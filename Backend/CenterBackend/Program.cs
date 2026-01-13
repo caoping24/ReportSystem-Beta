@@ -88,8 +88,8 @@ namespace CenterBackend
             // 配置全局异常处理中间件
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.MapControllers();
-            app.Run();
-            //app.Run("http://0.0.0.0:5000");
+            //app.Run();
+            app.Run("http://0.0.0.0:5000");
 
 
         }

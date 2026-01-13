@@ -1,6 +1,0 @@
-@CenterBackend_HostAddress = http://localhost:5260
-
-GET {{CenterBackend_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
