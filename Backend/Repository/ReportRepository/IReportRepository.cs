@@ -1,0 +1,15 @@
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace CenterReport.Repository
+{
+    public interface IReportRepository<T> where T : class
+    {
+        IQueryable<T> db { get; }
+        Task<List<T>> GetByDataTimeAsync(DateTime datetime);
+        Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end);
+        Task<T?> GetByIdAsync(int id);
+        Task AddAsync(T entity);
+        void Update(T entity);
+        Task DeleteByIdAsync(int id);
+    }
+}
