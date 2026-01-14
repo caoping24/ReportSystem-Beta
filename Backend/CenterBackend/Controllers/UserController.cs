@@ -147,6 +147,9 @@ namespace CenterBackend.Controllers
         {
             // 仅管理员可查询
             var userObj = HttpContext.Session.GetString(UserConstant.USER_LOGIN_STATE);
+            if (userObj == null) {
+                return false;
+            }
             var user = JsonSerializer.Deserialize<UserDto>(userObj);
             return user != null && user.Role == UserConstant.ADMIN_ROLE;
         }

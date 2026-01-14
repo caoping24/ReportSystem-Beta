@@ -23,7 +23,7 @@ namespace CenterBackend
             //1:泛型仓储注入
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped(typeof(IReportRepository<>), typeof(ReportRepository<>));
-
+            builder.Services.AddScoped(typeof(IReportRecordRepository<>), typeof(ReportRecordRepository<>));
             // 添加 DbContext 到服务容器
             string defaultConnection = configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -36,7 +36,8 @@ namespace CenterBackend
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IReportService, ReportService>();
-
+          
+            builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
             builder.Services.AddControllers();
 
             // 添加会话服务
@@ -88,8 +89,8 @@ namespace CenterBackend
             // 配置全局异常处理中间件
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.MapControllers();
-            //app.Run();
-            app.Run("http://0.0.0.0:5000");
+            app.Run();
+         
 
 
         }

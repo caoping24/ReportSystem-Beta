@@ -13,6 +13,8 @@ namespace CenterReport.Repository
         public DbSet<SourceData5> SourceData5 => Set<SourceData5>();
 
         public DbSet<HourlyDataStatistic> HourlyDataStatistics => Set<HourlyDataStatistic>();
+
+        public DbSet<ReportRecord> ReportRecord => Set<ReportRecord>();
         public CenterReportDbContext(DbContextOptions<CenterReportDbContext> options)
                : base(options)
         {
