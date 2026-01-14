@@ -1,0 +1,104 @@
+import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import { useLoginUserStore } from "@/store/useLoginUserStore";
+
+// 页面组件导入
+import HomePage from "@/pages/HomePage.vue";
+import UserManagePage from "@/pages/admin/UserManagePage.vue";
+import UserLoginPage from "@/pages/user/UserLoginPage.vue";
+import UserRegisterPage from "@/pages/user/UserRegisterPage.vue";
+// 侧边栏布局组件
+import BasicLayout from "@/layouts/BasicLayout.vue";
+
+// 路由规则
+const routes: Array<RouteRecordRaw> = [
+  // 根路径重定向到登录页
+  {
+    path: "/",
+    redirect: "/user/login"
+  },
+  // 登录页（无布局）
+  {
+    path: "/user/login",
+    name: "userLogin",
+    component: UserLoginPage,
+    meta: { requiresAuth: false }
+  },
+  // 注册页（无布局）
+  {
+    path: "/user/register",
+    name: "userRegister",
+    component: UserRegisterPage,
+    meta: { requiresAuth: false }
+  },
+  // 登录后的主布局（带侧边栏）
+  {
+    path: "/app",
+    component: BasicLayout,
+    meta: { requiresAuth: true },
+    children: [
+      // 主页
+      {
+        path: "home",
+        name: "homePage",
+        component: HomePage,
+      },
+      // 用户管理页
+      {
+        path: "admin/userManage",
+        name: "adminUserManage",
+        component: UserManagePage,
+      },
+    ]
+  },
+  // 404页面
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/user/login"
+  }
+];
+
+// 创建路由实例
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes,
+});
+
+// 路由守卫：登录校验
+router.beforeEach((to, from, next) => {
+  const loginUserStore = useLoginUserStore();
+  
+  // 优先从本地存储恢复登录状态（核心修复刷新丢失问题）
+  const savedUser = localStorage.getItem("loginUser");
+  if (savedUser) {
+    try {
+      const parsedUser = JSON.parse(savedUser);
+      if (parsedUser.id && !loginUserStore.loginUser.id) {
+        loginUserStore.setLoginUser(parsedUser);
+      }
+    } catch (e) {
+      console.error("本地存储用户信息异常：", e);
+      localStorage.removeItem("loginUser");
+    }
+  }
+
+  // 判断登录状态
+  const isLogin = !!loginUserStore.loginUser.id;
+
+  // 权限校验逻辑
+  if (to.meta.requiresAuth) {
+    if (isLogin) {
+      next();
+    } else {
+      next("/user/login");
+    }
+  } else {
+    // 已登录访问登录/注册页，跳首页
+    if (isLogin && (to.path === "/user/login" || to.path === "/user/register")) {
+      next("/app/home");
+    } else {
+      next();
+    }
+  }
+});
+
+export default router;
