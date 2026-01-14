@@ -5,6 +5,8 @@ using CenterBackend.Exceptions;
 using CenterBackend.IReportServices;
 using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using System.Text.Json;
 
 namespace CenterBackend.Controllers
@@ -47,92 +49,59 @@ namespace CenterBackend.Controllers
         {
             return "Hello World!";
         }
+        [HttpGet("ExportReport")]
+        public async Task<IActionResult> ExportReport()
+        {
+            return await reportService.ExportReport();
+        }
+        [HttpGet("ExportExcel")]
+        public IActionResult ExportExcel([FromQuery] int id, [FromQuery] int tabKey)
+        {
+            // 1. 先创建临时流写入Excel，再转字节数组，避免流被隐式关闭
+            byte[] excelBytes;
+            using (var tempStream = new MemoryStream())
+            {
+                // 创建Excel工作簿（业务逻辑完全不变）
+                IWorkbook workbook = new XSSFWorkbook();
+                ISheet worksheet = workbook.CreateSheet($"{id}号报表数据");
 
-        //    /// <summary>
-        //    /// 注销
-        //    /// </summary>
-        //    /// <returns></returns>
-        //    [HttpPost("logout")]
-        //    public BaseResponse<int> UserLogout()
-        //    {
-        //        var result = userService.UserLogout();
-        //        return ResultUtils<int>.Success(result);
-        //    }
+                // 写入表头（逻辑不变）
+                IRow headerRow = worksheet.CreateRow(0);
+                headerRow.CreateCell(0).SetCellValue("报表ID");
+                headerRow.CreateCell(1).SetCellValue("报表类型");
+                headerRow.CreateCell(2).SetCellValue("报表内容");
+                headerRow.CreateCell(3).SetCellValue("生成时间");
 
-        //    /// <summary>
-        //    /// 获取当前用户
-        //    /// </summary>
-        //    /// <returns></returns>
-        //    [HttpGet("current")]
-        //    public async Task<BaseResponse<UserDto>?> getCurrentUser()
-        //    {
-        //        var userObj = HttpContext.Session.GetString(UserConstant.USER_LOGIN_STATE);
-        //        // todo：暂时返回空， 防止第一次加载前端那边报错，前端还未做全局异常处理
-        //        if (userObj == null)
-        //        {
-        //            return null;
-        //        }
-        //        var user = JsonSerializer.Deserialize<UserDto>(userObj);
-        //        if (user == null)
-        //        {
-        //            return null;
-        //        }
-        //        var result = await userService.GetSafetyUser(user.Id);
-        //        return ResultUtils<UserDto>.Success(result);
-        //    }
+                // 写入业务数据（逻辑完全不变）
+                IRow dataRow = worksheet.CreateRow(1);
+                dataRow.CreateCell(0).SetCellValue(id);
+                dataRow.CreateCell(1).SetCellValue(tabKey == 1 ? "日报表" : tabKey == 2 ? "周报表" : tabKey == 3 ? "月报表" : "年报表");
+                dataRow.CreateCell(2).SetCellValue("报表数据内容");
+                dataRow.CreateCell(3).SetCellValue(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
-        //    /// <summary>
-        //    /// 搜索用户
-        //    /// </summary>
-        //    /// <param name="userName"></param>
-        //    /// <returns></returns>
-        //    /// <exception cref="BusinessException"></exception>
-        //    [HttpGet("search")]
-        //    public async Task<BaseResponse<List<UserDto>>> SearchUsers(string userName = "")
-        //    {
-        //        // 仅管理员可以查询
-        //        if (!isAdmin())
-        //        {
-        //            throw new BusinessException(ErrorCode.NO_AUTH, "缺少管理员权限");
-        //        }
-        //        var reuslt = await userService.SearchUsers(userName);
-        //        return ResultUtils<List<UserDto>>.Success(reuslt);
-        //    }
+                // 自动调整列宽（逻辑不变）
+                for (int i = 0; i < 4; i++)
+                {
+                    worksheet.AutoSizeColumn(i);
+                }
 
-        //    /// <summary>
-        //    /// 删除用户
-        //    /// </summary>
-        //    /// <param name="id"></param>
-        //    /// <returns></returns>
-        //    /// <exception cref="BusinessException"></exception>
-        //    [HttpPost("delete")]
-        //    public async Task<BaseResponse<bool>> DeleteUser([FromBody] long id)
-        //    {
-        //        // 仅管理员可以删除
-        //        if (!isAdmin())
-        //        {
-        //            throw new BusinessException(ErrorCode.NO_AUTH, "缺少管理员权限");
-        //        }
-        //        if (id <= 0)
-        //        {
-        //            throw new BusinessException(ErrorCode.PARAMS_ERROR, "id不能小于0");
-        //        }
-        //        var result = await userService.DeleteUser(id);
-        //        return ResultUtils<bool>.Success(result);
-        //    }
+                // 将工作簿写入临时流
+                workbook.Write(tempStream);
+                // 转字节数组（核心：脱离原流的依赖）
+                excelBytes = tempStream.ToArray();
+            }
 
-        //    /// <summary>
-        //    /// 是否为管理员
-        //    /// </summary>
-        //    /// <param name="httpContent"></param>
-        //    /// <returns></returns>
-        //    private bool isAdmin()
-        //    {
-        //        // 仅管理员可查询
-        //        var userObj = HttpContext.Session.GetString(UserConstant.USER_LOGIN_STATE);
-        //        var user = JsonSerializer.Deserialize<UserDto>(userObj);
-        //        return user != null && user.Role == UserConstant.ADMIN_ROLE;
-        //    }
-        //}
+            // 2. 基于字节数组创建新的MemoryStream，完全避免流关闭问题
+            var resultStream = new MemoryStream(excelBytes);
+            resultStream.Position = 0; // 此时流绝对不会被关闭
+
+            // 以下代码完全不变
+            string fileName = $"报表_{id}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");
+
+            // 返回File结果，框架会自动处理流的释放
+            return File(resultStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
     }
 }

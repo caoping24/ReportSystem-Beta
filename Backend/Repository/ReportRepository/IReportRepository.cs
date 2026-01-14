@@ -7,6 +7,8 @@ namespace CenterReport.Repository
         IQueryable<T> db { get; }
         Task<List<T>> GetByDataTimeAsync(DateTime datetime);
         Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end);
+
+        Task<List<T>> GetByDayAsync(DateTime time);
         Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
         void Update(T entity);
