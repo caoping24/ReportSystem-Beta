@@ -2,7 +2,7 @@
 
 namespace CenterUser.Repository.Models
 {
-    [Table("user")] //指定表名称
+    [Table("User")] //指定表名称
     public class User : ISoftDelete
     {
         public long Id { get; set; }
