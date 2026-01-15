@@ -21,7 +21,6 @@ namespace CenterBackend.Controllers
         {
             this.reportService = reportService;
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -38,9 +37,8 @@ namespace CenterBackend.Controllers
             var result = await reportService.DailyCalculateAndInsertAsync(_AddReportDailyDto);
             return ResultUtils<bool>.Success(result);
         }
-
         /// <summary>
-        /// µ«¬Ω
+        /// get≤‚ ‘
         /// </summary>
         /// <param name="loginDto"></param>
         /// <returns></returns>
@@ -49,11 +47,23 @@ namespace CenterBackend.Controllers
         {
             return "Hello World!";
         }
+
+        /// <summary>
+        /// ExportReport
+        /// </summary>
+        /// <param name="loginDto"></param>
+        /// <returns></returns>
         [HttpGet("ExportReport")]
         public async Task<IActionResult> ExportReport()
         {
             return await reportService.ExportReport();
         }
+
+        /// <summary>
+        /// ExportExcel ≤‚ ‘ π”√
+        /// </summary>
+        /// <param name="loginDto"></param>
+        /// <returns></returns>
         [HttpGet("ExportExcel")]
         public IActionResult ExportExcel([FromQuery] int id, [FromQuery] int tabKey)
         {

@@ -12,7 +12,6 @@ namespace CenterBackend.IReportServices
         Task<bool> DeleteReport(long id, AddReportDailyDto _AddReportDailyDto);
         Task<bool> AddReport(AddReportDailyDto _AddReportDailyDto);
         Task<bool> DailyCalculateAndInsertAsync(AddReportDailyDto _AddReportDailyDto);
-
         Task<IActionResult>  ExportReport();
     }
 }
