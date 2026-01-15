@@ -1,3 +1,4 @@
+using CenterBackend.IFileService;
 using CenterBackend.IReportServices;
 using CenterBackend.IUserServices;
 using CenterBackend.Middlewares;
@@ -36,6 +37,8 @@ namespace CenterBackend
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IFileServices, FileService>();
+
           
             builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
             builder.Services.AddControllers();
@@ -63,7 +66,6 @@ namespace CenterBackend
             });
 
             builder.Services.AddHttpContextAccessor();
-
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
@@ -74,11 +76,8 @@ namespace CenterBackend
             builder.WebHost.UseUrls(url);
 
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline.          
-            // 使用CORS中间件
-            app.UseCors("Policy");
-
+            app.UseStaticFiles(); // 启用静态文件访问，wwwroot才能被访问
+            app.UseCors("Policy");//使用CORS中间件 Configure the HTTP request pipeline.    
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -89,6 +88,8 @@ namespace CenterBackend
             // 配置全局异常处理中间件
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.MapControllers();
+            app.Run();
+
             app.Run();
          
 
