@@ -30,8 +30,8 @@ namespace CenterBackend.Controllers
         /// <param name="registerDto"></param>
         /// <returns></returns>
         /// <exception cref=""></exception>
-        [HttpGet]
-        public async Task<string> TEST()
+        [HttpGet("Test1")]
+        public async Task<string> Test1()
         {
             try
             {
@@ -58,12 +58,12 @@ namespace CenterBackend.Controllers
             }
         }
 
-        [HttpPut("test")]
+        [HttpPut("test2")]
         public IActionResult DownloadZipFileBig()
         {
             try
             {
-                string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Backup/FileBackup");//方式A：压缩wwwroot内的指定文件夹(推荐，你的项目内文件，如之前的Upload文件夹)
+                string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Files");//方式A：压缩wwwroot内的指定文件夹(推荐，你的项目内文件，如之前的Upload文件夹)
                 string zipFileName = $"文件备份_{DateTime.Now:yyyyMMddHHmmss}.zip";// 压缩包名称（带时间戳，避免重复，用户下载的文件名）
                 string tempZipPath = Path.Combine(_webHostEnv.WebRootPath, "Temp", zipFileName);// 服务器临时压缩包路径（生成在wwwroot的Temp文件夹，会自动创建）
                 bool compressSuccess = _fileService.CompressFolderToZip(sourceFolder, tempZipPath);//调用FileService 压缩文件夹为Zip包
@@ -86,7 +86,7 @@ namespace CenterBackend.Controllers
         [HttpGet("test3")]
         public Task<string> Test3()
         {
-            var temp = _fileService.GetDateFolderPath(_webHostEnv.WebRootPath, DateTime.Now, true, 0);
+            var temp = _fileService.GetDateFolderPath(_webHostEnv.WebRootPath, DateTime.Now, true, 1);
             return Task.FromResult(temp);
         }
 
