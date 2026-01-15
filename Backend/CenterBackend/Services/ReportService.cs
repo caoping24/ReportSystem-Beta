@@ -118,12 +118,12 @@ namespace CenterBackend.Services
         }
 
 
-        #region
+
         private async Task CalculateSourceData1Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
 
-            // cell1-cell10 完整赋值 - 按【平均值、差值、总和】循环重复，带注释+空值处理
+            // cell1-cell10 完整赋值 - 按平均值、差值、总和循环重复，带注释+空值处理
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
@@ -138,9 +138,9 @@ namespace CenterBackend.Services
 
             target.cell10 = dataList.Select(x => x.cell10 ?? 0).Average();//平均值
         }
-        #endregion
 
-        #region
+
+
         private async Task CalculateSourceData2Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
@@ -149,9 +149,9 @@ namespace CenterBackend.Services
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
-        #endregion
 
-        #region
+
+
         private async Task CalculateSourceData3Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
@@ -160,9 +160,9 @@ namespace CenterBackend.Services
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
-        #endregion
 
-        #region
+
+
         private async Task CalculateSourceData4Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
@@ -171,9 +171,9 @@ namespace CenterBackend.Services
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
-        #endregion
 
-        #region
+
+
         private async Task CalculateSourceData5Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
@@ -183,6 +183,9 @@ namespace CenterBackend.Services
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
 
+        /// <summary>
+        /// ExportReport
+        /// </summary>
         public async Task<IActionResult>  ExportReport()
         {
             try
@@ -247,8 +250,6 @@ namespace CenterBackend.Services
             }
             throw new NotImplementedException();
         }
-        #endregion
-
 
         /// <summary>
         /// 复制XLSX工作表（仅针对.xlsx，保留样式、合并单元格、列宽）
