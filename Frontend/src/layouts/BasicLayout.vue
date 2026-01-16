@@ -3,10 +3,10 @@
     <!-- 左侧菜单栏 -->
     <aside class="sidebar">
       <!-- 侧边栏头部 -->
-      <div class="sidebar-header">
+      <!-- <div class="sidebar-header">
         <img class="logo" src="../assets/logo.png" alt="logo" />
         <div class="title">用户中心</div>
-      </div>
+      </div> -->
       
       <!-- 侧边栏菜单 -->
       <a-menu
