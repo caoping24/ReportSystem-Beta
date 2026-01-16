@@ -9,7 +9,8 @@ import UserLoginPage from "@/pages/user/UserLoginPage.vue";
 import UserRegisterPage from "@/pages/user/UserRegisterPage.vue";
 // 侧边栏布局组件
 import BasicLayout from "@/layouts/BasicLayout.vue";
-
+//领导仓
+import LeaderDashboard from '@/components/LeaderDashboard.vue';
 // 路由规则
 const routes: Array<RouteRecordRaw> = [
   // 根路径重定向到登录页
@@ -48,6 +49,12 @@ const routes: Array<RouteRecordRaw> = [
         path: "admin/userManage",
         name: "adminUserManage",
         component: UserManagePage,
+      },
+      {
+        path: 'components/leader-dashboard',
+        name: 'LeaderDashboard',
+        component: LeaderDashboard,
+        meta: { title: '领导仓数据看板' }
       },
     ]
   },
