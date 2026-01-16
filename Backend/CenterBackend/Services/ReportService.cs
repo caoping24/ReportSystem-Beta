@@ -23,8 +23,8 @@ namespace CenterBackend.Services
         private readonly IReportRepository<SourceData1> _sourceData1;
         private readonly IReportRepository<SourceData2> _sourceData2;
         private readonly IReportRepository<SourceData3> _sourceData3;
-        private readonly IReportRepository<SourceData4> _sourceData4;
-        private readonly IReportRepository<SourceData5> _sourceData5;
+        //private readonly IReportRepository<SourceData4> _sourceData4;
+        //private readonly IReportRepository<SourceData5> _sourceData5;
         private readonly IReportRepository<HourlyDataStatistic> _hourlyDataStatistics;
         private readonly IReportUnitOfWork _reportUnitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -33,8 +33,8 @@ namespace CenterBackend.Services
         public ReportService(IReportRepository<SourceData1> sourceData1,
                              IReportRepository<SourceData2> sourceData2,
                              IReportRepository<SourceData3> sourceData3,
-                             IReportRepository<SourceData4> sourceData4,
-                             IReportRepository<SourceData5> sourceData5,
+                             //IReportRepository<SourceData4> sourceData4,
+                             //IReportRepository<SourceData5> sourceData5,
                              IReportRepository<HourlyDataStatistic> hourlyDataStatistics,
                              IReportUnitOfWork reportUnitOfWork,
                              IHttpContextAccessor httpContextAccessor)
@@ -42,8 +42,8 @@ namespace CenterBackend.Services
             this._sourceData1 = sourceData1;
             this._sourceData2 = sourceData2;
             this._sourceData3 = sourceData3;
-            this._sourceData4 = sourceData4;
-            this._sourceData5 = sourceData5;
+            //this._sourceData4 = sourceData4;
+            //this._sourceData5 = sourceData5;
             this._hourlyDataStatistics = hourlyDataStatistics;
             this._reportUnitOfWork = reportUnitOfWork;
             this._httpContextAccessor = httpContextAccessor;

@@ -1,4 +1,6 @@
-﻿namespace CenterBackend.IFileService
+﻿using CenterBackend.Models;
+
+namespace CenterBackend.IFileService
 {
     /// <summary>
     /// 文件操作服务接口
@@ -58,13 +60,17 @@
         bool CompressSingleFileToZip(string sourceFilePath, string zipSavePath);
 
         /// <summary>
-        /// 重载：按日期计算年/月/周层级路径，支持按需创建文件夹并指定返回路径层级
+        /// 获取指定日期的文件路径+文件名（日报/周报/年报）
+        /// 日报按目标日期年月 | 周报按本周一的年月+年周序号 | 年报按年份
+        /// </summary>rns>指定层级的完整物理路径，非法类型/空路径返回空字符串</returns>
+        FilePathAndName GetDateFolderPathAndName(string rootPath, DateTime targetDate);
+
+
+        /// <summary>
+        /// 按日期创建年/月/周三级文件夹(存在则不创建)
         /// </summary>
-        /// <param name="rootPath">存储的根物理路径</param>
-        /// <param name="targetDate">目标计算日期</param>
-        /// <param name="IsCreateFolder">是否自动创建对应层级文件夹，默认值:False</param>
-        /// <param name="Type">返回路径层级 1=年路径 2=月路径 3=周路径 0=返回空值，默认值:0</param>
-        /// <returns>指定层级的完整物理路径，非法类型/空路径返回空字符串</returns>
-        string GetDateFolderPath(string rootPath, DateTime targetDate, bool IsCreateFolder = false, int Type = 0);
+        /// <param name="rootPath">存储根路径</param>
+        /// <param name="targetDate">目标日期</param>
+        void CreateDateFolder(string rootPath, DateTime targetDate);
     }
 }

@@ -10,7 +10,7 @@ namespace CenterReport.Repository.Models
         public int Id { get; set; }
         public DateTime createdtime { get; set; }
         public int PH { get; set; }
-        public float? cell1 { get; set; }
+        public float? cell1 { get; set; }//Table1
         public float? cell2 { get; set; }
         public float? cell3 { get; set; }
         public float? cell4 { get; set; }
@@ -60,7 +60,7 @@ namespace CenterReport.Repository.Models
         public float? cell48 { get; set; }
         public float? cell49 { get; set; }
         public float? cell50 { get; set; }
-        public float? cell51 { get; set; }
+        public float? cell51 { get; set; }//Table2
         public float? cell52 { get; set; }
         public float? cell53 { get; set; }
         public float? cell54 { get; set; }
@@ -110,7 +110,7 @@ namespace CenterReport.Repository.Models
         public float? cell98 { get; set; }
         public float? cell99 { get; set; }
         public float? cell100 { get; set; }
-        public float? cell101 { get; set; }
+        public float? cell101 { get; set; }//Table3
         public float? cell102 { get; set; }
         public float? cell103 { get; set; }
         public float? cell104 { get; set; }
