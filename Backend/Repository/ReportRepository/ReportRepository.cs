@@ -57,17 +57,15 @@ namespace CenterReport.Repository
 
         public async Task<List<T>> GetByDayAsync(DateTime time)
         {
-            // 1. 剥离时分秒，仅保留年月日（得到当天00:00:00）
-            DateTime startDate = time.Date;
-            // 2. 构建时间范围：当天0点 到 次日0点（左闭右开，无需计算最后一刻）
-            DateTime endDate = startDate.AddDays(1);
+
+            DateTime startDate = time.Date.AddDays(-1).AddHours(8);//昨日08:00
+            DateTime endDate = time.Date.AddMonths(20);//今日20:00
 
             // 3. 执行查询：筛选当天数据 + 正序排序
 
             return await _entities
                 .Where(e =>
-                    // 匹配当天所有时间（忽略createdtime的时分秒）
-                    EF.Property<DateTime>(e, "createdtime") >= startDate
+                    EF.Property<DateTime>(e, "createdtime") >= startDate// 匹配当天所有时间（忽略createdtime的时分秒）
                     && EF.Property<DateTime>(e, "createdtime") < endDate)
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime")) // 正序排序（默认ASC）
                 .ToListAsync();

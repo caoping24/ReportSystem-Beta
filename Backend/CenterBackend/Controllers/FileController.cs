@@ -45,7 +45,7 @@ namespace CenterBackend.Controllers
                 bool isSuccess;
                 if (reporttype == 1) 
                 {
-                    string targetFilePath = Path.Combine(temp.PathDailyFiles, temp.NameDailyFile);
+                    string targetFilePath = Path.Combine(temp.DailyFilesPath, temp.DailyFileName);
                     isSuccess = _fileService.CopyFile(sourceFilePath, targetFilePath, true);
                     return  "文件夹创建+文件复制 操作成功！";
                 }

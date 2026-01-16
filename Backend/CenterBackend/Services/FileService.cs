@@ -202,20 +202,23 @@ namespace CenterBackend.Services
             int weekNumberInYear = GetWeekNumberInYear(weekFirstDay);//该周在当年的周序号
 
             // ===== 日报表
-            result.PathDailyFiles = Path.Combine(rootPath, "日报表", $"{currentDate.Year}-{currentDate.Month:00}");
-            result.NameDailyFile = $"日报表-{currentDate.Year}-{currentDate.Month:00}-{currentDate.Day:00}.xlsx";
-
+            result.DailyFilesPath = Path.Combine(rootPath, "日报表", $"{currentDate.Year}-{currentDate.Month:00}");
+            result.DailyFileName = $"日报表-{currentDate.Year}-{currentDate.Month:00}-{currentDate.Day:00}.xlsx";
+            result.DailyFilesFullPath = Path.Combine(result.DailyFilesPath, result.DailyFileName);
             // ===== 月报表
-            result.PathMonthlyFiles = Path.Combine(rootPath, "月报表", $"{currentDate.Year}");
-            result.NameMonthlyFile = $"月报表-{currentDate.Year}-{currentDate.Month:00}.xlsx";
+            result.MonthlyFilesPath = Path.Combine(rootPath, "月报表", $"{currentDate.Year}");
+            result.MonthlyFileName = $"月报表-{currentDate.Year}-{currentDate.Month:00}.xlsx";
+            result.MonthlyFilesFullPath = Path.Combine(result.MonthlyFilesPath, result.MonthlyFileName);
 
             // ===== 周报表 路径+文件名 (核心：按[本周一]的年月归类 =====
-            result.PathWeeklyFiles = Path.Combine(rootPath, "周报表", $"{weekBelongYear}-{weekBelongMonth:00}");
-            result.NameWeeklyFile = $"周报表-{weekBelongYear}年{weekNumberInYear:00}周.xlsx";
+            result.WeeklyFilesPath = Path.Combine(rootPath, "周报表", $"{weekBelongYear}-{weekBelongMonth:00}");
+            result.WeeklyFileName = $"周报表-{weekBelongYear}年{weekNumberInYear:00}周.xlsx";
+            result.WeeklyFilesFullPath = Path.Combine(result.WeeklyFilesPath, result.WeeklyFileName);
 
             // ===== 年报表
-            result.PathYearFiles = Path.Combine(rootPath, "年报表");
-            result.NameYearFile = $"年报表-{currentDate.Year}.xlsx";
+            result.YearlyFilesPath = Path.Combine(rootPath, "年报表");
+            result.YearlyFileName = $"年报表-{currentDate.Year}.xlsx";
+            result.YearlyFilesFullPath = Path.Combine(result.YearlyFilesPath, result.YearlyFileName);
 
             return result;
         }
@@ -229,11 +232,11 @@ namespace CenterBackend.Services
         public void CreateDateFolder(string rootPath, DateTime targetDate)
         {
             var result = GetDateFolderPathAndName(rootPath, targetDate);
-            if (string.IsNullOrWhiteSpace(result.PathDailyFiles)) return;
-            CreateFolder(result.PathDailyFiles);
-            CreateFolder(result.PathMonthlyFiles);
-            CreateFolder(result.PathWeeklyFiles);
-            CreateFolder(result.PathYearFiles);
+            if (string.IsNullOrWhiteSpace(result.DailyFilesPath)) return;
+            CreateFolder(result.DailyFilesPath);
+            CreateFolder(result.MonthlyFilesPath);
+            CreateFolder(result.WeeklyFilesPath);
+            CreateFolder(result.YearlyFilesPath);
         }
 
         #region 私有辅助方法

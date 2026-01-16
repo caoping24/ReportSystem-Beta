@@ -1,8 +1,8 @@
 ﻿namespace CenterBackend.Dto
 {
-    public class AddReportDailyDto
+    public class CreateReportDto
     {
         public DateTime AddDate { get; set; }
-        public string? Target { get; set; }
+        public string? ReportType { get; set; }
     }
 }

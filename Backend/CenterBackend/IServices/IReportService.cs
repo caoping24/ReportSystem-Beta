@@ -9,9 +9,9 @@ namespace CenterBackend.IReportServices
     public interface IReportService
     {
 
-        Task<bool> DeleteReport(long id, AddReportDailyDto _AddReportDailyDto);
-        Task<bool> AddReport(AddReportDailyDto _AddReportDailyDto);
-        Task<bool> DailyCalculateAndInsertAsync(AddReportDailyDto _AddReportDailyDto);
-        Task<IActionResult>  ExportReport();
+        Task<bool> DeleteReport(long id, DailyInsertDto _AddReportDailyDto);
+        Task<bool> AddReport(DailyInsertDto _AddReportDailyDto);
+        Task<bool> DailyCalculateAndInsertAsync(DailyInsertDto _AddReportDailyDto);
+        Task<IActionResult> WriteXlsxAndSave(string ModelFullPath, string TargetPullPath, DateTime ReportTime);
     }
 }

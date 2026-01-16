@@ -2,13 +2,20 @@
 using CenterBackend.Constant;
 using CenterBackend.Dto;
 using CenterBackend.Exceptions;
+using CenterBackend.IFileService;
 using CenterBackend.IReportServices;
+using CenterBackend.Models;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
 using Mapster;
 using Masuit.Tools;
+using Masuit.Tools.Reflection;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using MySqlConnector;
 using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
@@ -50,7 +57,7 @@ namespace CenterBackend.Services
         }
 
         //根据id删除对应数据
-        public async Task<bool> DeleteReport( long id, AddReportDailyDto _AddReportDailyDto)
+        public async Task<bool> DeleteReport( long id, DailyInsertDto _AddReportDailyDto)
         {
             //switch (AddReportDto.Target)
             //{
@@ -71,7 +78,7 @@ namespace CenterBackend.Services
             return true;
         }
         //统计每日数据写入对应表
-        public async Task<bool> AddReport(AddReportDailyDto _AddReportDailyDto)
+        public async Task<bool> AddReport(DailyInsertDto _AddReportDailyDto)
         {
             //switch (AddReportDto.Target)
             //{
@@ -94,7 +101,7 @@ namespace CenterBackend.Services
         /// <summary>
         /// 统计每日数据写入对应表
         /// </summary>
-        public async Task<bool> DailyCalculateAndInsertAsync(AddReportDailyDto _AddReportDailyDto)
+        public async Task<bool> DailyCalculateAndInsertAsync(DailyInsertDto _AddReportDailyDto)
         {
 
             DateTime StartTime = _AddReportDailyDto.AddDate.Date;
@@ -183,78 +190,122 @@ namespace CenterBackend.Services
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
 
+
+
         /// <summary>
-        /// ExportReport
+        /// 从模板文件创建文件流，然后按区域写数据（优化完整版）
         /// </summary>
-        public async Task<IActionResult>  ExportReport()
+        /// <param name="TemplateFullPath">Excel模板完整路径</param>
+        /// <param name="TargetSavePath">生成文件的保存路径</param>
+        /// <param name="ReportTime">报表日期</param>
+        /// <returns></returns>
+        public async Task<IActionResult> WriteXlsxAndSave(string ModelFullPath, string TargetPullPath, DateTime ReportTime)
         {
             try
             {
-                // 1. 定义目标时间（以“当前时间减1天”为例，你可替换为实际需要的time）
-                DateTime time = DateTime.Now.AddDays(-1);
-
-                // 2. 异步获取指定日期的数据列表
-                var dataList = await _sourceData1.GetByDayAsync(time);
-
-                // 3. 空值检查：避免dataList为null导致遍历空引用异常
+                var dataList = await _sourceData1.GetByDayAsync(ReportTime);
                 if (dataList == null || !dataList.Any())
                 {
-                    Console.WriteLine("指定日期无数据，跳过处理");
-                    throw new NotImplementedException();
+                    var msg = $"指定日期【{ReportTime:yyyy-MM-dd}】无数据，跳过Excel处理";
+                    return new OkObjectResult(new { success = true, msg });
                 }
+                using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
+                using var workbook = new XSSFWorkbook(templateStream);
+                ISheet sheet = workbook.GetSheetAt(0);
+                sheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
 
-                //获取excel表格
-                string templatePath = @"C:\Users\why\Desktop\报表1.xlsx"; // 替换为你的模板路径
-                string outputPath = @"C:\Users\why\Desktop\excel\Report.xlsx";        // 替换为输出路径
+                WriteXlsxRange1(workbook, sheet, 5, dataList);
 
-                try { 
-                    using FileStream templateStream = new FileStream(templatePath, FileMode.Open, FileAccess.Read);
-                    XSSFWorkbook workbook = new XSSFWorkbook(templateStream);
-                    ISheet sheet = workbook.GetSheetAt(0); // 获取第一个工作表
-                    // 假设从第2行开始写入数据（索引1），根据需要调整
-                    int startRow = 5;
-                    for (int i = 0; i < dataList.Count; i++)
-                    {
-                        var data = dataList[i];
-                        int rowIndex = startRow + i;
-                        // 写入cell1和cell2示例，按需添加更多字段
-                        if (data.cell1 != null) {
-                            SetXlsxCellValue(sheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell1), 2));
-                        }
-                        if (data.cell2 != null)
-                        {
-                            SetXlsxCellValue(sheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell1), 2));
-                        }
-
-
-
-                        // 继续为其他单元格赋值...
-                    }
-                    // 保存修改后的工作簿到新文件
-                    using FileStream outputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
-                    workbook.Write(outputStream);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"处理Excel时出错：{ex.Message}");
-                    throw; // 可根据需要选择是否重新抛出异常
-                }   
-                
+                // 4. 保存文件到指定路径，强制刷新缓存，杜绝文件损坏
+                using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);
+                workbook.Write(outputStream);
+                return new OkObjectResult(new { success = true, msg = "Excel生成成功" });
             }
             catch (Exception ex)
             {
-                // 异常处理：捕获异步调用或类型转换中的错误
-                Console.WriteLine($"处理数据时出错：{ex.Message}");
-                // 可根据实际场景记录日志、抛出异常或返回错误状态
-                // throw; // 如需向上层抛出异常，取消注释
+                var errorMsg = $"生成Excel报表异常，报表日期：{ReportTime:yyyy-MM-dd}，异常信息：{ex.ToString()}";
+                return new BadRequestObjectResult(new { success = false, msg = $"操作异常：{ex.Message}" });
             }
-            throw new NotImplementedException();
         }
 
         /// <summary>
+        /// 按区域写Xlsx数据 1
+        /// </summary>
+        private static bool WriteXlsxRange1(XSSFWorkbook srcWorkbook, ISheet srcSheet , int startRow, IEnumerable<SourceData1> dataList)
+        {
+
+            for (int i = 0; i < dataList.Count(); i++)
+            {
+                var data = dataList.ElementAt(i);
+                int rowIndex = startRow + i;
+
+                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
+                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
+                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
+                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
+                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
+                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
+                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
+                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
+                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
+                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
+                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
+                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
+                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
+                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
+                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
+                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
+                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
+                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
+                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
+                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
+                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
+                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
+                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
+                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
+                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
+                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
+                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
+                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
+                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
+                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
+                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
+                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
+                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
+                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
+                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
+                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
+                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
+                // ============ 注释结束 继续写入后续数据 ============
+                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
+                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
+                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
+                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
+                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
+                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
+                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 按区域写Xlsx数据 2
+        /// </summary>
+        private static bool WriteXlsxRange2(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
+        {
+            return true;
+        }
+        /// <summary>
+        /// 按区域写Xlsx数据 3
+        /// </summary>
+        private static bool WriteXlsxRange3(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
+        {
+            return true;
+        }
+        /// <summary>
         /// 复制XLSX工作表（仅针对.xlsx，保留样式、合并单元格、列宽）
         /// </summary>
-        private static ISheet CopyXlsxSheet(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
+        private static ISheet CopyXlsxSheet3(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
         {
             ISheet destSheet = destWorkbook.CreateSheet(newSheetName);
 
