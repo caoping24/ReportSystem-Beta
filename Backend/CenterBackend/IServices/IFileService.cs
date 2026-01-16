@@ -6,7 +6,7 @@
     public interface IFileServices
     {
         /// <summary>
-        /// 创建文件夹【兼容单层/多层】，路径存在则跳过，无异常抛出
+        /// 创建文件夹兼容单层/多层，路径存在则跳过，无异常抛出
         /// </summary>
         /// <param name="folderPath">待创建的文件夹完整物理路径</param>
         void CreateFolder(string folderPath);

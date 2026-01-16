@@ -123,7 +123,7 @@ namespace CenterBackend.Services
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
 
-            // cell1-cell10 完整赋值 - 按【平均值、差值、总和】循环重复，带注释+空值处理
+            // cell1-cell10 完整赋值 - 按平均值、差值、总和循环重复，带注释+空值处理
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和

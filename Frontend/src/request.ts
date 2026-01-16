@@ -10,7 +10,7 @@ declare module 'axios' {
 }
 
 const myAxios = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? "http://localhost:5260" : "http://118.31.13.93:80",
+    baseURL: process.env.NODE_ENV === 'development' ? "http://localhost:5260" : "http://192.168.2.250:5260",
   timeout: 10000,
   withCredentials: true,
 });

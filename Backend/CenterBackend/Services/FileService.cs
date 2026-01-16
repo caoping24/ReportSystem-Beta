@@ -12,7 +12,7 @@ namespace CenterBackend.Services
     public class FileService : IFileServices
     {
         /// <summary>
-        /// 创建文件夹【兼容单层/多层】，路径存在则跳过，无异常抛出
+        /// 创建文件夹兼容单层/多层，路径存在则跳过，无异常抛出
         /// </summary>
         /// <param name="folderPath">待创建的文件夹完整路径</param>
         public void CreateFolder(string folderPath)
@@ -24,7 +24,7 @@ namespace CenterBackend.Services
         }
 
         /// <summary>
-        /// 复制文件【核心封装】自动创建目标文件夹，解决原生File.Copy不建文件夹的问题
+        /// 复制文件核心封装自动创建目标文件夹，解决原生File.Copy不建文件夹的问题
         /// </summary>
         /// <param name="sourceFilePath">源文件完整路径</param>
         /// <param name="targetFilePath">目标文件完整路径</param>
@@ -49,7 +49,7 @@ namespace CenterBackend.Services
         }
 
         /// <summary>
-        /// 压缩指定文件夹内所有内容为Zip包【含子文件夹+保持原结构】
+        /// 压缩指定文件夹内所有内容为Zip包含子文件夹+保持原结构
         /// </summary>
         /// <param name="sourceFolderPath">待压缩的源文件夹路径</param>
         /// <param name="zipSavePath">压缩包保存的完整路径(含文件名.zip)</param>

@@ -1,4 +1,4 @@
-using CenterBackend.IFileService;
+锘縰sing CenterBackend.IFileService;
 using CenterBackend.IReportServices;
 using CenterBackend.IUserServices;
 using CenterBackend.Middlewares;
@@ -7,7 +7,7 @@ using CenterReport.Repository;
 using CenterUser.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-
+using Microsoft.AspNetCore.SpaServices;
 
 namespace CenterBackend
 {
@@ -16,84 +16,95 @@ namespace CenterBackend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            // 读取配置
             var configuration = builder.Configuration;
 
-            //1:泛型仓储注入
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped(typeof(IReportRepository<>), typeof(ReportRepository<>));
             builder.Services.AddScoped(typeof(IReportRecordRepository<>), typeof(ReportRecordRepository<>));
-            // 添加 DbContext 到服务容器
+
             string defaultConnection = configuration.GetConnectionString("DefaultConnection");
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(defaultConnection));
-            builder.Services.AddDbContext<CenterReportDbContext>(options =>
-                options.UseSqlServer(defaultConnection));
-            //2:手动注册Service
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(defaultConnection));
+            builder.Services.AddDbContext<CenterReportDbContext>(options => options.UseSqlServer(defaultConnection));
+
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IReportUnitOfWork, ReportUnitOfWork>();
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IFileServices, FileService>();
-
-          
             builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
+
             builder.Services.AddControllers();
 
-            // 添加会话服务
-            //基于内存的Session
+            builder.Services.AddSpaStaticFiles(spaConfig =>
+            {
+                spaConfig.RootPath = "wwwroot";
+            });
+
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(20); // 设置超时时间
-                options.Cookie.HttpOnly = true; // 确保 Cookie 只能通过 HTTP 访问
-                options.Cookie.IsEssential = true; // 标记会话 Cookie 为必要
+                options.IdleTimeout = TimeSpan.FromMinutes(20);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
             });
 
-            // 读取CORS策略配置
-            var allowedOrigins = builder.Configuration["CorsPolicy:AllowedOrigins"];
-            // 添加CORS服务，并定义一个策略
+            var allowedOrigins = configuration["CorsPolicy:AllowedOrigins"]?.Split(',') ?? Array.Empty<string>();
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("Policy",
-                    builder => builder.WithOrigins(allowedOrigins) // 允许的源
-                                      .AllowAnyHeader() // 允许所有头部
-                                      .AllowAnyMethod() // 允许所有HTTP方法
-                                     .AllowCredentials()); // 如果需要支持凭证，则必须设置
+                options.AddPolicy("Policy", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
             });
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "鎶ヨ〃绯荤粺API", Version = "v1" });
             });
 
-            // 指定启动url
-            string url = builder.Configuration["applicationUrl"];
-            builder.WebHost.UseUrls(url);
+            string serviceUrl = configuration["applicationUrl"];
+            builder.WebHost.UseHttpSys(options =>
+            {
+                options.UrlPrefixes.Add(serviceUrl);
+                options.MaxConnections = 1000;
+                options.RequestQueueLimit = 1000;
+                options.AllowSynchronousIO = true;
+            });
 
             var app = builder.Build();
-            app.UseStaticFiles(); // 启用静态文件访问，wwwroot才能被访问
-            app.UseCors("Policy");//使用CORS中间件 Configure the HTTP request pipeline.    
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+
+            app.UseStaticFiles();
+
+            app.UseCors("Policy");
+
+            if (app.Environment.IsDevelopment())
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-            });
-            // 使用Session中间件
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "鎶ヨ〃绯荤粺API v1");
+                });
+            }
+
             app.UseSession();
-            // 配置全局异常处理中间件
+
             app.UseMiddleware<GlobalExceptionMiddleware>();
+
             app.MapControllers();
-            app.Run();
+
+            app.UseSpaStaticFiles();
+
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "wwwroot";
+            });
 
             app.Run();
-         
-
-
         }
     }
 }
