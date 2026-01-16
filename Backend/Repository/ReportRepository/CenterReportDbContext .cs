@@ -9,8 +9,8 @@ namespace CenterReport.Repository
         public DbSet<SourceData1> SourceData1 => Set<SourceData1>();
         public DbSet<SourceData2> SourceData2 => Set<SourceData2>();
         public DbSet<SourceData3> SourceData3 => Set<SourceData3>();
-        public DbSet<SourceData4> SourceData4 => Set<SourceData4>();
-        public DbSet<SourceData5> SourceData5 => Set<SourceData5>();
+        //public DbSet<SourceData4> SourceData4 => Set<SourceData4>();
+        //public DbSet<SourceData5> SourceData5 => Set<SourceData5>();
 
         public DbSet<HourlyDataStatistic> HourlyDataStatistics => Set<HourlyDataStatistic>();
 

@@ -1,9 +1,11 @@
 ﻿using CenterBackend.IFileService;
+using CenterBackend.Models;
 using ICSharpCode.SharpZipLib.Zip;
 using MathNet.Numerics.LinearAlgebra.Factorization;
 using System;
 using System.IO;
 using System.Text;
+using System.Web;
 namespace CenterBackend.Services
 {
     /// <summary>
@@ -80,7 +82,7 @@ namespace CenterBackend.Services
         }
 
         /// <summary>
-        /// 压缩单个文件为独立Zip包
+        /// 单个文件下载,压缩为独立Zip包
         /// </summary>
         /// <param name="sourceFilePath">待压缩的源文件完整路径</param>
         /// <param name="zipSavePath">压缩包保存的完整路径(含文件名.zip)</param>
@@ -122,6 +124,28 @@ namespace CenterBackend.Services
                 return false;
             }
         }
+        /// <summary>
+        /// 单个文件直接下载,不压缩
+        /// </summary>
+        /// <param name="fileName">文件名称（如：test.xlsx、数据.csv）</param>
+        /// <param name="sourceFilePath">文件所在目录</param>
+        /// <returns>返回文件流+文件名，供控制器直接返回，null=文件不存在</returns>
+        public (FileStream? stream, string? encodeFileName) DownloadSingleFile(string sourceFilePath,  string fileName)
+        {
+            try
+            {
+                string filePath = Path.Combine(sourceFilePath, fileName);
+                if (!File.Exists(filePath)) return (null, null);
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);// 只读方式打开文件流，共享读取（文件被占用也能下载），流式返回，不加载到内存
+                string encodeFileName = HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);// 解决中文文件名下载乱码问题
+                return (fileStream, encodeFileName);
+            }
+            catch
+            {
+                return (null, null);
+            }
+        }
+
 
         #region 私有辅助方法
         /// <summary>
@@ -160,57 +184,42 @@ namespace CenterBackend.Services
         }
         #endregion
 
-        /// <summary>
-        /// 重载：按日期计算层级路径，支持创建文件夹+指定返回路径层级
-        /// </summary>
-        /// <param name="rootPath">存储根路径</param>
-        /// <param name="targetDate">目标日期</param>
-        /// <param name="IsCreateFolder">是否自动创建文件夹，默认:false</param>
-        /// <param name="Type">路径类型 1=年 2=月 3=周 0=空值，默认:0</param>
-        /// <returns>指定层级的完整物理路径，非法Type返回空字符串</returns>
-        public string GetDateFolderPath(string rootPath, DateTime targetDate, bool IsCreateFolder = false, int Type = 0)
-        {
-            var paths = GetDateFolderPath(rootPath, targetDate);//获取三级完整路径
-            if (IsCreateFolder) CreateDateFolder(rootPath, targetDate);//需要则创建文件夹
 
-            //按需返回对应路径
-            if (Type == 1) return paths.yearPath;
-            if (Type == 2) return paths.monthPath;
-            if (Type == 3) return paths.weekPath;
-            return string.Empty;
-        }
 
         /// <summary>
-        /// 核心：按日期计算年/月/周三级完整路径
+        /// 获取指定日期的文件路径+文件名（日报/周报/年报）
+        /// 日报按目标日期年月 | 周报按本周一的年月+年周序号 | 年报按年份
         /// </summary>
-        /// <param name="rootPath">存储根路径</param>
-        /// <param name="targetDate">目标日期</param>
-        /// <returns>元组(年路径,月路径,周路径)</returns>
-        public (string yearPath, string monthPath, string weekPath) GetDateFolderPath(string rootPath, DateTime targetDate)
+        public FilePathAndName GetDateFolderPathAndName(string rootPath, DateTime targetDate)
         {
-            if (string.IsNullOrWhiteSpace(rootPath)) return (string.Empty, string.Empty, string.Empty);//根路径判空
+            var result = new FilePathAndName();
+            if (string.IsNullOrWhiteSpace(rootPath)) return result;
 
-            DateTime currentDate = targetDate.Date;//去时分秒
-            DateTime weekFirstDay = GetWeekFirstDay(currentDate);//取本周一
-            int weekNum = GetWeekNumberInMonth(new DateTime(currentDate.Year, currentDate.Month, 1), currentDate);//取当月周数
-            string weekFolderName = $"{weekNum:00}周";//周文件夹名 01周格式
+            DateTime currentDate = targetDate.Date;//去时分秒，纯日期计算
+            DateTime weekFirstDay = GetWeekFirstDay(currentDate);//获取该日期的本周一
+            int weekBelongYear = weekFirstDay.Year;//本周一 归属的年份
+            int weekBelongMonth = weekFirstDay.Month;//本周一 归属的月份
+            int weekNumberInYear = GetWeekNumberInYear(weekFirstDay);//该周在当年的周序号
 
-            string yearPath; string monthPath; string weekPath;
-            //跨月判断：本周一在当月则用当前年月，否则用周一的年月
-            if (weekFirstDay.Year == currentDate.Year && weekFirstDay.Month == currentDate.Month)
-            {
-                yearPath = Path.Combine(rootPath, currentDate.Year.ToString());
-                monthPath = Path.Combine(yearPath, $"{currentDate.Month:00}月");
-                weekPath = Path.Combine(monthPath, weekFolderName);
-            }
-            else
-            {
-                yearPath = Path.Combine(rootPath, weekFirstDay.Year.ToString());
-                monthPath = Path.Combine(yearPath, $"{weekFirstDay.Month:00}月");
-                weekPath = Path.Combine(monthPath, weekFolderName);
-            }
-            return (yearPath, monthPath, weekPath);//返回三级路径
+            // ===== 日报表
+            result.PathDailyFiles = Path.Combine(rootPath, "日报表", $"{currentDate.Year}-{currentDate.Month:00}");
+            result.NameDailyFile = $"日报表-{currentDate.Year}-{currentDate.Month:00}-{currentDate.Day:00}.xlsx";
+
+            // ===== 月报表
+            result.PathMonthlyFiles = Path.Combine(rootPath, "月报表", $"{currentDate.Year}");
+            result.NameMonthlyFile = $"月报表-{currentDate.Year}-{currentDate.Month:00}.xlsx";
+
+            // ===== 周报表 路径+文件名 (核心：按[本周一]的年月归类 =====
+            result.PathWeeklyFiles = Path.Combine(rootPath, "周报表", $"{weekBelongYear}-{weekBelongMonth:00}");
+            result.NameWeeklyFile = $"周报表-{weekBelongYear}年{weekNumberInYear:00}周.xlsx";
+
+            // ===== 年报表
+            result.PathYearFiles = Path.Combine(rootPath, "年报表");
+            result.NameYearFile = $"年报表-{currentDate.Year}.xlsx";
+
+            return result;
         }
+
 
         /// <summary>
         /// 按日期创建年/月/周三级文件夹(存在则不创建)
@@ -219,10 +228,12 @@ namespace CenterBackend.Services
         /// <param name="targetDate">目标日期</param>
         public void CreateDateFolder(string rootPath, DateTime targetDate)
         {
-            var paths = GetDateFolderPath(rootPath, targetDate);//获取三级路径
-            CreateFolder(paths.yearPath);
-            CreateFolder(paths.monthPath);
-            CreateFolder(paths.weekPath);
+            var result = GetDateFolderPathAndName(rootPath, targetDate);
+            if (string.IsNullOrWhiteSpace(result.PathDailyFiles)) return;
+            CreateFolder(result.PathDailyFiles);
+            CreateFolder(result.PathMonthlyFiles);
+            CreateFolder(result.PathWeeklyFiles);
+            CreateFolder(result.PathYearFiles);
         }
 
         #region 私有辅助方法
@@ -237,19 +248,25 @@ namespace CenterBackend.Services
             if (diff < 0) diff += 7;//周日处理为-1，补7天
             return dt.AddDays(-diff).Date;
         }
-
         /// <summary>
-        /// 获取指定日期在当月的周序号
+        /// 根据目标日期，先获取该周第一天(周一)，再计算【该周是当年的第几周】
+        /// 完全基于你已有的GetWeekFirstDay方法，规则统一：周一为周首、周数从1开始
         /// </summary>
-        /// <param name="monthFirstDay">当月第一天</param>
-        /// <param name="currentDay">目标日期</param>
-        /// <returns>当月周数(从1开始)</returns>
-        private int GetWeekNumberInMonth(DateTime monthFirstDay, DateTime currentDay)
+        /// <param name="dt">任意目标日期</param>
+        /// <returns>该周在当年的周序号 1~53</returns>
+        private int GetWeekNumberInYear(DateTime dt)
         {
-            int firstWeekDay = (int)monthFirstDay.DayOfWeek;
-            if (firstWeekDay == 0) firstWeekDay = 7;//周日转7
-            int daysPast = (currentDay.Day - 1) + (firstWeekDay - 1);//计算总偏移天数
-            return (daysPast / 7) + 1;//返回周序号
+            //调用你写的方法，获取【该周的第一天（本周一）】，这是计算基准，完全复用你的逻辑
+            DateTime weekFirstDay = GetWeekFirstDay(dt);
+            // 这个周一 所在年份的1月1日
+            DateTime yearFirstDay = new DateTime(weekFirstDay.Year, 1, 1);
+            // 当年的第一个周一= 当年元旦的本周一
+            DateTime yearFirstWeekDay = GetWeekFirstDay(yearFirstDay);
+            // 两个周一的间隔天数 / 7  = 周差，+1得到周序号（从1开始）
+            int daysDiff = (int)(weekFirstDay - yearFirstWeekDay).TotalDays;
+            int weekNumber = (daysDiff / 7) + 1;
+            // 返回最终周序号
+            return weekNumber;
         }
         #endregion
     }
