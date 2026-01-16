@@ -16,7 +16,7 @@ let isRedirecting = false;
 
 // 创建axios实例
 const myAxios = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' ? "http://localhost:5260" : "http://192.168.2.250:8080",
+  baseURL: process.env.NODE_ENV === 'development' ? "http://localhost:5260" : "http://192.168.2.250:5260",
   timeout: 10000,
   withCredentials: true, // 允许携带cookie，适配session认证
 });

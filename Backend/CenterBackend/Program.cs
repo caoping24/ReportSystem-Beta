@@ -41,7 +41,7 @@ namespace CenterBackend
 
             builder.Services.AddSpaStaticFiles(spaConfig =>
             {
-                spaConfig.RootPath = "wwwroot";
+                spaConfig.RootPath = "wwwroot/dist";
             });
             builder.Services.RemoveAll<ISessionStore>();
             builder.Services.RemoveAll<IDistributedCache>();
@@ -122,7 +122,7 @@ namespace CenterBackend
             app.UseAuthentication();          // 5. 【新增】认证中间件 → 读取登录态
             app.UseAuthorization();           // 6. 授权中间件 → 校验权限
             app.MapControllers();             // 8. API路由映射
-            app.MapFallbackToFile("index.html"); //9. SPA刷新兜底
+            app.MapFallbackToFile("dist/index.html"); //9. SPA刷新兜底
 
             app.Run();
         }
