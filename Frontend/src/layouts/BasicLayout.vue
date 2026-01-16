@@ -45,7 +45,7 @@ const loginUserStore = useLoginUserStore();
 // 菜单配置（key对应路由路径）
 const items = ref<MenuProps["items"]>([
   { key: "/app/home", label: "主页", title: "主页" },
-  { key: "/app/admin/userManage", label: "用户管理", title: "用户管理" },
+   { key: "/app/admin/userManage", label: "用户管理", title: "用户管理" },
 ]);
 
 // 菜单点击跳转

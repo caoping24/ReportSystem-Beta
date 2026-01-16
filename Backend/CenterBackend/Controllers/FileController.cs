@@ -58,7 +58,7 @@ namespace CenterBackend.Controllers
             }
         }
 
-        [HttpPut("test2")]
+        [HttpGet("test2")]
         public IActionResult DownloadZipFileBig()
         {
             try

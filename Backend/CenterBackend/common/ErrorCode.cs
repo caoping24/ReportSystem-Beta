@@ -19,6 +19,9 @@ namespace CenterBackend.common
 
         [Description("系统内部异常")]
         SYSTEM_ERROR = 50000,
+
+        [Description("session过期")]
+        SESSION_EXPIRED = 401,
     }
 
 }
