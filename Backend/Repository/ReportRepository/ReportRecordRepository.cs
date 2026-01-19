@@ -16,6 +16,11 @@ namespace CenterReport.Repository
 
         public IQueryable<T> db => throw new NotImplementedException();
 
+        public async Task AddAsync(T entity)
+        {
+            await _context.AddAsync(entity);
+        }
+
         public async  Task<PaginationResult<ReportRecord>> GetReportByPageAsync(PaginationRequest request)
         {
             // 校验分页参数（避免无效参数）

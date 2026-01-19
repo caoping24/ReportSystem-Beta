@@ -1,10 +1,6 @@
 ﻿using CenterBackend.IFileService;
 using CenterBackend.Models;
 using ICSharpCode.SharpZipLib.Zip;
-using MathNet.Numerics.LinearAlgebra.Factorization;
-using System;
-using System.IO;
-using System.Text;
 using System.Web;
 namespace CenterBackend.Services
 {
@@ -21,12 +17,12 @@ namespace CenterBackend.Services
         {
             if (!string.IsNullOrWhiteSpace(folderPath) && !Directory.Exists(folderPath))//判空+判存在
             {
-                Directory.CreateDirectory(folderPath);//自动兼容多级创建
+                Directory.CreateDirectory(folderPath);
             }
         }
 
         /// <summary>
-        /// 复制文件核心封装自动创建目标文件夹，解决原生File.Copy不建文件夹的问题
+        /// 复制文件核心封装自动创建目标文件夹
         /// </summary>
         /// <param name="sourceFilePath">源文件完整路径</param>
         /// <param name="targetFilePath">目标文件完整路径</param>
@@ -41,7 +37,7 @@ namespace CenterBackend.Services
                 string targetFolder = Path.GetDirectoryName(targetFilePath);//提取目标文件夹路径
                 CreateFolder(targetFolder);//自动创建目标文件夹
 
-                File.Copy(sourceFilePath, targetFilePath, overwrite);//执行文件复制
+                File.Copy(sourceFilePath, targetFilePath, overwrite);
                 return true;
             }
             catch
@@ -65,7 +61,6 @@ namespace CenterBackend.Services
                 string zipFolder = Path.GetDirectoryName(zipSavePath);//提取压缩包所在文件夹
                 CreateFolder(zipFolder);//自动创建存储目录
 
-                // 流式写入，UTF8解决中文乱码，无内存溢出风险
                 using (var fs = new FileStream(zipSavePath, FileMode.Create, FileAccess.Write))
                 using (var zipStream = new ZipOutputStream(fs) { IsStreamOwner = true })
                 {
@@ -130,7 +125,7 @@ namespace CenterBackend.Services
         /// <param name="fileName">文件名称（如：test.xlsx、数据.csv）</param>
         /// <param name="sourceFilePath">文件所在目录</param>
         /// <returns>返回文件流+文件名，供控制器直接返回，null=文件不存在</returns>
-        public (FileStream? stream, string? encodeFileName) DownloadSingleFile(string sourceFilePath,  string fileName)
+        public (FileStream? stream, string? encodeFileName) DownloadSingleFile(string sourceFilePath, string fileName)
         {
             try
             {
@@ -145,7 +140,6 @@ namespace CenterBackend.Services
                 return (null, null);
             }
         }
-
 
         #region 私有辅助方法
         /// <summary>
@@ -183,9 +177,6 @@ namespace CenterBackend.Services
             }
         }
         #endregion
-
-
-
         /// <summary>
         /// 获取指定日期的文件路径+文件名（日报/周报/年报）
         /// 日报按目标日期年月 | 周报按本周一的年月+年周序号 | 年报按年份
@@ -238,7 +229,6 @@ namespace CenterBackend.Services
             CreateFolder(result.WeeklyFilesPath);
             CreateFolder(result.YearlyFilesPath);
         }
-
         #region 私有辅助方法
         /// <summary>
         /// 获取指定日期的本周第一天(周一为周首)
@@ -253,22 +243,20 @@ namespace CenterBackend.Services
         }
         /// <summary>
         /// 根据目标日期，先获取该周第一天(周一)，再计算【该周是当年的第几周】
-        /// 完全基于你已有的GetWeekFirstDay方法，规则统一：周一为周首、周数从1开始
         /// </summary>
         /// <param name="dt">任意目标日期</param>
         /// <returns>该周在当年的周序号 1~53</returns>
         private int GetWeekNumberInYear(DateTime dt)
         {
-            //调用你写的方法，获取【该周的第一天（本周一）】，这是计算基准，完全复用你的逻辑
+
             DateTime weekFirstDay = GetWeekFirstDay(dt);
-            // 这个周一 所在年份的1月1日
+
             DateTime yearFirstDay = new DateTime(weekFirstDay.Year, 1, 1);
             // 当年的第一个周一= 当年元旦的本周一
             DateTime yearFirstWeekDay = GetWeekFirstDay(yearFirstDay);
             // 两个周一的间隔天数 / 7  = 周差，+1得到周序号（从1开始）
             int daysDiff = (int)(weekFirstDay - yearFirstWeekDay).TotalDays;
             int weekNumber = (daysDiff / 7) + 1;
-            // 返回最终周序号
             return weekNumber;
         }
         #endregion

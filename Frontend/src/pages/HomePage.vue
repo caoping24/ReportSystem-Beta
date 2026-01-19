@@ -1,4 +1,5 @@
 <template>
+  <!-- 模板部分完全不变 -->
   <div id="userManagePage">
     <a-tabs 
       default-active-key="1" 
@@ -113,7 +114,7 @@
                 </a-button>
                 
                 <div class="batch-tips">
-                  <InfoCircleOutlined style="color: #1890ff; margin-right: 4px;" />
+                  <InfoCircleOutlined style="margin-right: 4px;" />
                   提示：下载的ZIP包包含所选时间范围内的所有对应类型报表文件
                 </div>
               </a-form-item>
@@ -126,6 +127,7 @@
 </template>
 
 <script lang="ts" setup>
+// script部分代码完全不变
 import { getReportByPage, downloadReport, batchDownloadReportZip } from "@/api/user";
 import { message } from "ant-design-vue";
 import { ref, reactive, computed } from "vue";
@@ -133,12 +135,10 @@ import dayjs from "dayjs";
 import { DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons-vue';
 import ReportTable from '@/components/ReportTable.vue';
 
-// 修改点2：导入Antd国际化配置和中文语言包
 import { ConfigProvider } from 'ant-design-vue';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
-// 导入dayjs中文语言包并配置
 import 'dayjs/locale/zh-cn';
-dayjs.locale('zh-cn'); // 全局设置dayjs为中文
+dayjs.locale('zh-cn');
 
 // ===================== 类型定义（精简整合） =====================
 interface ReportItem {
@@ -156,7 +156,6 @@ interface ReportTabItem {
 }
 
 // ===================== 常量定义 =====================
-// 报表标签配置（保留原有配置，仅在批量下载处过滤年报表）
 const reportTabs: ReportTabItem[] = [
   { key: '1', tab: '日报表' },
   { key: '2', tab: '周报表' },
@@ -164,7 +163,6 @@ const reportTabs: ReportTabItem[] = [
   { key: '4', tab: '年报表' },
 ];
 
-// 表格列配置（精简）
 const columns = [
   { title: "序号", key: "index", width: 80, align: "center" },
   { title: "创建时间", dataIndex: "createTime", key: "createTime" },
@@ -175,14 +173,12 @@ const columns = [
 const activeTabKey = ref("1");
 const isFetching = ref(false);
 
-// 分页参数
 const paginationParams = reactive({
   pageIndex: 1,
   pageSize: 10,
   total: 0
 });
 
-// 表格数据
 const tableData: Record<string, TableDataItem> = reactive({
   "1": { list: [] },
   "2": { list: [] },
@@ -190,24 +186,20 @@ const tableData: Record<string, TableDataItem> = reactive({
   "4": { list: [] }
 });
 
-// 批量下载相关状态
 const batchReportType = ref<string>("");
 const batchStartDate = ref<dayjs.Dayjs | null>(null);
 const batchEndDate = ref<dayjs.Dayjs | null>(null);
 const isBatchDownloading = ref<boolean>(false);
 
 // ===================== 计算属性（简化年报表相关逻辑） =====================
-// 修改点3：移除年报表（key=4）的映射，仅保留月报（key=3）
 const typeMap = { 
   '3': 'month' 
 } as Record<string, 'date' | 'month'>;
 
-// 修改点4：将日期格式改为中文显示（YYYY年MM月 / YYYY年MM月DD日）
 const formatMap = { 
   '3': 'YYYY年MM月' 
 } as Record<string, string>;
 
-// 分页配置
 const paginationConfig = computed(() => ({
   current: paginationParams.pageIndex,
   pageSize: paginationParams.pageSize,
@@ -228,23 +220,19 @@ const paginationConfig = computed(() => ({
   }
 }));
 
-// 修改点5：简化批量下载日期选择器类型（仅处理日报/周报=date，月报=month）
 const batchDatePickerType = computed(() => {
   return batchReportType.value ? typeMap[batchReportType.value] || "date" : "date";
 });
 
-// 修改点6：简化批量下载日期格式化（改为中文格式：YYYY年MM月DD日 / YYYY年MM月）
 const batchDateFormat = computed(() => {
   return batchReportType.value ? formatMap[batchReportType.value] || "YYYY年MM月DD日" : "YYYY年MM月DD日";
 });
 
 // ===================== 方法定义（封装精简） =====================
-// 禁用未来日期
 const disabledFutureDate = (current: dayjs.Dayjs) => {
   return current?.isAfter(dayjs().endOf('day')) || false;
 };
 
-// 校验批量下载参数
 const validateBatchParams = () => {
   if (!batchReportType.value) {
     message.warning("请选择报表类型");
@@ -261,7 +249,6 @@ const validateBatchParams = () => {
   return true;
 };
 
-// 处理文件下载（通用下载逻辑封装）
 const handleFileDownload = (res: any, defaultFileName: string, fileType: 'xlsx' | 'zip') => {
   const typeMap = {
     xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -272,7 +259,6 @@ const handleFileDownload = (res: any, defaultFileName: string, fileType: 'xlsx' 
   const contentDisposition = res.headers?.['content-disposition'];
   let fileName = defaultFileName;
 
-  // 解析文件名
   if (contentDisposition) {
     const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
     if (utf8Match?.[1]) {
@@ -285,7 +271,6 @@ const handleFileDownload = (res: any, defaultFileName: string, fileType: 'xlsx' 
     }
   }
 
-  // 触发下载
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -293,14 +278,12 @@ const handleFileDownload = (res: any, defaultFileName: string, fileType: 'xlsx' 
   document.body.appendChild(link);
   link.click();
   
-  // 清理资源
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
   
   message.success(`${fileType === 'xlsx' ? '报表' : 'ZIP包'}下载成功`);
 };
 
-// 单个报表下载
 const downloadExcel = async (tabKey: string, id: string) => {
   if (!id) return message.warning("ID 不能为空");
   
@@ -313,7 +296,6 @@ const downloadExcel = async (tabKey: string, id: string) => {
   }
 };
 
-// 批量下载ZIP
 const batchDownloadZip = async () => {
   if (!validateBatchParams()) return;
 
@@ -335,7 +317,6 @@ const batchDownloadZip = async () => {
   }
 };
 
-// 标签切换处理
 const handleTabChange = (key: string) => {
   activeTabKey.value = key;
   if (key !== "5") {
@@ -344,20 +325,17 @@ const handleTabChange = (key: string) => {
   }
 };
 
-// 报表类型变更处理
 const handleReportTypeChange = () => {
   batchStartDate.value = null;
   batchEndDate.value = null;
 };
 
-// 重置批量下载表单
 const resetBatchForm = () => {
   batchReportType.value = "";
   batchStartDate.value = null;
   batchEndDate.value = null;
 };
 
-// 获取报表数据
 const fetchData = async (tabKey: string) => {
   if (isFetching.value) return;
   
@@ -383,44 +361,89 @@ const fetchData = async (tabKey: string) => {
   }
 };
 
-// 初始化加载数据
 fetchData("1");
 </script>
 
 <style scoped>
+/* 基础布局样式保留，仅删除标签页自定义配色 */
 #userManagePage {
   padding: 20px;
 }
 
+/* 恢复标签页原有默认样式（删除之前的自定义标签页样式） */
 .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
   padding: 12px 24px;
 }
 
-.ant-table {
-  margin-top: 16px;
+/* ========== 仅保留非标签页的配色修改 ========== */
+/* 1. 按钮配色 */
+/* 主按钮（批量下载）- HEBANG主深蓝色 */
+::v-deep .ant-btn-primary {
+  background: #003399;
+  border-color: #003399;
+}
+::v-deep .ant-btn-primary:hover,
+::v-deep .ant-btn-primary:focus {
+  background: #0066CC; /* 深蓝hover色 */
+  border-color: #0066CC;
+}
+/* 普通按钮（重置）- 浅蓝辅助色 */
+::v-deep .ant-btn-default {
+  color: #003399;
+  border-color: #003399;
+}
+::v-deep .ant-btn-default:hover {
+  color: #00AEEF;
+  border-color: #00AEEF;
+  background: #f0f8ff;
 }
 
-/* 批量下载容器样式（精简） */
+/* 2. 表单/选择器配色 */
+/* 选择器/日期选择器激活边框 */
+::v-deep .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector,
+::v-deep .ant-picker-focused {
+  border-color: #00AEEF !important;
+  box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.2);
+}
+/* 选择器hover */
+::v-deep .ant-select-selector:hover,
+::v-deep .ant-picker:hover {
+  border-color: #00AEEF;
+}
+
+/* 3. 提示文字/图标配色 */
+.batch-tips {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666666;
+  display: flex;
+  align-items: center;
+}
+.batch-tips .anticon-infocircle {
+  color: #00AEEF; /* 浅蓝飘带色 */
+}
+
+/* 4. 批量下载容器样式（调整边框/阴影配色） */
 .batch-download-container {
   margin-top: 16px;
   padding: 24px;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 12px 0 rgba(0, 51, 153, 0.08); /* 主深蓝色浅阴影 */
+  border: 1px solid #e8f4fc; /* 浅蓝系边框 */
 }
 
 .batch-download-header {
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e8f4fc; /* 浅蓝系分隔线 */
 }
 
 .batch-download-title {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #003399; /* 主深蓝色标题 */
 }
 
 .batch-download-desc {
@@ -452,12 +475,19 @@ fetchData("1");
   padding: 0 24px;
 }
 
-.batch-tips {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #666666;
-  display: flex;
-  align-items: center;
+/* 5. 分页组件配色 */
+::v-deep .ant-pagination-item-active {
+  border-color: #003399;
+  background: #003399;
+}
+::v-deep .ant-pagination-item-active a {
+  color: #fff;
+}
+::v-deep .ant-pagination-item:hover {
+  border-color: #00AEEF;
+}
+::v-deep .ant-pagination-item a:hover {
+  color: #00AEEF;
 }
 
 /* 响应式适配 */

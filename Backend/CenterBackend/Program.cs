@@ -6,7 +6,6 @@ using CenterBackend.Services;
 using CenterReport.Repository;
 using CenterUser.Repository;
 using Microsoft.AspNetCore.Session;
-using Microsoft.AspNetCore.SpaServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -53,7 +52,7 @@ namespace CenterBackend
                 options.Cookie.IsEssential = true;
                 options.Cookie.SameSite = SameSiteMode.None; // 允许跨站携带Cookie
                 options.Cookie.SecurePolicy = CookieSecurePolicy.None; // 开发环境关闭HTTPS强制校验
-                options.Cookie.Name = "ReportSystem_SessionId"; // 【关键】手动指定Cookie名称，避免默认随机名导致丢失
+                options.Cookie.Name = "ReportSystem_SessionId"; //手动指定Cookie名称，避免默认随机名导致丢失
             });
 
             var allowedOrigins = configuration["CorsPolicy:AllowedOrigins"]?.Split(',') ?? Array.Empty<string>();
@@ -83,8 +82,8 @@ namespace CenterBackend
                     };
                     options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
                     options.SlidingExpiration = true;
-                    // ✅ 【必加】补充SameSite配置，和Session一致
-                    options.Cookie.SameSite = SameSiteMode.None;
+
+                    options.Cookie.SameSite = SameSiteMode.None;//SameSite配置，和Session一致
                     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
                 });
             builder.Services.AddHttpContextAccessor();
@@ -93,19 +92,17 @@ namespace CenterBackend
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "报表系统API", Version = "v1" });
             });
 
-            string serviceUrl = configuration["applicationUrl"];
-            builder.WebHost.UseHttpSys(options =>
+            builder.WebHost.UseKestrel(options =>
             {
-                options.UrlPrefixes.Add(serviceUrl);
-                options.MaxConnections = 1000;
-                options.RequestQueueLimit = 1000;
-                options.AllowSynchronousIO = true;
-            });
+                options.ListenAnyIP(5260);
+                options.Limits.MaxConcurrentConnections = 1000;
+                options.AllowSynchronousIO = true;// 允许同步IO操作，避免Excel/NPOI文件流同步读写报错
+                options.Limits.MaxConcurrentUpgradedConnections = 1000;
+            }).UseUrls(configuration["applicationUrl"]);
 
             var app = builder.Build();
 
-            // 1. 开发环境Swagger
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())// 1. 开发环境Swagger
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -121,8 +118,8 @@ namespace CenterBackend
             app.UseRouting();                 // 4. 路由中间件
             app.UseAuthentication();          // 5. 【新增】认证中间件 → 读取登录态
             app.UseAuthorization();           // 6. 授权中间件 → 校验权限
-            app.MapControllers();             // 8. API路由映射
-            app.MapFallbackToFile("dist/index.html"); //9. SPA刷新兜底
+            app.MapControllers();             // 7. API路由映射
+            app.MapFallbackToFile("dist/index.html"); //8. SPA刷新兜底
 
             app.Run();
         }

@@ -1,27 +1,11 @@
-﻿using CenterBackend.common;
-using CenterBackend.Constant;
-using CenterBackend.Dto;
-using CenterBackend.Exceptions;
-using CenterBackend.IFileService;
+﻿using CenterBackend.Dto;
 using CenterBackend.IReportServices;
-using CenterBackend.Models;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
-using Mapster;
-using Masuit.Tools;
-using Masuit.Tools.Reflection;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing.Template;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using MySqlConnector;
-using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
-using System.Text.Json;
 
 namespace CenterBackend.Services
 {
@@ -32,6 +16,7 @@ namespace CenterBackend.Services
         private readonly IReportRepository<SourceData3> _sourceData3;
         //private readonly IReportRepository<SourceData4> _sourceData4;
         //private readonly IReportRepository<SourceData5> _sourceData5;
+        private readonly IReportRecordRepository<ReportRecord> _reportRecord;
         private readonly IReportRepository<HourlyDataStatistic> _hourlyDataStatistics;
         private readonly IReportUnitOfWork _reportUnitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -42,6 +27,7 @@ namespace CenterBackend.Services
                              IReportRepository<SourceData3> sourceData3,
                              //IReportRepository<SourceData4> sourceData4,
                              //IReportRepository<SourceData5> sourceData5,
+                             IReportRecordRepository<ReportRecord> reportRecord,
                              IReportRepository<HourlyDataStatistic> hourlyDataStatistics,
                              IReportUnitOfWork reportUnitOfWork,
                              IHttpContextAccessor httpContextAccessor)
@@ -51,13 +37,14 @@ namespace CenterBackend.Services
             this._sourceData3 = sourceData3;
             //this._sourceData4 = sourceData4;
             //this._sourceData5 = sourceData5;
+            this._reportRecord = reportRecord;
             this._hourlyDataStatistics = hourlyDataStatistics;
             this._reportUnitOfWork = reportUnitOfWork;
             this._httpContextAccessor = httpContextAccessor;
         }
 
         //根据id删除对应数据
-        public async Task<bool> DeleteReport( long id, DailyInsertDto _AddReportDailyDto)
+        public async Task<bool> DeleteReport(long id, DailyInsertDto _AddReportDailyDto)
         {
             //switch (AddReportDto.Target)
             //{
@@ -216,9 +203,13 @@ namespace CenterBackend.Services
 
                 WriteXlsxRange1(workbook, sheet, 5, dataList);
 
-                // 4. 保存文件到指定路径，强制刷新缓存，杜绝文件损坏
-                using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);
+                using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);// 保存文件到指定路径
                 workbook.Write(outputStream);
+
+                var temp = new ReportRecord();
+                temp.Type = 1;
+                await _reportRecord.AddAsync(temp);
+                await _reportUnitOfWork.SaveChangesAsync();
                 return new OkObjectResult(new { success = true, msg = "Excel生成成功" });
             }
             catch (Exception ex)
@@ -231,7 +222,7 @@ namespace CenterBackend.Services
         /// <summary>
         /// 按区域写Xlsx数据 1
         /// </summary>
-        private static bool WriteXlsxRange1(XSSFWorkbook srcWorkbook, ISheet srcSheet , int startRow, IEnumerable<SourceData1> dataList)
+        private static bool WriteXlsxRange1(XSSFWorkbook srcWorkbook, ISheet srcSheet, int startRow, IEnumerable<SourceData1> dataList)
         {
 
             for (int i = 0; i < dataList.Count(); i++)
@@ -402,7 +393,7 @@ namespace CenterBackend.Services
             ICell cell = row.GetCell(colIdx) ?? row.CreateCell(colIdx);
             // 赋值
             cell.SetCellValue(value);
-           
+
         }
 
 

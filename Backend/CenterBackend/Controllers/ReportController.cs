@@ -1,5 +1,4 @@
 using CenterBackend.common;
-using CenterBackend.Constant;
 using CenterBackend.Dto;
 using CenterBackend.Exceptions;
 using CenterBackend.IFileService;
@@ -9,7 +8,6 @@ using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using System.Text.Json;
 
 namespace CenterBackend.Controllers
 {
@@ -55,11 +53,11 @@ namespace CenterBackend.Controllers
         }
 
         /// <summary>
-        /// CreateAndBuildDailyReport 根据传入时间查询数据库,生成报表(日)
+        /// CreateAndBuildDailyReport 根据传入时间查询数据库,生成报表
         /// </summary>
         /// <param name="loginDto"></param>
         /// <returns></returns>
-        [HttpPost("CreateAndBuildDailyReport")]
+        [HttpPost("BuildReport")]
         public async Task<IActionResult> CreateAndBuildDailyReport([FromBody] CreateReportDto _CreateReportDto)
         {
 
@@ -71,7 +69,7 @@ namespace CenterBackend.Controllers
 
             filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime);
 
-            if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName) )
+            if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName))
             {
                 return BadRequest("获取文件路径失败，请检查传入日期是否合法！");
             }

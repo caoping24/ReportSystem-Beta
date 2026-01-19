@@ -20,7 +20,6 @@
   </a-table>
 </template>
 
-<!-- 保留原有 setup 脚本 -->
 <script lang="ts" setup>
 import dayjs from 'dayjs';
 import { defineProps, defineEmits } from 'vue';
@@ -49,12 +48,43 @@ const handleDownload = (id: string) => {
 };
 </script>
 
-<!-- 新增这部分：显式声明默认导出，解决 TS 识别问题 -->
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-// 显式导出组件，让 TS 识别默认导出
 export default defineComponent({
-  name: 'ReportTable' // 可选：给组件命名，方便调试
+  name: 'ReportTable'
 });
 </script>
+
+<style scoped>
+/* 表格配色调整 - 表头背景改为纯白色 */
+::v-deep .ant-table {
+  --ant-table-header-text-color: #003399; /* 表头文字色（保留深蓝） */
+  --ant-table-border-color: #e8f4fc; /* 表格边框色（浅蓝系） */
+  --ant-table-row-hover-bg: #f0f8ff; /* 行hover背景（保留浅蓝） */
+}
+
+/* 表头样式 - 核心修改：背景改为纯白色 */
+::v-deep .ant-table-thead > tr > th {
+  background: #ffffff !important; /* 表头背景纯白 */
+  color: #003399; /* 表头文字深蓝 */
+  border-bottom: 2px solid #00AEEF; /* 表头下边框（浅蓝飘带色） */
+}
+
+/* 下载按钮配色 */
+::v-deep .ant-table-cell .ant-btn {
+  color: #003399;
+  border-color: #003399;
+  background: #fff;
+}
+::v-deep .ant-table-cell .ant-btn:hover {
+  color: #fff;
+  background: #00AEEF;
+  border-color: #00AEEF;
+}
+
+/* 表格行边框 */
+::v-deep .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #e8f4fc;
+}
+</style>

@@ -1,17 +1,8 @@
-using CenterBackend.common;
-using CenterBackend.Constant;
 using CenterBackend.Dto;
-using CenterBackend.Exceptions;
 using CenterBackend.IFileService;
-using CenterBackend.IUserServices;
 using CenterBackend.Models;
-using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
-using NPOI.HPSF;
-using System.Net;
 using System.Net.Mime;
-using System.Text.Json;
 using System.Web;
 
 namespace CenterBackend.Controllers
@@ -22,45 +13,50 @@ namespace CenterBackend.Controllers
     {
         private readonly IFileServices _fileService;
         private readonly IWebHostEnvironment _webHostEnv;
-        public FileController(IFileServices fileService, IWebHostEnvironment webHostEnv )
+        public FileController(IFileServices fileService, IWebHostEnvironment webHostEnv)
         {
             this._fileService = fileService;
             this._webHostEnv = webHostEnv;
         }
 
         /// <summary>
-        /// 测试
+        /// 在Report目录下创建按日期命名所有的文件夹
         /// </summary>
-        /// <param name="registerDto"></param>
         /// <returns></returns>
         /// <exception cref=""></exception>
-        [HttpGet("Test1")]
-        public async Task<string> Test1(int reporttype)
+        [HttpGet("CreateDateFolderTest")]
+        public async Task<IActionResult> Test1()
         {
             try
             {
-                // 操作网站根目录wwwroot下的文件
-                var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
-                string sourceFilePath = Path.Combine(_webHostEnv.WebRootPath, "Files/Model-20260116.xlsx");
-                bool isSuccess;
-                if (reporttype == 1) 
-                {
-                    string targetFilePath = Path.Combine(temp.DailyFilesPath, temp.DailyFileName);
-                    isSuccess = _fileService.CopyFile(sourceFilePath, targetFilePath, true);
-                    return  "文件夹创建+文件复制 操作成功！";
-                }
-                else
-                {
-                    return "操作失败，请检查文件路径/权限！";
-                }
+                //var pathAndName = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+                //string sourceFilePath = Path.Combine(_webHostEnv.WebRootPath, "Files/Model-20260116.xlsx");
+                _fileService.CreateDateFolder(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+                return new OkObjectResult(new { success = true, msg = "操作成功" });
             }
             catch (Exception ex)
             {
-                return $"操作异常：{ex.Message}";
+                return new BadRequestObjectResult(new { success = false, msg = $"创建文件夹失败：{ex.Message}" });
             }
         }
+        /// <summary>
+        /// 根绝日期获取对应的文件夹路径和文件名测试
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref=""></exception>
+        [HttpGet("GetFolderPathTest")]
+        public Task<FilePathAndName> Test3()
+        {
+            var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+            return Task.FromResult(temp);
+        }
 
-        [HttpPut("test2")]
+        /// <summary>
+        /// 下载大文件压缩包测试
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref=""></exception>
+        [HttpPut("ZipFileBigTest")]
         public IActionResult DownloadZipFileBig([FromBody] FileDownloadZIPDto _FileDownloadZIPDto)
         {
             try
@@ -84,13 +80,5 @@ namespace CenterBackend.Controllers
                 return BadRequest($"下载失败：{ex.Message}");
             }
         }
-
-        [HttpGet("test3")]
-        public Task<FilePathAndName> Test3()
-        {
-            var temp = _fileService.GetDateFolderPathAndName(_webHostEnv.WebRootPath, DateTime.Now);
-            return Task.FromResult(temp);
-        }
-
     }
 }

@@ -3,7 +3,7 @@
     public class FileDownloadExcleDto
     {
         public int Type { get; set; }
-        public DateTime Time{ get; set; }
+        public DateTime Time { get; set; }
     }
     public class FileDownloadZIPDto
     {

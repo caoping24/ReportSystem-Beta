@@ -1,7 +1,6 @@
 ﻿using CenterBackend.common;
 using CenterBackend.Constant;
 using Masuit.Tools.Systems;
-using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Text.Json;
 
@@ -33,14 +32,14 @@ namespace CenterBackend.Middlewares
         {
             // 1. 获取请求路径并统一转小写，避免大小写问题
             var requestPath = context.Request.Path.ToString().ToLower();
-            
+
             // 2. 判断是否为无需检查的接口
             bool isExcluded = _excludePaths.Any(path => requestPath.StartsWith(path.ToLower()));
 
             if (!isExcluded)
             {
                 // 3. 检查Session中是否存在有效用户标识（核心：UserId为Session存储的用户唯一标识）
-               
+
                 var userObj = context.Session.GetString(UserConstant.USER_LOGIN_STATE);
                 if (userObj == null)
                 {
@@ -60,7 +59,7 @@ namespace CenterBackend.Middlewares
                     await context.Response.WriteAsync(json);
                     return; // 终止请求管道，不执行后续中间件  
                 }
-              
+
             }
 
             // 5. Session有效/无需检查：继续执行下一个中间件

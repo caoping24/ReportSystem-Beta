@@ -1,8 +1,5 @@
 ﻿using CenterBackend.Dto;
-using CenterReport.Repository;
-using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
-using static CenterBackend.Services.ReportService;
 
 namespace CenterBackend.IReportServices
 {

@@ -7,7 +7,7 @@ namespace CenterReport.Repository.Models
     [Table("SourceData1")]
     public class SourceData1
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public DateTime createdtime { get; set; }
         public int PH { get; set; }
         public float? cell1 { get; set; }
@@ -64,7 +64,7 @@ namespace CenterReport.Repository.Models
     [Table("SourceData2")]
     public class SourceData2
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public DateTime createdtime { get; set; }
         public int PH { get; set; }
         public float? cell1 { get; set; }
@@ -121,7 +121,7 @@ namespace CenterReport.Repository.Models
     [Table("SourceData3")]
     public class SourceData3
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public DateTime createdtime { get; set; }
         public int PH { get; set; }
         public float? cell1 { get; set; }
@@ -178,7 +178,7 @@ namespace CenterReport.Repository.Models
     //[Table("SourceData4")]
     //public class SourceData4
     //{
-    //    public int Id { get; set; }
+    //    public long Id { get; set; }
     //    public DateTime createdtime { get; set; }
     //    public int PH { get; set; }
     //    public float? cell1 { get; set; }
@@ -235,7 +235,7 @@ namespace CenterReport.Repository.Models
     //[Table("SourceData5")]
     //public class SourceData5
     //{
-    //    public int Id { get; set; }
+    //    public long Id { get; set; }
     //    public DateTime createdtime { get; set; }
     //    public int PH { get; set; }
     //    public float? cell1 { get; set; }

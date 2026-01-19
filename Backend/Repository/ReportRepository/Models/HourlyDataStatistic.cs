@@ -7,7 +7,7 @@ namespace CenterReport.Repository.Models
     [Table("HourlyDataStatistics")] //指定表名称
     public class HourlyDataStatistic //: ISoftDelete
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public DateTime createdtime { get; set; }
         public int PH { get; set; }
         public float? cell1 { get; set; }//Table1
