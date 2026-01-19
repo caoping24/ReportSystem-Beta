@@ -3,10 +3,9 @@
     <!-- 左侧菜单栏 -->
     <aside class="sidebar">
       <!-- 侧边栏头部 -->
-      <!-- <div class="sidebar-header">
-        <img class="logo" src="../assets/logo.png" alt="logo" />
-        <div class="title">用户中心</div>
-      </div> -->
+      <div class="sidebar-header">
+        <img class="logo" src="../assets/hb.jpg" alt="logo" />
+      </div>
       
       <!-- 侧边栏菜单 -->
       <a-menu
@@ -31,21 +30,28 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, h } from "vue"; // 新增导入 h 函数
 import { MenuProps } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue";
-// 导入退出登录接口
+// 导入小房子图标
+import { HomeOutlined } from "@ant-design/icons-vue";
 import { userLogout } from "@/api/user";
 
 const router = useRouter();
 const loginUserStore = useLoginUserStore();
 
-// 菜单配置（key对应路由路径）
+// 修复 TS 类型错误：使用 h 函数创建 VNode，避免类型推断问题
 const items = ref<MenuProps["items"]>([
-  { key: "/app/home", label: "主页", title: "主页" },
-   { key: "/app/admin/userManage", label: "用户管理", title: "用户管理" },
+  { 
+    key: "/app/home", 
+    label: "主页", 
+    title: "主页",
+    // 使用 h 函数创建图标 VNode，解决类型错误
+    icon: () => h(HomeOutlined)  
+  },
+   { key: "/app/components/leader-dashboard", label: "领导仓数据看板", title: "领导仓数据看板" },
 ]);
 
 // 菜单点击跳转
@@ -59,31 +65,21 @@ router.afterEach((to) => {
   current.value = [to.path];
 });
 
-// 退出登录（完整逻辑，修复 TS 类型错误）
+// 退出登录逻辑（保持不变）
 const handleLogout = async () => {
   try {
-    // 1. 调用后端退出登录接口
     await userLogout({});
-    
-    // 2. 清空Store中的用户信息（修复 void 类型判断问题）
     if (typeof loginUserStore.clearLoginUser === 'function') {
       loginUserStore.clearLoginUser();
     } else {
       loginUserStore.loginUser = { userName: "未登录" };
     }
-    
-    // 3. 清空本地存储
     localStorage.removeItem("loginUser");
     localStorage.removeItem("token");
-    
-    // 4. 清空Cookie
     clearAllCookies();
-    
-    // 5. 提示并跳转
     message.success("退出成功");
     router.replace({ path: "/user/login" });
   } catch (error) {
-    // 接口失败也清空状态
     console.error("退出登录接口调用失败：", error);
     if (typeof loginUserStore.clearLoginUser === 'function') {
       loginUserStore.clearLoginUser();
@@ -98,7 +94,7 @@ const handleLogout = async () => {
   }
 };
 
-// 辅助函数：清空所有Cookie
+// 清空所有Cookie
 const clearAllCookies = () => {
   const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
@@ -111,7 +107,7 @@ const clearAllCookies = () => {
 </script>
 
 <style scoped>
-/* 样式部分不变，省略 */
+/* 蓝白主题样式保持不变 */
 .layout-container {
   display: flex;
   height: 100vh;
@@ -120,9 +116,9 @@ const clearAllCookies = () => {
 .sidebar {
   width: 180px;
   height: 100%;
-  background-color: #0f172a;
-  color: #e2e8f0;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  background-color: #f5f9ff;
+  color: #1e40af;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
 }
@@ -132,14 +128,14 @@ const clearAllCookies = () => {
   justify-content: center;
   padding: 0 12px;
   height: 60px;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid #e0e7ff;
 }
 .logo {
   height: 30px;
   margin-right: 8px;
 }
 .title {
-  color: #f8fafc;
+  color: #1e40af;
   font-size: 16px;
   font-weight: 600;
 }
@@ -150,12 +146,12 @@ const clearAllCookies = () => {
 }
 .logout-btn {
   padding: 12px;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid #e0e7ff;
 }
 .main-content {
   flex: 1;
   padding: 24px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   overflow-y: auto;
 }
 :deep(.ant-menu-vertical .ant-menu-item) {
@@ -164,28 +160,29 @@ const clearAllCookies = () => {
   margin: 0 8px !important;
   border-radius: 6px;
   padding-left: 20px !important;
-  color: #e2e8f0 !important;
+  color: #1e40af !important;
+  background-color: transparent !important;
 }
 :deep(.ant-menu-item-selected) {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
 }
 :deep(.ant-menu-item:hover) {
-  background-color: #1e293b !important;
-  color: #ffffff !important;
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
 }
 :deep(.ant-menu-title-content) {
   font-size: 14px;
   font-weight: 500;
 }
 :deep(.ant-btn-text) {
-  color: #e2e8f0 !important;
+  color: #1e40af !important;
   display: block;
   width: 100%;
   text-align: center;
 }
 :deep(.ant-btn-text:hover) {
-  background-color: #1e293b !important;
-  color: #fff !important;
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
 }
 </style>
