@@ -3,11 +3,12 @@
     "http": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5260/swagger/index.html",
+      "launchUrl": "swagger/index.html",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "dotnetRunMessages": true
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5260" //加上这个,并且端口必须和Program.cs里的ListenAnyIP(5261)一致 才能自动打开swagger页面
     },
     "Container (Dockerfile)": {
       "commandName": "Docker",

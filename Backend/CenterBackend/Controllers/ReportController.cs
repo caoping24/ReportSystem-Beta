@@ -97,34 +97,31 @@ namespace CenterBackend.Controllers
             var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, _fileDownloadExcleDto.Time);
             var DownloadfilePath = string.Empty;
             var DownloadfileName = string.Empty;
-
             switch (_fileDownloadExcleDto.Type)
                 {
                 case 1: //Daily
                     DownloadfilePath = PathAndFileName.DailyFilesPath;
-                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    DownloadfileName = PathAndFileName.DailyFileName;
                     break;
                 case 2: //Weekly
-                    DownloadfilePath = PathAndFileName.DailyFilesPath;
-                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    DownloadfilePath = PathAndFileName.WeeklyFilesPath;
+                    DownloadfileName = PathAndFileName.WeeklyFileName;
                     break;
                 case 3: //Monthly
-                    DownloadfilePath = PathAndFileName.DailyFilesPath;
-                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    DownloadfilePath = PathAndFileName.MonthlyFilesPath;
+                    DownloadfileName = PathAndFileName.MonthlyFileName;
                     break;
                 case 4: //Yearly
-                    DownloadfilePath = PathAndFileName.DailyFilesPath;
-                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    DownloadfilePath = PathAndFileName.YearlyFilesPath;
+                    DownloadfileName = PathAndFileName.YearlyFileName;
                     break;
                 default:
                     return BadRequest("类型错误，请检查传入类型！");
             }
-
             var (fileStream, encodeFileName) = _fileService.DownloadSingleFile(DownloadfilePath, DownloadfileName);
-
             if (fileStream == null)
             {
-                return NotFound("文件未找到。");
+                return NotFound("文件不存在。");
             }
             string fileName = PathAndFileName.DailyFileName;
             Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");

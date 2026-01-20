@@ -98,7 +98,7 @@ namespace CenterBackend
                 options.Limits.MaxConcurrentConnections = 1000;
                 options.AllowSynchronousIO = true;// 允许同步IO操作，避免Excel/NPOI文件流同步读写报错
                 options.Limits.MaxConcurrentUpgradedConnections = 1000;
-            }).UseUrls(configuration["applicationUrl"]);
+            });/*.UseUrls(configuration["applicationUrl"]);*/
 
             var app = builder.Build();
 

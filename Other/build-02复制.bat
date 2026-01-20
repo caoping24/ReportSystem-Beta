@@ -18,13 +18,13 @@ if not exist "dist" (
 
 echo 【正常】检测到dist文件夹，内含文件，准备复制
 
-:: 清空后端wwwroot目录
-echo 正在清空 wwwroot 旧文件...
-rd /s /q "%~dp0../Backend/CenterBackend/wwwroot" 2>nul
-md "%~dp0../Backend/CenterBackend/wwwroot" 2>nul
+:: 仅清空wwwroot下的dist文件夹（核心修改处）
+echo 正在清空 wwwroot 下的 dist 旧文件...
+rd /s /q "%~dp0../Backend/CenterBackend/wwwroot/dist" 2>nul
+:: 无需重建整个wwwroot，仅在删除dist后（如需）确保dist目录存在（xcopy也会自动创建）
+md "%~dp0../Backend/CenterBackend/wwwroot/dist" 2>nul
 echo 清空完成！
 echo.
-
 
 echo 正在复制dist文件到wwwroot目录...
 xcopy "dist" "%~dp0../Backend/CenterBackend/wwwroot/dist" /s /e /y /q /i
@@ -34,7 +34,7 @@ echo.
 echo ========================================================
 echo 复制成功！无任何异常！
 echo 源文件夹：%cd%\dist
-echo 目标文件夹：%~dp0Backend\CenterBackend\wwwroot
+echo 目标文件夹：%~dp0Backend\CenterBackend\wwwroot\dist
 echo ========================================================
 echo.
 pause
