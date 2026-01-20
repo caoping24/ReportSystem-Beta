@@ -1,0 +1,34 @@
+' 关闭脚本执行时的弹窗提示（可选）
+On Error Resume Next
+
+' 1. 创建 msxml2.serverxmlhttp.6.0 对象
+Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+If Err.Number <> 0 Then
+    MsgBox "创建HTTP对象失败：" & Err.Description, vbCritical
+    WScript.Quit 1
+End If
+On Error Goto 0
+
+' 2. 配置请求参数
+strURL = "https://httpbin.org/post"  ' 测试用的POST接口
+' JSON格式的POST数据（注意引号转义：VBS中用两个双引号表示一个）
+strPostData = "{""username"":""testuser"",""password"":""123456"",""age"":20}"
+
+' 3. 打开POST请求
+objHTTP.Open "POST", strURL, False
+
+' 4. 设置请求头（JSON格式必须指定Content-Type）
+objHTTP.SetRequestHeader "Content-Type", "application/json; charset=utf-8"
+objHTTP.SetRequestHeader "User-Agent", "VBS-POST-Request/1.0"
+
+' 5. 发送POST数据
+objHTTP.Send strPostData
+
+' 6. 获取并输出响应结果
+WScript.Echo "=== 响应状态码 ==="
+WScript.Echo objHTTP.Status & " " & objHTTP.StatusText
+WScript.Echo vbCrLf & "=== 响应内容 ==="
+WScript.Echo objHTTP.ResponseText
+
+' 释放对象
+Set objHTTP = Nothing

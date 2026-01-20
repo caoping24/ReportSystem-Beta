@@ -7,8 +7,11 @@ using CenterBackend.Models;
 using CenterBackend.Services;
 using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.HPSF;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using System.Net;
+using System.Net.Mime;
 
 namespace CenterBackend.Controllers
 {
@@ -43,14 +46,34 @@ namespace CenterBackend.Controllers
             return ResultUtils<bool>.Success(result);
         }
         /// <summary>
-        /// get测试
+        /// Get测试
         /// </summary>
         /// <param name="loginDto"></param>
         /// <returns></returns>
-        [HttpGet]
-        public async Task<string> TEST()
+        [HttpGet("Test")]
+        public IActionResult Test()
         {
-            return "Hello World!";
+            try
+            {
+                string downloadFilePath = _webHostEnv.WebRootPath;
+                string downloadFileName = "comm.txt";
+                var (fileStream, encodeFileName) = _fileService.DownloadSingleFile(downloadFilePath, downloadFileName);
+
+                if (fileStream == null) return NotFound("文件不存在。");
+
+                if (fileStream.CanSeek) fileStream.Position = 0;
+
+                return File(fileStream, "application/octet-stream; charset=utf-8", downloadFileName);
+     
+            }
+            catch (IOException ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, $"文件下载失败：{ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, $"系统异常：{ex.Message}");
+            }
         }
 
         /// <summary>
