@@ -10,8 +10,10 @@
   <ItemGroup>
     <Compile Remove="IServer\**" />
     <Compile Remove="Server\**" />
+    <Compile Remove="wwwroot\Backup\**" />
     <Content Remove="IServer\**" />
     <Content Remove="Server\**" />
+    <Content Remove="wwwroot\Backup\**" />
     <EmbeddedResource Remove="IServer\**" />
     <EmbeddedResource Remove="Server\**" />
     <None Remove="IServer\**" />
@@ -30,7 +32,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="wwwroot\Backup\" />
 	  <Folder Include="wwwroot\Model\" />
 	</ItemGroup>
 
