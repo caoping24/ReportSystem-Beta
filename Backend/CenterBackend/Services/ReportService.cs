@@ -43,50 +43,20 @@ namespace CenterBackend.Services
             this._httpContextAccessor = httpContextAccessor;
         }
 
-        //根据id删除对应数据
+
         public async Task<bool> DeleteReport(long id, DailyInsertDto _AddReportDailyDto)
         {
-            //switch (AddReportDto.Target)
-            //{
-            //    case "SourceData":
-            //        var source = await SourceDatas.GetByIdAsync(id);
-            //        if (source == null) return false;
-            //        await SourceDatas.DeleteByIdAsync(id);
-            //        break;
-            //    case "HourlyDataStatistic":
-            //        var hour = await HourlyDataStatistics.GetByIdAsync(id);
-            //        if (hour == null) return false;
-            //        await HourlyDataStatistics.DeleteByIdAsync(id);
-            //        break;
-            //    default:
-            //        throw new ArgumentException("未知的删除目标", AddReportDto.Target);
-            //}
-            //    await reportUnitOfWork.SaveChangesAsync();
             return true;
         }
-        //统计每日数据写入对应表
+
         public async Task<bool> AddReport(DailyInsertDto _AddReportDailyDto)
         {
-            //switch (AddReportDto.Target)
-            //{
-            //    case "HourlyDataStatistic":
-            //        var source = await SourceDatas.GetByDataTimeAsync(AddReportDto.Datetime);
-            //        if (source == null) return false; // 未找到数据，按需可抛异常或返回 false
-            //        var stat = source.Adapt<HourlyDataStatistic>();// 映射单条 SourceData 到 HourlyDataStatistic 并入库
-            //        stat.Id = 0; // 确保 EF 分配新 Id
-
-            //        await HourlyDataStatistics.AddAsync(stat);
-            //        break;
-            //    default:
-            //        throw new ArgumentException("未知的添加目标", AddReportDto.Target);
-            //}
-            //await reportUnitOfWork.SaveChangesAsync();
             return true;
         }
 
 
         /// <summary>
-        /// 统计每日数据写入对应表
+        /// 统计每日数据写入对应Table
         /// </summary>
         public async Task<bool> DailyCalculateAndInsertAsync(DailyInsertDto _AddReportDailyDto)
         {
@@ -99,13 +69,11 @@ namespace CenterBackend.Services
                 createdtime = DateTime.Now,
                 PH = 80,
             };
-
             await CalculateSourceData1Async(StartTime, StopTime, targetModel);
             //await CalculateSourceData2Async(startTime, endTime, targetModel);
             //await CalculateSourceData3Async(startTime, endTime, targetModel);
             //await CalculateSourceData4Async(startTime, endTime, targetModel);
             //await CalculateSourceData5Async(startTime, endTime, targetModel);
-
             await _hourlyDataStatistics.AddAsync(targetModel);
             await _reportUnitOfWork.SaveChangesAsync();
             return true;
@@ -198,9 +166,9 @@ namespace CenterBackend.Services
                 }
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
                 using var workbook = new XSSFWorkbook(templateStream);
+
                 ISheet sheet = workbook.GetSheetAt(0);
                 sheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-
                 WriteXlsxRange1(workbook, sheet, 5, dataList);
 
                 using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);// 保存文件到指定路径
@@ -208,6 +176,7 @@ namespace CenterBackend.Services
 
                 var temp = new ReportRecord();
                 temp.Type = 1;
+
                 await _reportRecord.AddAsync(temp);
                 await _reportUnitOfWork.SaveChangesAsync();
                 return new OkObjectResult(new { success = true, msg = "Excel生成成功" });

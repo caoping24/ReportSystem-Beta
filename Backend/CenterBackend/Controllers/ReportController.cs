@@ -4,6 +4,7 @@ using CenterBackend.Exceptions;
 using CenterBackend.IFileService;
 using CenterBackend.IReportServices;
 using CenterBackend.Models;
+using CenterBackend.Services;
 using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
 using NPOI.SS.UserModel;
@@ -82,7 +83,6 @@ namespace CenterBackend.Controllers
             {
                 return BadRequest($"操作异常：{ex.Message}");
             }
-            //return await reportService.ExportReport();
         }
 
         /// <summary>
@@ -90,53 +90,84 @@ namespace CenterBackend.Controllers
         /// </summary>
         /// <param name="loginDto"></param>
         /// <returns></returns>
-        [HttpGet("ExportExcel")]
-        public IActionResult ExportExcel([FromQuery] int id, [FromQuery] int tabKey)
+        [HttpPost("ExportExcel")]
+        public IActionResult DownloadFile([FromBody] FileDownloadExcleDto _fileDownloadExcleDto)
         {
-            // 1. 先创建临时流写入Excel，再转字节数组，避免流被隐式关闭
-            byte[] excelBytes;
-            using (var tempStream = new MemoryStream())
-            {
-                // 创建Excel工作簿（业务逻辑完全不变）
-                IWorkbook workbook = new XSSFWorkbook();
-                ISheet worksheet = workbook.CreateSheet($"{id}号报表数据");
+            var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
+            var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, _fileDownloadExcleDto.Time);
+            var DownloadfilePath = string.Empty;
+            var DownloadfileName = string.Empty;
 
-                // 写入表头（逻辑不变）
-                IRow headerRow = worksheet.CreateRow(0);
-                headerRow.CreateCell(0).SetCellValue("报表ID");
-                headerRow.CreateCell(1).SetCellValue("报表类型");
-                headerRow.CreateCell(2).SetCellValue("报表内容");
-                headerRow.CreateCell(3).SetCellValue("生成时间");
-
-                // 写入业务数据（逻辑完全不变）
-                IRow dataRow = worksheet.CreateRow(1);
-                dataRow.CreateCell(0).SetCellValue(id);
-                dataRow.CreateCell(1).SetCellValue(tabKey == 1 ? "日报表" : tabKey == 2 ? "周报表" : tabKey == 3 ? "月报表" : "年报表");
-                dataRow.CreateCell(2).SetCellValue("报表数据内容");
-                dataRow.CreateCell(3).SetCellValue(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-
-                // 自动调整列宽（逻辑不变）
-                for (int i = 0; i < 4; i++)
+            switch (_fileDownloadExcleDto.Type)
                 {
-                    worksheet.AutoSizeColumn(i);
-                }
-
-                // 将工作簿写入临时流
-                workbook.Write(tempStream);
-                // 转字节数组（核心：脱离原流的依赖）
-                excelBytes = tempStream.ToArray();
+                case 1: //Daily
+                    DownloadfilePath = PathAndFileName.DailyFilesPath;
+                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    break;
+                case 2: //Weekly
+                    DownloadfilePath = PathAndFileName.DailyFilesPath;
+                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    break;
+                case 3: //Monthly
+                    DownloadfilePath = PathAndFileName.DailyFilesPath;
+                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    break;
+                case 4: //Yearly
+                    DownloadfilePath = PathAndFileName.DailyFilesPath;
+                    DownloadfilePath = PathAndFileName.DailyFileName;
+                    break;
+                default:
+                    return BadRequest("类型错误，请检查传入类型！");
             }
 
-            // 2. 基于字节数组创建新的MemoryStream，完全避免流关闭问题
-            var resultStream = new MemoryStream(excelBytes);
-            resultStream.Position = 0; // 此时流绝对不会被关闭
+            var (fileStream, encodeFileName) = _fileService.DownloadSingleFile(DownloadfilePath, DownloadfileName);
 
-            // 以下代码完全不变
-            string fileName = $"报表_{id}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            if (fileStream == null)
+            {
+                return NotFound("文件未找到。");
+            }
+            string fileName = PathAndFileName.DailyFileName;
             Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");
+            return File(fileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
 
-            // 返回File结果，框架会自动处理流的释放
-            return File(resultStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        ///// 原来测试用////////////////////////////////
+        //// 1. 先创建临时流写入Excel，再转字节数组，避免流被隐式关闭
+        //      byte[] excelBytes;
+        //    using (var tempStream = new MemoryStream())
+        //    {
+        //        // 创建Excel工作簿（业务逻辑完全不变）
+        //        IWorkbook workbook = new XSSFWorkbook();
+        //        ISheet worksheet = workbook.CreateSheet($"{id}号报表数据");
+        //        // 写入表头（逻辑不变）
+        //        IRow headerRow = worksheet.CreateRow(0);
+        //        headerRow.CreateCell(0).SetCellValue("报表ID");
+        //        headerRow.CreateCell(1).SetCellValue("报表类型");
+        //        headerRow.CreateCell(2).SetCellValue("报表内容");
+        //        headerRow.CreateCell(3).SetCellValue("生成时间");
+        //        // 写入业务数据（逻辑完全不变）
+        //        IRow dataRow = worksheet.CreateRow(1);
+        //        dataRow.CreateCell(0).SetCellValue(id);
+        //        dataRow.CreateCell(1).SetCellValue(tabKey == 1 ? "日报表" : tabKey == 2 ? "周报表" : tabKey == 3 ? "月报表" : "年报表");
+        //        dataRow.CreateCell(2).SetCellValue("报表数据内容");
+        //        dataRow.CreateCell(3).SetCellValue(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        //        // 自动调整列宽（逻辑不变）
+        //        for (int i = 0; i < 4; i++)
+        //        {
+        //            worksheet.AutoSizeColumn(i);
+        //        }
+        //        // 将工作簿写入临时流
+        //        workbook.Write(tempStream);
+        //        // 转字节数组（核心：脱离原流的依赖）
+        //        excelBytes = tempStream.ToArray();
+        //    }
+        //    // 2. 基于字节数组创建新的MemoryStream，完全避免流关闭问题
+        //    var resultStream = new MemoryStream(excelBytes);
+        //    resultStream.Position = 0; // 此时流绝对不会被关闭
+        //    // 以下代码完全不变
+        //    string fileName = $"报表_{id}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+        //    Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");
+        //    // 返回File结果，框架会自动处理流的释放
+        //    return File(resultStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
     }

@@ -58,7 +58,10 @@ namespace CenterBackend.IFileService
         /// <param name="zipSavePath">压缩包保存的完整物理路径(含文件名+后缀)</param>
         /// <returns>压缩成功返回True，失败/异常返回False</returns>
         bool CompressSingleFileToZip(string sourceFilePath, string zipSavePath);
-
+        /// <summary>
+        ///直接下载单个文件
+        /// </summary>
+        (FileStream? stream, string? encodeFileName) DownloadSingleFile(string sourceFilePath, string fileName);
         /// <summary>
         /// 获取指定日期的文件路径+文件名（日报/周报/年报）
         /// 日报按目标日期年月 | 周报按本周一的年月+年周序号 | 年报按年份
