@@ -108,6 +108,7 @@ namespace CenterBackend
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "报表系统API v1");
+                    c.RoutePrefix = "swagger";
                 });
             }
             // ==========顺序从上到下 ==========
