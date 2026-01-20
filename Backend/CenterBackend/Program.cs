@@ -15,16 +15,32 @@ namespace CenterBackend
 {
     public class Program
     {
+        // 保持原有 Main 行为，单独运行时不变
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var app = BuildWebApplication(args);
+            app.Run();
+        }
+
+        // 对外提供的工厂方法：构建 WebApplication（但不 Run）
+        // contentRootPath 可用于在外部（如 WPF）指定静态文件所在的目录
+        public static WebApplication BuildWebApplication(string[]? args = null, string? contentRootPath = null, int port = 5260)
+        {
+            var builder = WebApplication.CreateBuilder(args ?? Array.Empty<string>());
+
+            if (!string.IsNullOrEmpty(contentRootPath))
+            {
+                // 指定 ContentRoot（确保 wwwroot 可被找到）
+                builder.Environment.ContentRootPath = contentRootPath;
+            }
+
             var configuration = builder.Configuration;
 
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped(typeof(IReportRepository<>), typeof(ReportRepository<>));
             builder.Services.AddScoped(typeof(IReportRecordRepository<>), typeof(ReportRecordRepository<>));
 
-            string defaultConnection = configuration.GetConnectionString("DefaultConnection");
+            string defaultConnection = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(defaultConnection));
             builder.Services.AddDbContext<CenterReportDbContext>(options => options.UseSqlServer(defaultConnection));
 
@@ -36,7 +52,10 @@ namespace CenterBackend
             builder.Services.AddScoped<IFileServices, FileService>();
             builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
 
-            builder.Services.AddControllers();
+            // 显式注册控制器所在的程序集，确保在 ReportServer 进程内也能发现控制器
+            builder.Services.AddControllers()
+                .AddApplicationPart(typeof(Program).Assembly) // 确保包含 CenterBackend 的控制器
+                .AddControllersAsServices();
 
             builder.Services.AddSpaStaticFiles(spaConfig =>
             {
@@ -50,9 +69,9 @@ namespace CenterBackend
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
-                options.Cookie.SameSite = SameSiteMode.None; // 允许跨站携带Cookie
-                options.Cookie.SecurePolicy = CookieSecurePolicy.None; // 开发环境关闭HTTPS强制校验
-                options.Cookie.Name = "ReportSystem_SessionId"; //手动指定Cookie名称，避免默认随机名导致丢失
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+                options.Cookie.Name = "ReportSystem_SessionId";
             });
 
             var allowedOrigins = configuration["CorsPolicy:AllowedOrigins"]?.Split(',') ?? Array.Empty<string>();
@@ -83,7 +102,7 @@ namespace CenterBackend
                     options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
                     options.SlidingExpiration = true;
 
-                    options.Cookie.SameSite = SameSiteMode.None;//SameSite配置，和Session一致
+                    options.Cookie.SameSite = SameSiteMode.None;
                     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
                 });
             builder.Services.AddHttpContextAccessor();
@@ -92,17 +111,27 @@ namespace CenterBackend
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "报表系统API", Version = "v1" });
             });
 
+            // Kestrel 绑定到 loopback（本机），避免 ListenAnyIP 导致防火墙弹窗
             builder.WebHost.UseKestrel(options =>
             {
-                options.ListenAnyIP(5260);
+                // 【核心修正】从 ListenLocalhost 改为 ListenAnyIP，允许局域网访问
+                options.ListenAnyIP(port); // 替换原 options.ListenLocalhost(port);
                 options.Limits.MaxConcurrentConnections = 1000;
-                options.AllowSynchronousIO = true;// 允许同步IO操作，避免Excel/NPOI文件流同步读写报错
+                options.AllowSynchronousIO = true;
                 options.Limits.MaxConcurrentUpgradedConnections = 1000;
-            });/*.UseUrls(configuration["applicationUrl"]);*/
+            });
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())// 1. 开发环境Swagger
+            // 临时请求日志（便于确认请求是否到达服务器；可上线前移除）
+            app.Use(async (ctx, next) =>
+            {
+                Console.WriteLine($"[REQ] {ctx.Request.Method} {ctx.Request.Path}");
+                await next();
+                Console.WriteLine($"[RES] {ctx.Request.Method} {ctx.Request.Path} -> {ctx.Response.StatusCode}");
+            });
+
+            if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -111,18 +140,19 @@ namespace CenterBackend
                     c.RoutePrefix = "swagger";
                 });
             }
-            // ==========顺序从上到下 ==========
-            app.UseSpaStaticFiles();          // 1. SPA静态文件
-            app.UseMiddleware<GlobalExceptionMiddleware>(); // 全局异常中间件
-            app.UseCors("Policy");            // 2. 跨域（必须在路由前）
-            app.UseSession();                 // 3. Session会话（必须在认证前）
-            app.UseRouting();                 // 4. 路由中间件
-            app.UseAuthentication();          // 5. 【新增】认证中间件 → 读取登录态
-            app.UseAuthorization();           // 6. 授权中间件 → 校验权限
-            app.MapControllers();             // 7. API路由映射
-            app.MapFallbackToFile("dist/index.html"); //8. SPA刷新兜底
 
-            app.Run();
+            app.UseSpaStaticFiles();
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+            app.UseCors("Policy");
+            app.UseSession();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.MapControllers();
+            app.MapFallbackToFile("dist/index.html");
+
+            // 返回构建好的 app，调用方负责 StartAsync / StopAsync / Run
+            return app;
         }
     }
 }
