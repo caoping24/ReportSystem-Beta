@@ -35,14 +35,14 @@ namespace CenterBackend.Controllers
         /// <param name="_AddReportDailyDto"></param>
         /// <returns></returns>
         /// <exception cref="BusinessException"></exception>
-        [HttpPost("DailyInsert")]
-        public async Task<BaseResponse<bool>> DailyInsert([FromBody] DailyInsertDto _DailyInsertDto)
+        [HttpPost("DailyInsert")] 
+        public async Task<BaseResponse<bool>> DailyInsert([FromBody] CalculateAndInsertDto _CalculateAndInsertDto)
         {
-            if (_DailyInsertDto.ReportType.IsNullOrEmpty())
+            if (_CalculateAndInsertDto.Type == 1 )
             {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "添加目标不能为空");
             }
-            var result = await reportService.DailyCalculateAndInsertAsync(_DailyInsertDto);
+            var result = await reportService.DailyCalculateAndInsertAsync(_CalculateAndInsertDto);
             return ResultUtils<bool>.Success(result);
         }
         /// <summary>
@@ -85,22 +85,48 @@ namespace CenterBackend.Controllers
         public async Task<IActionResult> CreateAndBuildDailyReport([FromBody] CreateReportDto _CreateReportDto)
         {
 
-            var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+            
             var reportFileRoot = Path.Combine(_webHostEnv.WebRootPath, "Report");//所有报表汇总文件夹
+            var tempTime = _CreateReportDto.Time;
 
-            var tempTime = _CreateReportDto.AddDate;
-            var filePathAndName = new FilePathAndName();
-
-            filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime);
-
+            var filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime);
             if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName))
             {
                 return BadRequest("获取文件路径失败，请检查传入日期是否合法！");
             }
+
+            string XlsxFilesPath = string.Empty;
+            string XlsxFilesFullPath = string.Empty;
+            string modelFilePath = string.Empty;
             try
             {
-                _fileService.CreateFolder(filePathAndName.DailyFilesPath);//自动创建文件夹
-                return await reportService.WriteXlsxAndSave(modelFilePath, filePathAndName.DailyFilesFullPath, tempTime);
+                switch (_CreateReportDto.Type)
+                {
+                    case 1: //Daily
+                        XlsxFilesPath = filePathAndName.DailyFilesPath;
+                        XlsxFilesFullPath = filePathAndName.DailyFilesFullPath;
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        break;
+                    case 2: //Weekly
+                        XlsxFilesPath = filePathAndName.WeeklyFilesPath;
+                        XlsxFilesFullPath = filePathAndName.WeeklyFilesFullPath;
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        break;
+                    case 3: //Monthly
+                        XlsxFilesPath = filePathAndName.MonthlyFilesPath;
+                        XlsxFilesFullPath = filePathAndName.MonthlyFilesFullPath;
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        break;
+                    case 4: //Yearly
+                        XlsxFilesPath = filePathAndName.YearlyFilesPath;
+                        XlsxFilesFullPath = filePathAndName.YearlyFilesFullPath;
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        break;
+                    default:
+                        return new BadRequestObjectResult(new { success = false, msg = "ReportType不存在" });
+                }
+                _fileService.CreateFolder(XlsxFilesPath);//自动创建文件夹
+                return await reportService.WriteXlsxAndSave_Daily(modelFilePath, XlsxFilesFullPath, tempTime);
             }
             catch (Exception ex)
             {
