@@ -7,7 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
      <UseWindowsForms>true</UseWindowsForms>
+     <ApplicationIcon>128.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="128.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CenterBackend\CenterBackend.csproj" />

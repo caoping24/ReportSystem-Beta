@@ -25,39 +25,29 @@ namespace ReportServer
         public MainWindow()
         {
             InitializeComponent();
-
-            // 窗口启动时不显示（只驻留托盘）
             this.Loaded += MainWindow_Loaded;
             this.Closing += MainWindow_Closing;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // 隐藏窗口并不显示任务栏图标
-            this.Hide();
+
+            //this.Hide();            // 隐藏窗口
             this.ShowInTaskbar = false;
-
-            // 初始化托盘图标与菜单
-            InitializeTray();
-
-            // 可选：启动时自动启动后端（如不希望自动启动，请注释掉）
-            await StartEmbeddedApiAsync();
+            InitializeTray();// 初始化托盘图标与菜单
+            await StartEmbeddedApiAsync();// 可选：启动时自动启动后端
         }
 
         private async void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
-            // 用户关闭窗口时改为退出应用（托盘图标移除、停止后端）
-            e.Cancel = true; // 先取消关闭，执行退出逻辑
-            await ExitApplicationAsync();
+            e.Cancel = true;
+            HideMainWindow();
         }
 
         private void InitializeTray()
         {
-            // 如果已初始化，跳过
-            if (_notifyIcon != null) return;
-
-            // 创建托盘菜单
-            var menu = new ContextMenuStrip();
+            if (_notifyIcon != null) return;// 如果已初始化，跳过
+            var menu = new ContextMenuStrip();// 创建托盘菜单
 
             _startMenuItem = new ToolStripMenuItem("启动后端");
             _startMenuItem.Click += async (_, __) => await StartEmbeddedApiAsync();
@@ -77,15 +67,25 @@ namespace ReportServer
             exitMenu.Click += async (_, __) => await ExitApplicationAsync();
             menu.Items.Add(exitMenu);
 
-            // 创建 NotifyIcon
-            _notifyIcon = new NotifyIcon
+
+            string icoName = "128.ico";// 自定义图标
+            string icoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot\\Images", icoName);
+            Icon iconToUse;
+            if (File.Exists(icoPath))
             {
-                Icon = SystemIcons.Application, // 可替换为自定义图标
+                iconToUse = new Icon(icoPath);
+            }
+            else
+            {
+                iconToUse = SystemIcons.Application; // 回退图标
+            }
+            _notifyIcon = new NotifyIcon// 创建 NotifyIcon
+            {
+                Icon = iconToUse,
                 Text = "ReportServer",
                 ContextMenuStrip = menu,
                 Visible = true
             };
-
             // 双击托盘显示窗口
             _notifyIcon.DoubleClick += (_, __) => Dispatcher.Invoke(ShowMainWindow);
 
@@ -125,34 +125,24 @@ namespace ReportServer
 
             try
             {
-                // 【核心修正】手动指定 Web API 项目的 wwwroot 所在目录（根据实际路径调整）
-                // 方式1：调试阶段 - 指向 Web API 项目的 wwwroot 目录（示例路径，需替换为你的实际路径）
-                //string webApiProjectDir = Path.Combine(AppContext.BaseDirectory, "C:\\Users\\caoping\\source\\repos\\ReportSystem\\Backend\\CenterBackend"); // 相对路径，适配调试
-
-
-                // 方式2：发布阶段 - 确保 wwwroot 被复制到 WPF 输出目录，直接用程序集目录
+                // 直接用程序集目录
                 string webApiProjectDir = Path.GetDirectoryName(typeof(CenterBackend.Program).Assembly.Location) ?? AppContext.BaseDirectory;
                 string contentRootPath = Path.GetFullPath(webApiProjectDir);
                 int port = 5260;
-
                 // 传入正确的 contentRootPath
                 var app = CenterBackend.Program.BuildWebApplication(Array.Empty<string>(), contentRootPath, port);
-
-                await app.StartAsync(); // 异步启动
-
+                await app.StartAsync();
                 lock (_apiLock)
                 {
                     _apiApp = app;
                 }
-
-                // 更新托盘菜单状态（在UI线程）
-                Dispatcher.Invoke(UpdateMenuState);
+                Dispatcher.Invoke(UpdateMenuState);// 更新托盘菜单状态（在UI线程）
             }
             catch (Exception ex)
             {
-                // 如果启动失败，提示用户（UI线程）
-                Dispatcher.Invoke(() =>
-                    System.Windows.MessageBox.Show($"启动后端失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+                Dispatcher.Invoke(() =>// 如果启动失败，提示用户（UI线程）
+                    System.Windows.MessageBox.Show($"启动服务失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+                await ExitApplicationAsync();
             }
         }
         private async Task StopEmbeddedApiAsync()
@@ -167,43 +157,39 @@ namespace ReportServer
 
             try
             {
-                // StopAsync 需要 CancellationToken
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // StopAsync 需要 CancellationToken
                 await appToStop!.StopAsync(cts.Token);
-
-                // 异步释放
                 await appToStop.DisposeAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                // 忽略停止异常，也可以改为日志记录
+                Dispatcher.Invoke(() =>
+                    System.Windows.MessageBox.Show($"停止服务失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
             }
             finally
             {
-                // 更新托盘菜单状态（在UI线程）
                 Dispatcher.Invoke(UpdateMenuState);
             }
         }
 
         private async Task ExitApplicationAsync()
         {
-            // 停止后端（若在运行）
             try
             {
                 await StopEmbeddedApiAsync();
             }
-            catch { }
-
-            // 移除托盘图标
-            if (_notifyIcon != null)
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                    System.Windows.MessageBox.Show($"推出应用失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+            }
+            if (_notifyIcon != null)// 移除托盘图标
             {
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
                 _notifyIcon = null;
             }
-
-                // 真正退出应用（消除 System.Windows.Forms.Application 与 System.Windows.Application 的歧义）
-                System.Windows.Application.Current.Shutdown();
+            System.Windows.Application.Current.Shutdown();// 退出应用
         }
     }
 }
