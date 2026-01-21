@@ -70,9 +70,9 @@ namespace CenterBackend.Services
                 Type = 1,//标记该数据是日统计数据
                 PH = 80//暂时没有特殊意义
             };
-            await CalculateSourceData1Async(StartTime, StopTime, targetModel);
-            await CalculateSourceData2Async(StartTime, StopTime, targetModel);
-            await CalculateSourceData3Async(StartTime, StopTime, targetModel);
+            await CalculateSourceData1Async(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculateSourceData2Async(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculateSourceData3Async(StartTime, StopTime, targetModel, _Dto.Type);
             await _calculatedDatas.AddAsync(targetModel);
             await _reportUnitOfWork.SaveChangesAsync();
             return true;
@@ -92,9 +92,9 @@ namespace CenterBackend.Services
                 PH = 80//暂时没有特殊意义
             };
             //每周的数据是基于每日数据计算得出
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
             await _calculatedDatas.AddAsync(targetModel);
             await _reportUnitOfWork.SaveChangesAsync();
             return true;
@@ -114,9 +114,9 @@ namespace CenterBackend.Services
                 PH = 80//暂时没有特殊意义
             };
             //每月的数据是基于每日数据计算得出
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
-            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel, _Dto.Type);
             await _calculatedDatas.AddAsync(targetModel);
             await _reportUnitOfWork.SaveChangesAsync();
             return true;
@@ -130,9 +130,9 @@ namespace CenterBackend.Services
         }
 
 
-        private async Task CalculateSourceData1Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
+        private async Task CalculateSourceData1Async(DateTime StartTime, DateTime StopTime, CalculatedData target, int _Type)
         {
-            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime,  _Type);
 
             // cell1-cell10 完整赋值 - 按平均值、差值、总和循环重复，带注释+空值处理
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
@@ -150,9 +150,9 @@ namespace CenterBackend.Services
             target.cell10 = dataList.Select(x => x.cell10 ?? 0).Average();//平均值
         }
 
-        private async Task CalculateSourceData2Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
+        private async Task CalculateSourceData2Async(DateTime StartTime, DateTime StopTime, CalculatedData target, int Type)
         {
-            var dataList = await _sourceData2.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _sourceData2.GetByDataTimeAsync(StartTime, Type);
 
             target.cell51 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell52 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
@@ -161,18 +161,18 @@ namespace CenterBackend.Services
 
 
 
-        private async Task CalculateSourceData3Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
+        private async Task CalculateSourceData3Async(DateTime StartTime, DateTime StopTime, CalculatedData target, int Type)
         {
-            var dataList = await _sourceData3.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _sourceData3.GetByDataTimeAsync(StartTime, StopTime, Type);
 
             target.cell101 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell102 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell103 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
 
-        private async Task CalculatedDataAsync(DateTime StartTime, DateTime StopTime, CalculatedData target)
+        private async Task CalculatedDataAsync(DateTime StartTime, DateTime StopTime, CalculatedData target, int Type)
         {
-            var dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, Type);
 
             // cell1-cell10 完整赋值 - 按平均值、差值、总和循环重复，带注释+空值处理
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值

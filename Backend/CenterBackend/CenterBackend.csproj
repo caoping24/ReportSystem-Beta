@@ -33,7 +33,11 @@
 	  <Folder Include="wwwroot\Model\" />
 	  <Folder Include="wwwroot\Report\" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<Content Update="wwwroot\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Repository\ReportRepository\CenterReport.Repository.csproj" />
 	  <ProjectReference Include="..\Repository\UserRepository\CenterUser.Repository.csproj" />
