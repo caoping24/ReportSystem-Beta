@@ -10,12 +10,16 @@
   <ItemGroup>
     <Compile Remove="IServer\**" />
     <Compile Remove="Server\**" />
+    <Compile Remove="wwwroot\Images\**" />
     <Content Remove="IServer\**" />
     <Content Remove="Server\**" />
+    <Content Remove="wwwroot\Images\**" />
     <EmbeddedResource Remove="IServer\**" />
     <EmbeddedResource Remove="Server\**" />
+    <EmbeddedResource Remove="wwwroot\Images\**" />
     <None Remove="IServer\**" />
     <None Remove="Server\**" />
+    <None Remove="wwwroot\Images\**" />
   </ItemGroup>
 
 	<ItemGroup>
