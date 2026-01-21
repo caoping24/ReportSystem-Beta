@@ -55,6 +55,12 @@ namespace CenterReport.Repository
             }
         }
 
+
+        /// <summary>
+        /// 查询一天内的数据（昨日08:00-今日20:00）
+        /// </summary>
+        /// <param name="time">日期时间,自动切片</param>
+        /// <returns></returns>
         public async Task<List<T>> GetByDayAsync(DateTime time)
         {
 

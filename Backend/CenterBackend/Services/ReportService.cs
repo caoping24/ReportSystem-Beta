@@ -3,6 +3,7 @@ using CenterBackend.IReportServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.OpenXml4Net.OPC;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -17,7 +18,7 @@ namespace CenterBackend.Services
         //private readonly IReportRepository<SourceData4> _sourceData4;
         //private readonly IReportRepository<SourceData5> _sourceData5;
         private readonly IReportRecordRepository<ReportRecord> _reportRecord;
-        private readonly IReportRepository<HourlyDataStatistic> _hourlyDataStatistics;
+        private readonly IReportRepository<CalculatedData> _calculatedDatas;
         private readonly IReportUnitOfWork _reportUnitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -28,7 +29,7 @@ namespace CenterBackend.Services
                              //IReportRepository<SourceData4> sourceData4,
                              //IReportRepository<SourceData5> sourceData5,
                              IReportRecordRepository<ReportRecord> reportRecord,
-                             IReportRepository<HourlyDataStatistic> hourlyDataStatistics,
+                             IReportRepository<CalculatedData> CalculatedDatas,
                              IReportUnitOfWork reportUnitOfWork,
                              IHttpContextAccessor httpContextAccessor)
         {
@@ -38,50 +39,98 @@ namespace CenterBackend.Services
             //this._sourceData4 = sourceData4;
             //this._sourceData5 = sourceData5;
             this._reportRecord = reportRecord;
-            this._hourlyDataStatistics = hourlyDataStatistics;
+            this._calculatedDatas = CalculatedDatas;
             this._reportUnitOfWork = reportUnitOfWork;
             this._httpContextAccessor = httpContextAccessor;
         }
 
 
-        public async Task<bool> DeleteReport(long id, DailyInsertDto _AddReportDailyDto)
-        {
-            return true;
-        }
+        //public async Task<bool> DeleteReport(long id, DailyInsertDto _AddReportDailyDto)
+        //{
+        //    return true;
+        //}
 
-        public async Task<bool> AddReport(DailyInsertDto _AddReportDailyDto)
-        {
-            return true;
-        }
+        //public async Task<bool> AddReport(DailyInsertDto _AddReportDailyDto)
+        //{
+        //    return true;
+        //}
 
 
         /// <summary>
-        /// 统计每日数据写入对应Table
+        /// 每日统计数据
         /// </summary>
-        public async Task<bool> DailyCalculateAndInsertAsync(DailyInsertDto _AddReportDailyDto)
+        public async Task<bool> DailyCalculateAndInsertAsync(CalculateAndInsertDto _Dto)
         {
 
-            DateTime StartTime = _AddReportDailyDto.AddDate.Date;
-            DateTime StopTime = _AddReportDailyDto.AddDate.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+            DateTime StartTime = _Dto.Time.Date;
+            DateTime StopTime = _Dto.Time.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
 
-            HourlyDataStatistic targetModel = new HourlyDataStatistic()
+            CalculatedData targetModel = new CalculatedData()
             {
-                createdtime = DateTime.Now,
-                PH = 80,
+                Type = 1,//标记该数据是日统计数据
+                PH = 80//暂时没有特殊意义
             };
             await CalculateSourceData1Async(StartTime, StopTime, targetModel);
-            //await CalculateSourceData2Async(startTime, endTime, targetModel);
-            //await CalculateSourceData3Async(startTime, endTime, targetModel);
-            //await CalculateSourceData4Async(startTime, endTime, targetModel);
-            //await CalculateSourceData5Async(startTime, endTime, targetModel);
-            await _hourlyDataStatistics.AddAsync(targetModel);
+            await CalculateSourceData2Async(StartTime, StopTime, targetModel);
+            await CalculateSourceData3Async(StartTime, StopTime, targetModel);
+            await _calculatedDatas.AddAsync(targetModel);
             await _reportUnitOfWork.SaveChangesAsync();
+            return true;
+        }
+        /// <summary>
+        /// 每周统计数据
+        /// </summary>
+        public async Task<bool> WeeklyCalculateAndInsertAsync(CalculateAndInsertDto _Dto)
+        {
+            //每周一计算上周一到周日的数据
+            DateTime StartTime = _Dto.Time.Date.AddDays(-7);
+            DateTime StopTime = _Dto.Time.Date.AddDays(-1).AddMinutes(59).AddSeconds(59);
+
+            CalculatedData targetModel = new CalculatedData()
+            {
+                Type = 2,//标记该数据是日统计数据
+                PH = 80//暂时没有特殊意义
+            };
+            //每周的数据是基于每日数据计算得出
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await _calculatedDatas.AddAsync(targetModel);
+            await _reportUnitOfWork.SaveChangesAsync();
+            return true;
+        }
+        /// <summary>
+        /// 每月统计数据
+        /// </summary>
+        public async Task<bool> MonthlyCalculateAndInsertAsync(CalculateAndInsertDto _Dto)
+        {
+            //每月一计算上月1号到最后一日的数据
+            DateTime StartTime = new DateTime(_Dto.Time.Year, _Dto.Time.Month, 1).AddMonths(-1);
+            DateTime StopTime = StartTime.AddMonths(1).AddDays(-1);
+
+            CalculatedData targetModel = new CalculatedData()
+            {
+                Type = 3,//标记该数据是日统计数据
+                PH = 80//暂时没有特殊意义
+            };
+            //每月的数据是基于每日数据计算得出
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await CalculatedDataAsync(StartTime, StopTime, targetModel);
+            await _calculatedDatas.AddAsync(targetModel);
+            await _reportUnitOfWork.SaveChangesAsync();
+            return true;
+        }
+        /// <summary>
+        /// 每年统计数据
+        /// </summary>
+        public async Task<bool> YearlyCalculateAndInsertAsync(CalculateAndInsertDto _Dto)
+        {
             return true;
         }
 
 
-
-        private async Task CalculateSourceData1Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
+        private async Task CalculateSourceData1Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
         {
             var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
 
@@ -101,89 +150,79 @@ namespace CenterBackend.Services
             target.cell10 = dataList.Select(x => x.cell10 ?? 0).Average();//平均值
         }
 
-
-
-        private async Task CalculateSourceData2Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
+        private async Task CalculateSourceData2Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
         {
-            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _sourceData2.GetByDataTimeAsync(StartTime, StopTime);
 
-            target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
-            target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
-            target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
+            target.cell51 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
+            target.cell52 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
+            target.cell53 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
         }
 
 
 
-        private async Task CalculateSourceData3Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
+        private async Task CalculateSourceData3Async(DateTime StartTime, DateTime StopTime, CalculatedData target)
         {
-            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
+            var dataList = await _sourceData3.GetByDataTimeAsync(StartTime, StopTime);
 
+            target.cell101 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
+            target.cell102 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
+            target.cell103 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
+        }
+
+        private async Task CalculatedDataAsync(DateTime StartTime, DateTime StopTime, CalculatedData target)
+        {
+            var dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime);
+
+            // cell1-cell10 完整赋值 - 按平均值、差值、总和循环重复，带注释+空值处理
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
+
+            target.cell4 = dataList.Select(x => x.cell4 ?? 0).Average();//平均值
+            target.cell5 = (dataList.Last().cell5 ?? 0) - (dataList.First().cell5 ?? 0);//差值
+            target.cell6 = dataList.Select(x => x.cell6 ?? 0).Sum();//总和
+
+            target.cell7 = dataList.Select(x => x.cell7 ?? 0).Average();//平均值
+            target.cell8 = (dataList.Last().cell8 ?? 0) - (dataList.First().cell8 ?? 0);//差值
+            target.cell9 = dataList.Select(x => x.cell9 ?? 0).Sum();//总和
+
+            target.cell10 = dataList.Select(x => x.cell10 ?? 0).Average();//平均值
         }
-
-
-
-        private async Task CalculateSourceData4Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
-        {
-            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
-
-            target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
-            target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
-            target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
-        }
-
-
-
-        private async Task CalculateSourceData5Async(DateTime StartTime, DateTime StopTime, HourlyDataStatistic target)
-        {
-            var dataList = await _sourceData1.GetByDataTimeAsync(StartTime, StopTime);
-
-            target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
-            target.cell2 = (dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
-            target.cell3 = dataList.Select(x => x.cell3 ?? 0).Sum();//总和
-        }
-
-
 
         /// <summary>
-        /// 从模板文件创建文件流，然后按区域写数据（优化完整版）
+        /// 从模板文件创建文件流，然后按区域写数据并且保存到本地文件 Daily
         /// </summary>
-        /// <param name="TemplateFullPath">Excel模板完整路径</param>
-        /// <param name="TargetSavePath">生成文件的保存路径</param>
+        /// <param name="ModelFullPath">模板完整路径</param>
+        /// <param name="TargetPullPath">生成文件的保存路径</param>
         /// <param name="ReportTime">报表日期</param>
         /// <returns></returns>
-        public async Task<IActionResult> WriteXlsxAndSave(string ModelFullPath, string TargetPullPath, DateTime ReportTime)
+        public async Task<IActionResult> WriteXlsxAndSave_Daily(string ModelFullPath, string TargetPullPath, DateTime ReportTime)
         {
             try
             {
                 var dataList = await _sourceData1.GetByDayAsync(ReportTime);
                 if (dataList == null || !dataList.Any())
                 {
-                    var msg = $"指定日期【{ReportTime:yyyy-MM-dd}】无数据，跳过Excel处理";
-                    return new OkObjectResult(new { success = true, msg });
+                    var msg = $"指定日期:{ReportTime:yyyy-MM-dd} 无数据";
+                    return new BadRequestObjectResult(new { success = false, msg });
                 }
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
                 using var workbook = new XSSFWorkbook(templateStream);
-
                 ISheet sheet = workbook.GetSheetAt(0);
-                sheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-                WriteXlsxRange1(workbook, sheet, 5, dataList);
-
+                WriteXlsxDailyRange1(workbook, sheet, 5, dataList);
                 using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);// 保存文件到指定路径
                 workbook.Write(outputStream);
 
                 var temp = new ReportRecord();
                 temp.Type = 1;
-
                 await _reportRecord.AddAsync(temp);
                 await _reportUnitOfWork.SaveChangesAsync();
-                return new OkObjectResult(new { success = true, msg = "Excel生成成功" });
+                return new OkObjectResult(new { success = true, msg = "Excel_Daily 生成成功" });
             }
             catch (Exception ex)
             {
-                var errorMsg = $"生成Excel报表异常，报表日期：{ReportTime:yyyy-MM-dd}，异常信息：{ex.ToString()}";
+                var errorMsg = $"生成Excel_Daily异常，日期：{ReportTime:yyyy-MM-dd}，异常信息：{ex.ToString()}";
                 return new BadRequestObjectResult(new { success = false, msg = $"操作异常：{ex.Message}" });
             }
         }
@@ -191,9 +230,9 @@ namespace CenterBackend.Services
         /// <summary>
         /// 按区域写Xlsx数据 1
         /// </summary>
-        private static bool WriteXlsxRange1(XSSFWorkbook srcWorkbook, ISheet srcSheet, int startRow, IEnumerable<SourceData1> dataList)
+        private static bool WriteXlsxDailyRange1(XSSFWorkbook srcWorkbook, ISheet srcSheet, int startRow, IEnumerable<SourceData1> dataList)
         {
-
+            srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < dataList.Count(); i++)
             {
                 var data = dataList.ElementAt(i);
@@ -251,14 +290,14 @@ namespace CenterBackend.Services
         /// <summary>
         /// 按区域写Xlsx数据 2
         /// </summary>
-        private static bool WriteXlsxRange2(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
+        private static bool WriteXlsxDailyRange2(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
         {
             return true;
         }
         /// <summary>
         /// 按区域写Xlsx数据 3
         /// </summary>
-        private static bool WriteXlsxRange3(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
+        private static bool WriteXlsxDailyRange3(XSSFWorkbook srcWorkbook, XSSFWorkbook destWorkbook, ISheet srcSheet, string newSheetName)
         {
             return true;
         }

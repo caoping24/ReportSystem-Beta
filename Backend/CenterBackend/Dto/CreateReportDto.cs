@@ -2,7 +2,7 @@
 {
     public class CreateReportDto
     {
-        public DateTime AddDate { get; set; }
-        public string? ReportType { get; set; }
+        public int Type { get; set; }
+        public DateTime Time { get; set; }
     }
 }
