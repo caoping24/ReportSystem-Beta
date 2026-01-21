@@ -15,11 +15,11 @@ namespace CenterReport.Repository
 
         public IQueryable<T> db => _entities.AsQueryable();
 
-        public async Task<List<T>> GetByDataTimeAsync(DateTime dateTime)
+        public async Task<List<T>> GetByDataTimeAsync(DateTime dateTime, int Type)
         {
-            return await GetByDataTimeAsync(dateTime, dateTime);
+            return await GetByDataTimeAsync(dateTime, dateTime, Type);
         }
-        public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end)
+        public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end, int _Type)
         {
             var from = DateTime.Compare(start, end) > 0 ? end : start;
             var to = DateTime.Compare(start, end) > 0 ? start : end;
@@ -27,11 +27,12 @@ namespace CenterReport.Repository
             if (from == to)//获取满足条件的最新的一条记录
             {
                 return await _entities
-                    .Where(e => EF.Property<DateTime>(e, "createdtime") == from)
+                    .Where(e => EF.Property<DateTime>(e, "createdtime") == from && EF.Property<int>(e, "Type") == _Type)
                     .ToListAsync();
             }
             return await _entities
-                .Where(e => EF.Property<DateTime>(e, "createdtime") >= from && EF.Property<DateTime>(e, "createdtime") <= to)
+                .Where(e => EF.Property<DateTime>(e, "createdtime") >= from && EF.Property<DateTime>(e, "createdtime") <= to
+                    && EF.Property<int>(e, "Type") == _Type)
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
                 .ToListAsync();
         }
