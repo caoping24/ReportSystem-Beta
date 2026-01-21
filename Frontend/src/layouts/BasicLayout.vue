@@ -4,7 +4,7 @@
     <aside class="sidebar">
       <!-- 侧边栏头部 -->
       <div class="sidebar-header">
-        <img class="logo" src="../assets/hb.jpg" alt="logo" />
+        <img class="logo" src="../assets/hb.png" alt="logo" />
       </div>
       
       <!-- 侧边栏菜单 -->
