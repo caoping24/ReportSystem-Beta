@@ -15,8 +15,12 @@ declare module 'axios' {
 let isRedirecting = false;
 
 // 创建axios实例
+
 const myAxios = axios.create({
-    baseURL: process.env.NODE_ENV === 'development' ? "http://localhost:5260" : "http://192.168.2.250:5260",
+    // 【优化】动态匹配当前页面域名，避免硬编码IP
+    baseURL: process.env.NODE_ENV === 'development' 
+        ? "http://localhost:5260" 
+        : window.location.origin, // 生产环境使用当前页面的域名/IP
   timeout: 10000,
   withCredentials: true, // 允许携带cookie，适配session认证
 });
