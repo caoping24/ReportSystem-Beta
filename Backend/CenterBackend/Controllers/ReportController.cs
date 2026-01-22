@@ -7,6 +7,7 @@ using CenterBackend.Models;
 using CenterBackend.Services;
 using Masuit.Tools;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
 using NPOI.HPSF;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -30,74 +31,38 @@ namespace CenterBackend.Controllers
             this._webHostEnv = webHostEnv;
         }
         /// <summary>
-        /// 根据dto.Type 进行日报统计表插入(Type实际暂时没有使用，只是判断是否为空)
+        /// 根据dto.Type 统计数据并且插入表中
         /// </summary>
         /// <param name="_AddReportDailyDto"></param>
         /// <returns></returns>
         /// <exception cref="BusinessException"></exception>
-        [HttpPost("DailyInsert")] 
-        public async Task<BaseResponse<bool>> DailyInsert([FromBody] CalculateAndInsertDto _CalculateAndInsertDto)
+        [HttpPost("AnalysesInsert")] 
+        public async Task<BaseResponse<bool>> AnalysesInsert([FromBody] CalculateAndInsertDto _CalculateAndInsertDto)
         {
-            if (_CalculateAndInsertDto.Type == 1 )
+            if (_CalculateAndInsertDto.Type == 0 )
             {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "添加目标不能为空");
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "类型错误");
             }
-            var result = await reportService.DailyCalculateAndInsertAsync(_CalculateAndInsertDto);
+            var result = await reportService.DataAnalyses(_CalculateAndInsertDto);
             return ResultUtils<bool>.Success(result);
         }
         /// <summary>
-        /// Get测试
+        ///  根据传入时间查询数据库,生成报表 Type 表示不同的报表类型
         /// </summary>
-        /// <param name="loginDto"></param>
-        /// <returns></returns>
-        [HttpGet("Test")]
-        public IActionResult Test()
-        {
-            try
-            {
-                string downloadFilePath = _webHostEnv.WebRootPath;
-                string downloadFileName = "comm.txt";
-                var (fileStream, encodeFileName) = _fileService.DownloadSingleFile(downloadFilePath, downloadFileName);
-
-                if (fileStream == null) return NotFound("文件不存在。");
-
-                if (fileStream.CanSeek) fileStream.Position = 0;
-
-                return File(fileStream, "application/octet-stream; charset=utf-8", downloadFileName);
-     
-            }
-            catch (IOException ex)
-            {
-                return StatusCode((int)HttpStatusCode.InternalServerError, $"文件下载失败：{ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode((int)HttpStatusCode.InternalServerError, $"系统异常：{ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// CreateAndBuildDailyReport 根据传入时间查询数据库,生成报表
-        /// </summary>
-        /// <param name="loginDto"></param>
+        /// <param name="CreateReportDto"></param>
         /// <returns></returns>
         [HttpPost("BuildReport")]
-        public async Task<IActionResult> CreateAndBuildDailyReport([FromBody] CreateReportDto _CreateReportDto)
+        public async Task<IActionResult> CreateAndBuildReport([FromBody] CreateReportDto _CreateReportDto)
         {
-
-            
             var reportFileRoot = Path.Combine(_webHostEnv.WebRootPath, "Report");//所有报表汇总文件夹
-            var tempTime = _CreateReportDto.Time;
+            DateTime tempTime = _CreateReportDto.Time;
+            int reportType = _CreateReportDto.Type;
 
             var filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime);
-            if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName))
-            {
-                return BadRequest("获取文件路径失败，请检查传入日期是否合法！");
-            }
-
-            string XlsxFilesPath = string.Empty;
-            string XlsxFilesFullPath = string.Empty;
-            string modelFilePath = string.Empty;
+            if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName)) return BadRequest("获取文件路径失败，请检查传入日期格式！");
+            string? XlsxFilesPath;
+            string? XlsxFilesFullPath;
+            string? modelFilePath;
             try
             {
                 switch (_CreateReportDto.Type)
@@ -126,20 +91,19 @@ namespace CenterBackend.Controllers
                         return new BadRequestObjectResult(new { success = false, msg = "ReportType不存在" });
                 }
                 _fileService.CreateFolder(XlsxFilesPath);//自动创建文件夹
-                return await reportService.WriteXlsxAndSave_Daily(modelFilePath, XlsxFilesFullPath, tempTime);
+                return await reportService.WriteXlsxAndSave(modelFilePath, XlsxFilesFullPath, tempTime, reportType);
             }
             catch (Exception ex)
             {
                 return BadRequest($"操作异常：{ex.Message}");
             }
         }
-
         /// <summary>
-        /// ExportExcel 测试使用
+        /// 下载单个excle文件
         /// </summary>
         /// <param name="loginDto"></param>
         /// <returns></returns>
-        [HttpPost("ExportExcel")]
+        [HttpPost("DownloadExcel")]
         public IActionResult DownloadFile([FromBody] FileDownloadExcleDto _fileDownloadExcleDto)
         {
             var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
@@ -216,5 +180,30 @@ namespace CenterBackend.Controllers
         //    return File(resultStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
+        [HttpGet("Test")]// Get测试从服务器下载文件
+        public IActionResult Test()
+        {
+            try
+            {
+                string downloadFilePath = _webHostEnv.WebRootPath;
+                string downloadFileName = "comm.txt";
+                var (fileStream, encodeFileName) = _fileService.DownloadSingleFile(downloadFilePath, downloadFileName);
+
+                if (fileStream == null) return NotFound("文件不存在。");
+
+                if (fileStream.CanSeek) fileStream.Position = 0;
+
+                return File(fileStream, "application/octet-stream; charset=utf-8", downloadFileName);
+
+            }
+            catch (IOException ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, $"文件下载失败：{ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, $"系统异常：{ex.Message}");
+            }
+        }
     }
 }

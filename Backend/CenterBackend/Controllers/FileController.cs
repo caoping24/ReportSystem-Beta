@@ -56,7 +56,7 @@ namespace CenterBackend.Controllers
         /// </summary>
         /// <returns></returns>
         /// <exception cref=""></exception>
-        [HttpPut("ZipFileBigTest")]
+        [HttpPost("ZipFileBigTest")]
         public IActionResult DownloadZipFileBig([FromBody] FileDownloadZIPDto _FileDownloadZIPDto)
         {
             try

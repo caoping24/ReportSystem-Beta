@@ -8,8 +8,7 @@ namespace CenterReport.Repository.Models
     public class CalculatedData //: ISoftDelete
     {
         public long Id { get; set; }
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]//标记下面的值为自动生成
-        public DateTime createdtime { get; set; }
+        public DateTime createdtime { get; set; } = DateTime.Now;
         public int Type { get; set; }
         public int PH { get; set; }//暂未使用
         public float? cell1 { get; set; }//Table1

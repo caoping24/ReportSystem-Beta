@@ -15,6 +15,34 @@ namespace CenterReport.Repository
 
         public IQueryable<T> db => _entities.AsQueryable();
 
+        /// <summary>
+        /// 查询一天内的数据（昨日08:00-今日08:00）日统计专用
+        /// </summary>
+        /// <param name="time">日期时间,自动切片</param>
+        /// <returns></returns>
+        public async Task<List<T>> GetByDayAsync(DateTime time)
+        {
+
+            DateTime startDate = time.Date.AddDays(-1).AddHours(8);//昨日08:00
+            DateTime endDate = startDate.AddHours(24).AddMinutes(59);//今日08:00
+            // 3. 执行查询：筛选当天数据 + 正序排序
+            return await _entities
+                .Where(e =>
+                    EF.Property<DateTime>(e, "createdtime") >= startDate// 匹配当天所有时间（忽略createdtime的时分秒）
+                    && EF.Property<DateTime>(e, "createdtime") < endDate)
+                .OrderBy(e => EF.Property<DateTime>(e, "createdtime")) // 正序排序（默认ASC）
+                .ToListAsync();
+        }
+        public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end)
+        {
+            var from = DateTime.Compare(start, end) > 0 ? end : start;
+            var to = DateTime.Compare(start, end) > 0 ? start : end;
+
+            return await _entities
+                .Where(e => EF.Property<DateTime>(e, "createdtime") >= from && EF.Property<DateTime>(e, "createdtime") <= to)
+                .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
+                .ToListAsync();
+        }
         public async Task<List<T>> GetByDataTimeAsync(DateTime dateTime, int Type)
         {
             return await GetByDataTimeAsync(dateTime, dateTime, Type);
@@ -36,6 +64,8 @@ namespace CenterReport.Repository
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
                 .ToListAsync();
         }
+
+
         public async Task<T?> GetByIdAsync(int id) => await _entities.FindAsync(id);
         public async Task AddAsync(T entity)
         {
@@ -54,28 +84,6 @@ namespace CenterReport.Repository
             {
                 _context.Remove(entity);
             }
-        }
-
-
-        /// <summary>
-        /// 查询一天内的数据（昨日08:00-今日20:00）
-        /// </summary>
-        /// <param name="time">日期时间,自动切片</param>
-        /// <returns></returns>
-        public async Task<List<T>> GetByDayAsync(DateTime time)
-        {
-
-            DateTime startDate = time.Date.AddDays(-1).AddHours(8);//昨日08:00
-            DateTime endDate = time.Date.AddMonths(20);//今日20:00
-
-            // 3. 执行查询：筛选当天数据 + 正序排序
-
-            return await _entities
-                .Where(e =>
-                    EF.Property<DateTime>(e, "createdtime") >= startDate// 匹配当天所有时间（忽略createdtime的时分秒）
-                    && EF.Property<DateTime>(e, "createdtime") < endDate)
-                .OrderBy(e => EF.Property<DateTime>(e, "createdtime")) // 正序排序（默认ASC）
-                .ToListAsync();
         }
     }
 }
