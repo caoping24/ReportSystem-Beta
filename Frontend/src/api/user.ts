@@ -98,18 +98,17 @@ export const downloadReport = async (id: number, tabKey: number) => { // ✅ 增
     timeout: 60000, 
   });
 };
-// 新增批量下载报表ZIP接口（和原有格式保持一致）
+// 新增批量下载报表ZIP接口
 export const batchDownloadReportZip = async (params: {
   type: number;    // 报表类型 1-日报 2-周报 3-月报 4-年报
   startTime: string; // 开始时间（格式：YYYY/YYYY-MM/YYYY-MM-DD）
   endTime: string;   // 结束时间（格式同上）
 }) => {
   return myAxios.request({
-    url: "api/Report/BatchExportZip", // 后端批量下载接口地址（需和后端确认）
-    method: "GET",
-    params: params, // 直接传递参数对象，和后端参数名对应
+    url: "/api/File/ZipFileBigTest", // 后端批量下载接口地址（需和后端确认）
+    method: "POST", // 从GET改为POST
+    data: params, // GET用params，POST改用data传递请求体参数
     responseType: 'blob', // 必须指定blob，处理zip二进制流
     timeout: 120000, // 批量下载可能耗时更长，设置2分钟超时
   });
 };
-

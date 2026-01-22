@@ -79,7 +79,7 @@ const handleSubmit = async (values: any) => {
       // 延时跳转，避免弹窗和路由冲突
       setTimeout(async () => {
         await router.push({
-          path: "/app/home",
+          path: "/app/components/leader-dashboard",
           replace: true,
         });
         console.log("登录成功，跳转到首页");
