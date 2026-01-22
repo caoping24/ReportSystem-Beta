@@ -225,7 +225,7 @@ const batchDatePickerType = computed(() => {
 });
 
 const batchDateFormat = computed(() => {
-  return batchReportType.value ? formatMap[batchReportType.value] || "YYYY年MM月DD日" : "YYYY年MM月DD日";
+  return batchReportType.value ? formatMap[batchReportType.value] || "YYYY-MM-DD" : "YYYY-MM-DD";
 });
 
 // ===================== 方法定义（封装精简） =====================

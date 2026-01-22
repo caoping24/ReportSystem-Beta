@@ -1,4 +1,3 @@
-using CenterBackend.Dto;
 using CenterBackend.IFileService;
 using CenterBackend.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -56,12 +55,12 @@ namespace CenterBackend.Controllers
         /// </summary>
         /// <returns></returns>
         /// <exception cref=""></exception>
-        [HttpPost("ZipFileBigTest")]
-        public IActionResult DownloadZipFileBig([FromBody] FileDownloadZIPDto _FileDownloadZIPDto)
+        [HttpGet("ZipDownloadFILETest")]
+        public IActionResult DownloadZipFileBig()
         {
             try
             {
-                string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");//方式A：压缩wwwroot内的指定文件夹(推荐，你的项目内文件，如之前的Upload文件夹)
+                string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "FILE");//方式A：压缩wwwroot内的指定文件夹(推荐，你的项目内文件，如之前的Upload文件夹)
                 string zipFileName = $"文件备份_{DateTime.Now:yyyyMMddHHmmss}.zip";// 压缩包名称（带时间戳，避免重复，用户下载的文件名）
                 string tempZipPath = Path.Combine(_webHostEnv.WebRootPath, "Temp", zipFileName);// 服务器临时压缩包路径（生成在wwwroot的Temp文件夹，会自动创建）
                 bool compressSuccess = _fileService.CompressFolderToZip(sourceFolder, tempZipPath);//调用FileService 压缩文件夹为Zip包

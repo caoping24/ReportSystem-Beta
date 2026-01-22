@@ -36,7 +36,7 @@ import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue";
 // 导入小房子图标
-import { HomeOutlined } from "@ant-design/icons-vue";
+import { HomeOutlined, DashboardOutlined } from "@ant-design/icons-vue";
 import { userLogout } from "@/api/user";
 
 const router = useRouter();
@@ -44,14 +44,19 @@ const loginUserStore = useLoginUserStore();
 
 // 修复 TS 类型错误：使用 h 函数创建 VNode，避免类型推断问题
 const items = ref<MenuProps["items"]>([
+ { key: "/app/components/leader-dashboard", 
+   label: "数据看板", 
+   title: "数据看板" ,
+  icon: () => h(DashboardOutlined)  
+   },
   { 
     key: "/app/home", 
-    label: "主页", 
-    title: "主页",
+    label: "报表", 
+    title: "报表",
     // 使用 h 函数创建图标 VNode，解决类型错误
     icon: () => h(HomeOutlined)  
   },
-   { key: "/app/components/leader-dashboard", label: "领导仓数据看板", title: "领导仓数据看板" },
+
 ]);
 
 // 菜单点击跳转

@@ -1,14 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using System;
 using System.ComponentModel;
-using System.Drawing; // SystemIcons
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms; // NotifyIcon, ContextMenuStrip, ToolStripItem
-using System.Windows.Threading;
 using System.Windows.Resources;
+using System.Windows.Threading;
 
 namespace ReportServer
 {
@@ -145,9 +140,18 @@ namespace ReportServer
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>// 如果启动失败，提示用户（UI线程）
-                    System.Windows.MessageBox.Show($"启动服务失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+                //Dispatcher.Invoke(() =>// 如果启动失败，提示用户（UI线程）
+                //    System.Windows.MessageBox.Show($"启动服务失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error));
+                //await ExitApplicationAsync();
+
+                // 输出详细异常信息（包含内部异常和调用栈）
+                string errorMsg = $"启动服务失败：{ex.Message}\n" +
+                                 $"内部异常：{ex.InnerException?.Message}\n" +
+                                 $"调用栈：{ex.StackTrace}";
+                Dispatcher.Invoke(() =>
+                    System.Windows.MessageBox.Show(errorMsg, "错误", MessageBoxButton.OK, MessageBoxImage.Error));
                 await ExitApplicationAsync();
+
             }
         }
         private async Task StopEmbeddedApiAsync()
