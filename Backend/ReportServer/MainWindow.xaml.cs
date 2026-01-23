@@ -211,8 +211,7 @@ namespace ReportServer
 
                 // 输出详细异常信息（包含内部异常和调用栈）
                 string errorMsg = $"启动服务失败：{ex.Message}\n" +
-                                 $"内部异常：{ex.InnerException?.Message}\n" +
-                                 $"调用栈：{ex.StackTrace}";
+                                 $"内部异常：{ex.InnerException?.Message}\n";
                 Dispatcher.Invoke(() =>
                     System.Windows.MessageBox.Show(errorMsg, "错误", MessageBoxButton.OK, MessageBoxImage.Error));
                 await ExitApplicationAsync();
