@@ -5,7 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ReportServer"
         mc:Ignorable="d"
-        Title="报表运行系统" Height="200" Width="300">
+        Title="报表运行系统" 
+        Height="200" 
+        Width="300"
+        GotFocus="Window_GotFocus"
+        LostFocus="Window_LostFocus"
+        Closing="MainWindow_Closing">
     <Grid>
 
     </Grid>
