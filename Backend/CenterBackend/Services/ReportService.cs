@@ -3,9 +3,11 @@ using CenterBackend.IReportServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
+using System.Diagnostics;
 
 namespace CenterBackend.Services
 {
@@ -19,7 +21,6 @@ namespace CenterBackend.Services
 
         // 构造函数注入：按顺序注入5个SourceData仓储 + 原有依赖，一一对应赋值
         public ReportService(IReportRepository<SourceData> SourceData,
-
                              IReportRecordRepository<ReportRecord> reportRecord,
                              IReportRepository<CalculatedData> CalculatedDatas,
                              IReportUnitOfWork reportUnitOfWork,
@@ -197,9 +198,9 @@ namespace CenterBackend.Services
         {
             DateTime StartTime;
             DateTime StopTime;
-            List<SourceData> dataList;
-            List<SourceData> Temp_DataList;
-            List<CalculatedData> dataList2;
+            List<SourceData>? dataList;
+            List<CalculatedData>? dataList2;
+            
             try
             {
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
@@ -216,14 +217,11 @@ namespace CenterBackend.Services
                         dataList = await _sourceData.GetByDayAsync(ReportTime);
                         if (dataList == null || !dataList.Any())
                         {
-
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
-                        Temp_DataList = dataList.Where(x => x.Type == 1).ToList();
-                        WriteXlsxDaily1(workbook, 5, dataList);
-
-                        Temp_DataList = dataList.Where(x => x.Type == 2).ToList();
-                        WriteXlsxDaily2(workbook, 5, dataList);
+                        SourceData?[] targetArray = MatchSourceDataDay(dataList, ReportTime);
+                        WriteXlsxDaily1(workbook,  targetArray);
+                        WriteXlsxDaily2(workbook, targetArray);
                         break;
                     case 2: // 上周
                         DateTime currentDayOfWeek = ReportTime.Date;// 计算上周的开始时间（星期一）
@@ -236,7 +234,8 @@ namespace CenterBackend.Services
                         {
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
-                        WriteXlsxWeekly(workbook, 5, dataList2);
+                        CalculatedData?[] targetArray2 = MatchSourceDataWeek(dataList2, StartTime);
+                        WriteXlsxWeekly(workbook,  targetArray2);
                         break;
                     case 3: // 上月
                         StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
@@ -246,7 +245,8 @@ namespace CenterBackend.Services
                         {
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
-                        WriteXlsxMonthly(workbook, 5, dataList2);
+                        targetArray2 = MatchSourceDataMonth(dataList2, StartTime);
+                        WriteXlsxMonthly(workbook, targetArray2);
                         break;
                     case 4: // 去年   
                         StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
@@ -256,7 +256,8 @@ namespace CenterBackend.Services
                         {
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
-                        WriteXlsxYearly(workbook, 5, dataList2);
+                        targetArray2 = MatchSourceDataYear(dataList2, StartTime);
+                        WriteXlsxYearly(workbook, targetArray2);
                         break;
                     default:
                         return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 类型无效" });
@@ -278,62 +279,277 @@ namespace CenterBackend.Services
         }
 
         /// <summary>
+        /// 适配SourceData实体：按小时差匹配到指定长度数组 存档日报
+        /// </summary>
+        /// <param name="sourceDataList">SourceData原始数据</param>
+        /// <param name="startTime">时间起始点</param>
+        /// <returns>指定长度的SourceData?[]</returns>
+        public SourceData?[] MatchSourceDataDay(List<SourceData> sourceDataList, DateTime startTime)
+        {
+            SourceData?[] targetArray = new SourceData?[25];
+            if (sourceDataList == null || !sourceDataList.Any()) return targetArray;
+            startTime = startTime.AddDays(-1).Date.AddHours(8);
+            foreach (var data in sourceDataList)
+            {
+                if (data == null) continue;
+                double hourDiff = (data.createdtime - startTime).TotalHours;
+                int matchIndex = (int)Math.Round(hourDiff);
+                if (matchIndex >= 0 && matchIndex < 25)
+                {
+                    targetArray[matchIndex] = data;
+                }
+            }
+            return targetArray;
+        }
+
+        /// <summary>
+        /// 适配SourceData实体：按小时差匹配到指定长度数组 存档Week
+        /// </summary>
+        /// <param name="sourceDataList">SourceData原始数据</param>
+        /// <param name="startTime">时间起始点</param>
+        /// <returns>指定长度的SourceData?[]</returns>
+        public CalculatedData?[] MatchSourceDataWeek(List<CalculatedData> sourceDataList, DateTime startTime)
+        {
+            CalculatedData?[] targetArray = new CalculatedData?[8];
+            if (sourceDataList == null || !sourceDataList.Any()) return targetArray;
+
+            startTime = startTime.AddHours(8); //上周一8点
+
+            foreach (var data in sourceDataList)
+            {
+                if (data == null) continue;
+                double hourDiff = (data.createdtime - startTime).TotalDays;
+                int matchIndex = (int)Math.Round(hourDiff);
+                if (matchIndex >= 0 && matchIndex < 8)
+                {
+                    targetArray[matchIndex] = data;
+                }
+            }
+            return targetArray;
+        }
+        /// <summary>
+        /// 适配SourceData实体：按小时差匹配到指定长度数组 存档month
+        /// </summary>
+        /// <param name="sourceDataList">SourceData原始数据</param>
+        /// <param name="startTime">时间起始点</param>
+        /// <returns>指定长度的SourceData?[]</returns>
+        public CalculatedData?[] MatchSourceDataMonth(List<CalculatedData> sourceDataList, DateTime startTime)
+        {
+            CalculatedData?[] targetArray = new CalculatedData?[32];
+            if (sourceDataList == null || !sourceDataList.Any()) return targetArray;
+
+            startTime = startTime.AddHours(8); //上月1号8点
+
+            foreach (var data in sourceDataList)
+            {
+                if (data == null) continue;
+                double hourDiff = (data.createdtime - startTime).TotalDays;
+                int matchIndex = (int)Math.Round(hourDiff);
+                if (matchIndex >= 0 && matchIndex < 32)
+                {
+                    targetArray[matchIndex] = data;
+                }
+            }
+            return targetArray;
+        }
+        /// <summary>
+        /// 适配SourceData实体：按小时差匹配到指定长度数组 存档year
+        /// </summary>
+        /// <param name="sourceDataList">SourceData原始数据</param>
+        /// <param name="startTime">时间起始点</param>
+        /// <returns>指定长度的SourceData?[]</returns>
+        public CalculatedData?[] MatchSourceDataYear(List<CalculatedData> sourceDataList, DateTime startTime)
+        {
+            CalculatedData?[] targetArray = new CalculatedData?[13];
+            if (sourceDataList == null || !sourceDataList.Any()) return targetArray;
+
+            startTime = startTime.AddHours(8); //去年1月1号8点
+
+            foreach (var data in sourceDataList)
+            {
+                if (data == null) continue;
+
+                int matchIndex = (data.createdtime.Year - startTime.Year) * 12 + (data.createdtime.Month - startTime.Month);
+                if (matchIndex >= 0 && matchIndex < 13)
+                {
+                    targetArray[matchIndex] = data;
+                }
+            }
+            return targetArray;
+        }
+        /// <summary>
         /// 写Xlsx数据  白班
         /// </summary>
-        private static bool WriteXlsxDaily1(XSSFWorkbook srcWorkbook, int startRow, IEnumerable<SourceData> dataList)
+        private static bool WriteXlsxDaily1(XSSFWorkbook srcWorkbook, SourceData?[] dataList)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-            for (int i = 0; i < dataList.Count(); i++)
+            for (int i = 0; i < 13; i++)
             {
                 var data = dataList.ElementAt(i);
-                int rowIndex = startRow + i;
+                if (data == null) continue; // 如果 data 为空则跳过
 
-                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
-                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
-                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
-                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
-                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
-                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
-                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
-                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
-                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
-                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
-                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
-                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
-                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
-                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
-                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
-                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
-                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
-                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
-                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
-                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
-                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
-                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
-                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
-                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
-                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
-                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
-                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
-                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
-                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
-                // ============ 注释结束 继续写入后续数据 ============
-                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
-                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
-                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
-                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                int Range1 = 5 + i;
+                int Range2 = 21 + i;
+                int Range3 = 38 + i;
+
+                // 从Excel第2列开始写入
+                //Rang1 
+                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
+                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
+                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
+                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
+                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
+                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
+                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
+                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
+                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
+                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
+                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
+                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
+                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
+                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
+                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
+                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
+                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
+                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
+                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
+                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
+                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
+                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
+                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
+                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
+                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
+                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
+                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
+                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
+                if (data.cell29 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
+                if (data.cell30 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
+                if (data.cell31 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
+                if (data.cell32 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
+                if (data.cell33 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
+                if (data.cell34 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
+                if (data.cell35 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
+                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
+                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
+                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
+                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
+                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
+                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
+                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                //if (data.cell43 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell43), 2)); }
+                //if (data.cell44 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell44), 2)); }
+                //if (data.cell45 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell45), 2)); }
+                //if (data.cell46 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell46), 2)); }
+                //if (data.cell47 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell47), 2)); }
+                //if (data.cell48 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell48), 2)); }
+                //if (data.cell49 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell49), 2)); }
+                //if (data.cell50 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell50), 2)); }
+
+                // //Rang2
+                if (data.cell51 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell51), 2)); }
+                if (data.cell52 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell52), 2)); }
+                if (data.cell53 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell53), 2)); }
+                if (data.cell54 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell54), 2)); }
+                if (data.cell55 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell55), 2)); }
+                if (data.cell56 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell56), 2)); }
+                if (data.cell57 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell57), 2)); }
+                if (data.cell58 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell58), 2)); }
+                if (data.cell59 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell59), 2)); }
+                if (data.cell60 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell60), 2)); }
+                if (data.cell61 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell61), 2)); }
+                if (data.cell62 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell62), 2)); }
+                if (data.cell63 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell63), 2)); }
+                if (data.cell64 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell64), 2)); }
+                if (data.cell65 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell65), 2)); }
+                if (data.cell66 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell66), 2)); }
+                if (data.cell67 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell67), 2)); }
+                if (data.cell68 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell68), 2)); }
+                if (data.cell69 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell69), 2)); }
+                if (data.cell70 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell70), 2)); }
+                if (data.cell71 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell71), 2)); }
+                if (data.cell72 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell72), 2)); }
+                if (data.cell73 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell73), 2)); }
+                if (data.cell74 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell74), 2)); }
+                if (data.cell75 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell75), 2)); }
+                if (data.cell76 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell76), 2)); }
+                if (data.cell77 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell77), 2)); }
+                if (data.cell78 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell78), 2)); }
+                if (data.cell79 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell79), 2)); }
+                if (data.cell80 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell80), 2)); }
+                if (data.cell81 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell81), 2)); }
+                if (data.cell82 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell82), 2)); }
+                if (data.cell83 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell83), 2)); }
+                if (data.cell84 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell84), 2)); }
+                if (data.cell85 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell85), 2)); }
+                if (data.cell86 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell86), 2)); }
+                if (data.cell87 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell87), 2)); }
+                if (data.cell88 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell88), 2)); }
+                if (data.cell89 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell89), 2)); }
+                if (data.cell90 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell90), 2)); }
+                if (data.cell91 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell91), 2)); }
+                if (data.cell92 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell92), 2)); }
+                //if (data.cell93 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell93), 2)); }
+                //if (data.cell94 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell94), 2)); }
+                //if (data.cell95 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell95), 2)); }
+                //if (data.cell96 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell96), 2)); }
+                //if (data.cell97 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell97), 2)); }
+                //if (data.cell98 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell98), 2)); }
+                //if (data.cell99 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell99), 2)); }
+                //if (data.cell100 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell100), 2)); }
+
+                // //Rang3
+                if (data.cell101 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell101), 2)); }
+                if (data.cell102 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell102), 2)); }
+                if (data.cell103 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell103), 2)); }
+                if (data.cell104 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell104), 2)); }
+                if (data.cell105 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell105), 2)); }
+                if (data.cell106 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell106), 2)); }
+                if (data.cell107 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell107), 2)); }
+                if (data.cell108 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell108), 2)); }
+                if (data.cell109 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell109), 2)); }
+                if (data.cell110 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell110), 2)); }
+                if (data.cell111 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell111), 2)); }
+                if (data.cell112 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell112), 2)); }
+                if (data.cell113 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell113), 2)); }
+                if (data.cell114 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell114), 2)); }
+                if (data.cell115 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell115), 2)); }
+                if (data.cell116 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell116), 2)); }
+                if (data.cell117 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell117), 2)); }
+                if (data.cell118 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell118), 2)); }
+                if (data.cell119 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell119), 2)); }
+                if (data.cell120 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell120), 2)); }
+                if (data.cell121 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell121), 2)); }
+                if (data.cell122 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell122), 2)); }
+                if (data.cell123 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell123), 2)); }
+                if (data.cell124 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell124), 2)); }
+                if (data.cell125 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell125), 2)); }
+                if (data.cell126 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell126), 2)); }
+                if (data.cell127 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell127), 2)); }
+                if (data.cell128 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell128), 2)); }
+                if (data.cell129 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell129), 2)); }
+                if (data.cell130 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell130), 2)); }
+                if (data.cell131 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell131), 2)); }
+                if (data.cell132 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell132), 2)); }
+                if (data.cell133 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell133), 2)); }
+                if (data.cell134 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell134), 2)); }
+                if (data.cell135 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell135), 2)); }
+                if (data.cell136 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell136), 2)); }
+                if (data.cell137 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell137), 2)); }
+                if (data.cell138 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell138), 2)); }
+                if (data.cell139 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell139), 2)); }
+                if (data.cell140 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell140), 2)); }
+                if (data.cell141 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell141), 2)); }
+                if (data.cell142 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell142), 2)); }
+                //if (data.cell143 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell143), 2)); }
+                //if (data.cell144 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell144), 2)); }
+                //if (data.cell145 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell145), 2)); }
+                //if (data.cell146 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell146), 2)); }
+                //if (data.cell147 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell147), 2)); }
+                //if (data.cell148 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell148), 2)); }
+                //if (data.cell149 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell149), 2)); }
+                //if (data.cell150 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell150), 2)); }
+
             }
             return true;
         }
@@ -341,240 +557,228 @@ namespace CenterBackend.Services
         /// <summary>
         /// 写Xlsx数据  夜班
         /// </summary>
-        private static bool WriteXlsxDaily2(XSSFWorkbook srcWorkbook, int startRow, IEnumerable<SourceData> dataList)
+        private static bool WriteXlsxDaily2(XSSFWorkbook srcWorkbook, SourceData?[] dataList)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(1); //实际要写的表
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-            for (int i = 0; i < dataList.Count(); i++)
+            for (int i = 12; i < 25; i++)
             {
                 var data = dataList.ElementAt(i);
-                int rowIndex = startRow + i;
+                if (data == null) continue; // 如果 data 为空则跳过
 
-                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
-                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
-                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
-                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
-                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
-                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
-                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
-                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
-                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
-                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
-                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
-                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
-                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
-                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
-                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
-                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
-                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
-                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
-                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
-                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
-                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
-                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
-                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
-                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
-                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
-                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
-                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
-                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
-                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
-                // ============ 注释结束 继续写入后续数据 ============
-                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
-                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
-                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
-                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                int Range1 = 5 + i;
+                int Range2 = 21 + i;
+                int Range3 = 38 + i;
+
+                // 从Excel第2列开始写入
+                //Rang1 
+                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
+                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
+                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
+                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
+                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
+                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
+                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
+                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
+                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
+                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
+                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
+                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
+                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
+                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
+                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
+                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
+                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
+                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
+                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
+                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
+                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
+                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
+                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
+                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
+                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
+                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
+                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
+                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
+                if (data.cell29 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
+                if (data.cell30 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
+                if (data.cell31 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
+                if (data.cell32 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
+                if (data.cell33 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
+                if (data.cell34 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
+                if (data.cell35 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
+                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
+                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
+                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
+                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
+                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
+                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
+                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                //if (data.cell43 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell43), 2)); }
+                //if (data.cell44 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell44), 2)); }
+                //if (data.cell45 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell45), 2)); }
+                //if (data.cell46 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell46), 2)); }
+                //if (data.cell47 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell47), 2)); }
+                //if (data.cell48 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell48), 2)); }
+                //if (data.cell49 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell49), 2)); }
+                //if (data.cell50 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell50), 2)); }
+
+                // //Rang2
+                if (data.cell51 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell51), 2)); }
+                if (data.cell52 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell52), 2)); }
+                if (data.cell53 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell53), 2)); }
+                if (data.cell54 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell54), 2)); }
+                if (data.cell55 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell55), 2)); }
+                if (data.cell56 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell56), 2)); }
+                if (data.cell57 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell57), 2)); }
+                if (data.cell58 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell58), 2)); }
+                if (data.cell59 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell59), 2)); }
+                if (data.cell60 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell60), 2)); }
+                if (data.cell61 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell61), 2)); }
+                if (data.cell62 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell62), 2)); }
+                if (data.cell63 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell63), 2)); }
+                if (data.cell64 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell64), 2)); }
+                if (data.cell65 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell65), 2)); }
+                if (data.cell66 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell66), 2)); }
+                if (data.cell67 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell67), 2)); }
+                if (data.cell68 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell68), 2)); }
+                if (data.cell69 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell69), 2)); }
+                if (data.cell70 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell70), 2)); }
+                if (data.cell71 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell71), 2)); }
+                if (data.cell72 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell72), 2)); }
+                if (data.cell73 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell73), 2)); }
+                if (data.cell74 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell74), 2)); }
+                if (data.cell75 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell75), 2)); }
+                if (data.cell76 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell76), 2)); }
+                if (data.cell77 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell77), 2)); }
+                if (data.cell78 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell78), 2)); }
+                if (data.cell79 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell79), 2)); }
+                if (data.cell80 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell80), 2)); }
+                if (data.cell81 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell81), 2)); }
+                if (data.cell82 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell82), 2)); }
+                if (data.cell83 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell83), 2)); }
+                if (data.cell84 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell84), 2)); }
+                if (data.cell85 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell85), 2)); }
+                if (data.cell86 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell86), 2)); }
+                if (data.cell87 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell87), 2)); }
+                if (data.cell88 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell88), 2)); }
+                if (data.cell89 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell89), 2)); }
+                if (data.cell90 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell90), 2)); }
+                if (data.cell91 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell91), 2)); }
+                if (data.cell92 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell92), 2)); }
+                //if (data.cell93 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell93), 2)); }
+                //if (data.cell94 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell94), 2)); }
+                //if (data.cell95 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell95), 2)); }
+                //if (data.cell96 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell96), 2)); }
+                //if (data.cell97 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell97), 2)); }
+                //if (data.cell98 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell98), 2)); }
+                //if (data.cell99 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell99), 2)); }
+                //if (data.cell100 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell100), 2)); }
+
+                // //Rang3
+                if (data.cell101 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell101), 2)); }
+                if (data.cell102 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell102), 2)); }
+                if (data.cell103 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell103), 2)); }
+                if (data.cell104 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell104), 2)); }
+                if (data.cell105 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell105), 2)); }
+                if (data.cell106 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell106), 2)); }
+                if (data.cell107 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell107), 2)); }
+                if (data.cell108 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell108), 2)); }
+                if (data.cell109 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell109), 2)); }
+                if (data.cell110 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell110), 2)); }
+                if (data.cell111 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell111), 2)); }
+                if (data.cell112 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell112), 2)); }
+                if (data.cell113 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell113), 2)); }
+                if (data.cell114 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell114), 2)); }
+                if (data.cell115 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell115), 2)); }
+                if (data.cell116 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell116), 2)); }
+                if (data.cell117 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell117), 2)); }
+                if (data.cell118 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell118), 2)); }
+                if (data.cell119 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell119), 2)); }
+                if (data.cell120 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell120), 2)); }
+                if (data.cell121 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell121), 2)); }
+                if (data.cell122 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell122), 2)); }
+                if (data.cell123 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell123), 2)); }
+                if (data.cell124 != null) { SetXlsxCellValue(srcSheet, Range1, 25, (float)Math.Round(Convert.ToSingle(data.cell124), 2)); }
+                if (data.cell125 != null) { SetXlsxCellValue(srcSheet, Range1, 26, (float)Math.Round(Convert.ToSingle(data.cell125), 2)); }
+                if (data.cell126 != null) { SetXlsxCellValue(srcSheet, Range1, 27, (float)Math.Round(Convert.ToSingle(data.cell126), 2)); }
+                if (data.cell127 != null) { SetXlsxCellValue(srcSheet, Range1, 28, (float)Math.Round(Convert.ToSingle(data.cell127), 2)); }
+                if (data.cell128 != null) { SetXlsxCellValue(srcSheet, Range1, 29, (float)Math.Round(Convert.ToSingle(data.cell128), 2)); }
+                if (data.cell129 != null) { SetXlsxCellValue(srcSheet, Range1, 30, (float)Math.Round(Convert.ToSingle(data.cell129), 2)); }
+                if (data.cell130 != null) { SetXlsxCellValue(srcSheet, Range1, 31, (float)Math.Round(Convert.ToSingle(data.cell130), 2)); }
+                if (data.cell131 != null) { SetXlsxCellValue(srcSheet, Range1, 32, (float)Math.Round(Convert.ToSingle(data.cell131), 2)); }
+                if (data.cell132 != null) { SetXlsxCellValue(srcSheet, Range1, 33, (float)Math.Round(Convert.ToSingle(data.cell132), 2)); }
+                if (data.cell133 != null) { SetXlsxCellValue(srcSheet, Range1, 34, (float)Math.Round(Convert.ToSingle(data.cell133), 2)); }
+                if (data.cell134 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell134), 2)); }
+                if (data.cell135 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell135), 2)); }
+                if (data.cell136 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell136), 2)); }
+                if (data.cell137 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell137), 2)); }
+                if (data.cell138 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell138), 2)); }
+                if (data.cell139 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell139), 2)); }
+                if (data.cell140 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell140), 2)); }
+                if (data.cell141 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell141), 2)); }
+                if (data.cell142 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell142), 2)); }
+                //if (data.cell143 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell143), 2)); }
+                //if (data.cell144 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell144), 2)); }
+                //if (data.cell145 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell145), 2)); }
+                //if (data.cell146 != null) { SetXlsxCellValue(srcSheet, Range1, 47, (float)Math.Round(Convert.ToSingle(data.cell146), 2)); }
+                //if (data.cell147 != null) { SetXlsxCellValue(srcSheet, Range1, 48, (float)Math.Round(Convert.ToSingle(data.cell147), 2)); }
+                //if (data.cell148 != null) { SetXlsxCellValue(srcSheet, Range1, 49, (float)Math.Round(Convert.ToSingle(data.cell148), 2)); }
+                //if (data.cell149 != null) { SetXlsxCellValue(srcSheet, Range1, 50, (float)Math.Round(Convert.ToSingle(data.cell149), 2)); }
+                //if (data.cell150 != null) { SetXlsxCellValue(srcSheet, Range1, 51, (float)Math.Round(Convert.ToSingle(data.cell150), 2)); }
             }
             return true;
         }
         /// <summary>
         /// 写Xlsx数据  上周
         /// </summary>
-        private static bool WriteXlsxWeekly(XSSFWorkbook srcWorkbook, int startRow, IEnumerable<CalculatedData> dataList)
+        private static bool WriteXlsxWeekly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-            for (int i = 0; i < dataList.Count(); i++)
+            for (int i = 0; i < 8; i++)
             {
                 var data = dataList.ElementAt(i);
-                int rowIndex = startRow + i;
+                if (data == null) continue; // 如果 data 为空则跳过
+                int rowIndex = 5 + i;
 
-                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
-                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
-                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
-                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
-                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
-                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
-                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
-                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
-                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
-                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
-                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
-                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
-                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
-                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
-                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
-                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
-                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
-                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
-                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
-                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
-                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
-                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
-                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
-                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
-                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
-                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
-                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
-                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
-                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
-                // ============ 注释结束 继续写入后续数据 ============
-                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
-                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
-                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
-                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+
+                //模板还未提供
             }
             return true;
         }
         /// <summary>
         /// 写Xlsx数据  上月
         /// </summary>
-        private static bool WriteXlsxMonthly(XSSFWorkbook srcWorkbook, int startRow, IEnumerable<CalculatedData> dataList)
+        private static bool WriteXlsxMonthly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-            for (int i = 0; i < dataList.Count(); i++)
+            for (int i = 0; i < 32; i++)
             {
                 var data = dataList.ElementAt(i);
-                int rowIndex = startRow + i;
+                if (data == null) continue; // 如果 data 为空则跳过
+                int rowIndex = 5 + i;
 
-                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
-                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
-                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
-                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
-                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
-                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
-                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
-                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
-                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
-                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
-                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
-                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
-                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
-                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
-                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
-                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
-                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
-                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
-                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
-                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
-                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
-                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
-                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
-                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
-                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
-                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
-                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
-                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
-                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
-                // ============ 注释结束 继续写入后续数据 ============
-                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
-                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
-                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
-                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+
+                //模板还未提供
             }
             return true;
         }
         /// <summary>
         /// 写Xlsx数据  去年年
         /// </summary>
-        private static bool WriteXlsxYearly(XSSFWorkbook srcWorkbook, int startRow, IEnumerable<CalculatedData> dataList)
+        private static bool WriteXlsxYearly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
-            for (int i = 0; i < dataList.Count(); i++)
+            for (int i = 0; i < 13; i++)
             {
                 var data = dataList.ElementAt(i);
-                int rowIndex = startRow + i;
+                if (data == null) continue; // 如果 data 为空则跳过
+                int rowIndex = 5 + i;
 
-                // 从Excel第2列开始写入，对应cell1-cell42 共42条数据 | 已注释 29-35条(cell29-cell35)
-                if (data.cell1 != null) { SetXlsxCellValue(srcSheet, rowIndex, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
-                if (data.cell2 != null) { SetXlsxCellValue(srcSheet, rowIndex, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
-                if (data.cell3 != null) { SetXlsxCellValue(srcSheet, rowIndex, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, rowIndex, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, rowIndex, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
-                if (data.cell6 != null) { SetXlsxCellValue(srcSheet, rowIndex, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
-                if (data.cell7 != null) { SetXlsxCellValue(srcSheet, rowIndex, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, rowIndex, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
-                if (data.cell9 != null) { SetXlsxCellValue(srcSheet, rowIndex, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
-                if (data.cell10 != null) { SetXlsxCellValue(srcSheet, rowIndex, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
-                if (data.cell11 != null) { SetXlsxCellValue(srcSheet, rowIndex, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
-                if (data.cell12 != null) { SetXlsxCellValue(srcSheet, rowIndex, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
-                if (data.cell13 != null) { SetXlsxCellValue(srcSheet, rowIndex, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, rowIndex, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
-                if (data.cell15 != null) { SetXlsxCellValue(srcSheet, rowIndex, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, rowIndex, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
-                if (data.cell17 != null) { SetXlsxCellValue(srcSheet, rowIndex, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
-                if (data.cell18 != null) { SetXlsxCellValue(srcSheet, rowIndex, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, rowIndex, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, rowIndex, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
-                if (data.cell21 != null) { SetXlsxCellValue(srcSheet, rowIndex, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, rowIndex, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
-                if (data.cell23 != null) { SetXlsxCellValue(srcSheet, rowIndex, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
-                if (data.cell24 != null) { SetXlsxCellValue(srcSheet, rowIndex, 25, (float)Math.Round(Convert.ToSingle(data.cell24), 2)); }
-                if (data.cell25 != null) { SetXlsxCellValue(srcSheet, rowIndex, 26, (float)Math.Round(Convert.ToSingle(data.cell25), 2)); }
-                if (data.cell26 != null) { SetXlsxCellValue(srcSheet, rowIndex, 27, (float)Math.Round(Convert.ToSingle(data.cell26), 2)); }
-                if (data.cell27 != null) { SetXlsxCellValue(srcSheet, rowIndex, 28, (float)Math.Round(Convert.ToSingle(data.cell27), 2)); }
-                if (data.cell28 != null) { SetXlsxCellValue(srcSheet, rowIndex, 29, (float)Math.Round(Convert.ToSingle(data.cell28), 2)); }
-                // ============ 以下 29-35条 已注释 (cell29-cell35) ============
-                //if (data.cell29 != null) { SetXlsxCellValue(srcSheet, rowIndex, 30, (float)Math.Round(Convert.ToSingle(data.cell29), 2)); }
-                //if (data.cell30 != null) { SetXlsxCellValue(srcSheet, rowIndex, 31, (float)Math.Round(Convert.ToSingle(data.cell30), 2)); }
-                //if (data.cell31 != null) { SetXlsxCellValue(srcSheet, rowIndex, 32, (float)Math.Round(Convert.ToSingle(data.cell31), 2)); }
-                //if (data.cell32 != null) { SetXlsxCellValue(srcSheet, rowIndex, 33, (float)Math.Round(Convert.ToSingle(data.cell32), 2)); }
-                //if (data.cell33 != null) { SetXlsxCellValue(srcSheet, rowIndex, 34, (float)Math.Round(Convert.ToSingle(data.cell33), 2)); }
-                //if (data.cell34 != null) { SetXlsxCellValue(srcSheet, rowIndex, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
-                //if (data.cell35 != null) { SetXlsxCellValue(srcSheet, rowIndex, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
-                // ============ 注释结束 继续写入后续数据 ============
-                if (data.cell36 != null) { SetXlsxCellValue(srcSheet, rowIndex, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, rowIndex, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
-                if (data.cell38 != null) { SetXlsxCellValue(srcSheet, rowIndex, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
-                if (data.cell39 != null) { SetXlsxCellValue(srcSheet, rowIndex, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
-                if (data.cell40 != null) { SetXlsxCellValue(srcSheet, rowIndex, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, rowIndex, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, rowIndex, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                //模板还未提供
             }
             return true;
         }

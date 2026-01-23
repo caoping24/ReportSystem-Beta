@@ -55,8 +55,8 @@ namespace CenterBackend.Controllers
         /// </summary>
         /// <returns></returns>
         /// <exception cref=""></exception>
-        [HttpGet("ZipDownloadFILETest")]
-        public IActionResult DownloadZipFileBig()
+        [HttpGet("ZipDownloadFile")]
+        public IActionResult DownloadZipFileBig(String timeStr, int type)
         {
             try
             {

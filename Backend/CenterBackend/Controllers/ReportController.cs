@@ -95,29 +95,36 @@ namespace CenterBackend.Controllers
         /// <param name="loginDto"></param>
         /// <returns></returns>
         [HttpGet("DownloadExcel")]
-        public IActionResult DownloadFile([FromBody] FileDownloadExcleDto _fileDownloadExcleDto)
+        public IActionResult DownloadFile(String timeStr ,int  Type)
         {
             var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
-            var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, _fileDownloadExcleDto.Time);
+             
+            DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd HH:mm:ss", null);
+            var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, dateTime);
             var DownloadfilePath = string.Empty;
             var DownloadfileName = string.Empty;
-            switch (_fileDownloadExcleDto.Type)
+            string fileName;
+            switch (Type)
             {
                 case 1: //Daily
                     DownloadfilePath = PathAndFileName.DailyFilesPath;
                     DownloadfileName = PathAndFileName.DailyFileName;
+                    fileName = PathAndFileName.DailyFileName;
                     break;
                 case 2: //Weekly
                     DownloadfilePath = PathAndFileName.WeeklyFilesPath;
                     DownloadfileName = PathAndFileName.WeeklyFileName;
+                    fileName = PathAndFileName.WeeklyFileName;
                     break;
                 case 3: //Monthly
                     DownloadfilePath = PathAndFileName.MonthlyFilesPath;
                     DownloadfileName = PathAndFileName.MonthlyFileName;
+                    fileName = PathAndFileName.MonthlyFileName;
                     break;
                 case 4: //Yearly
                     DownloadfilePath = PathAndFileName.YearlyFilesPath;
                     DownloadfileName = PathAndFileName.YearlyFileName;
+                    fileName = PathAndFileName.YearlyFileName;
                     break;
                 default:
                     return BadRequest("类型错误，请检查传入类型！");
@@ -127,7 +134,7 @@ namespace CenterBackend.Controllers
             {
                 return NotFound("文件不存在。");
             }
-            string fileName = PathAndFileName.DailyFileName;
+            
             Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");
             return File(fileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
