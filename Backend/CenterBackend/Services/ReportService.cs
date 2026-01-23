@@ -54,7 +54,7 @@ namespace CenterBackend.Services
 
             switch (_Dto.Type)
             {
-                case 1: // 当天
+                case 1: // 昨天
                     StartTime = _Dto.Time.Date.AddDays(-1).AddHours(8); // 开始时间等于昨天的8点0分
                     StopTime = StartTime.AddHours(24).AddMinutes(59); // 结束时间等于昨天的20点59分
                     break;

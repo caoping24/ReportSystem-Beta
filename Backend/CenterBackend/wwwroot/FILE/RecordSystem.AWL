@@ -1,0 +1,18 @@
+DATA_BLOCK "RecordSystem"
+TITLE =
+VERSION : 0.1
+
+
+  STRUCT 	
+   UA_xx_Field { S7_m_c := 'true' }: STRING  [6 ] := 'Index';	//临时占位符变量
+   UA_xx_ID { S7_m_c := 'true' }: INT ;	//临时占位符变量
+   UA_xx_Job { S7_m_c := 'true' }: INT ;	//临时占位符变量
+   UA_xx_Value { S7_m_c := 'true' }: STRING  [6 ] := '0';	//临时占位符变量
+  END_STRUCT ;	
+BEGIN
+   UA_xx_Field := 'Index'; 
+   UA_xx_ID := 0; 
+   UA_xx_Job := 0; 
+   UA_xx_Value := '0'; 
+END_DATA_BLOCK
+
