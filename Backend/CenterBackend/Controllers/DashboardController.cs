@@ -1,0 +1,46 @@
+using CenterBackend.common;
+using CenterBackend.Dto;
+using CenterBackend.IReportServices;
+using CenterBackend.IServices;
+using CenterReport.Repository.Utils;
+using CenterUser.Repository.Models;
+using Microsoft.AspNetCore.Mvc;
+using NPOI.SS.Formula.Functions;
+using static FastExpressionCompiler.ExpressionCompiler;
+
+namespace CenterBackend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DashboardController : ControllerBase
+    {
+        private readonly IDashboardService _dashboardService;
+
+        public DashboardController(IDashboardService _dashboardService)
+        {
+            this._dashboardService = _dashboardService;
+        }
+
+        /// <summary>
+        /// 分页记录列表
+        /// </summary>
+        /// <param name="request">分页参数</param>
+        /// <returns>分页结果</returns>
+        [HttpGet("getLineChartOne")]
+        public async Task<BaseResponse<LineChartDataDto>> getLineChartOne()
+        {
+            try
+            {
+
+                var result = await _dashboardService.getLineChartOne(DateTime.Now);
+                return ResultUtils<LineChartDataDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                // 异常处理（实际项目可封装全局异常过滤器）
+                return ResultUtils<LineChartDataDto>.error();
+            }
+        }
+
+    }
+}
