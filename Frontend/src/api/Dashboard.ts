@@ -23,3 +23,18 @@ export const getLineChartThree = async () => {
   });
 };
 
+export const getPieChart = async () => {
+  return myAxios.request({
+    url: "/api/Dashboard/getPieChart",
+    method: "GET",
+    
+  });
+};
+
+export const getCoreChart = async () => {
+  return myAxios.request({
+    url: "/api/Dashboard/getCoreChart",
+    method: "GET",
+    
+  });
+};

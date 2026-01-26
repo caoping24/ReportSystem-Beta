@@ -17,8 +17,8 @@
         <a-statistic
           title="昨日产量"
           :value="productionData.yesterday"
-          :precision="0"
-          suffix="件"
+          :precision="2"
+          suffix="kg"
           class="stat-item"
         >
           <template #prefix>
@@ -36,8 +36,8 @@
         <a-statistic
           title="当周产量"
           :value="productionData.week"
-          :precision="0"
-          suffix="件"
+          :precision="2"
+          suffix="kg"
           class="stat-item"
         >
           <template #prefix>
@@ -55,8 +55,8 @@
         <a-statistic
           title="当月产量"
           :value="productionData.month"
-          :precision="0"
-          suffix="件"
+          :precision="2"
+          suffix="kg"
           class="stat-item"
         >
           <template #prefix>
@@ -74,8 +74,8 @@
         <a-statistic
           title="今年产量"
           :value="productionData.year"
-          :precision="0"
-          suffix="件"
+          :precision="2"
+          suffix="kg"
           class="stat-item"
         >
           <template #prefix>
@@ -160,7 +160,7 @@ import { message } from "ant-design-vue";
 import { CalendarOutlined } from '@ant-design/icons-vue';
 import { Card, Statistic, Button } from 'ant-design-vue';
 //接口
-import{getLineChartOne,getLineChartTwo,getLineChartThree} from'@/api/Dashboard'
+import{getLineChartOne,getLineChartTwo,getLineChartThree,getPieChart,getCoreChart} from'@/api/Dashboard'
 // 2. 确保ECharts引入正确（核心修复）
 import * as echarts from 'echarts';
 
@@ -245,47 +245,13 @@ const dayLineChartData = ref<LineChartData>({ xAxis: [], series: [] });
 const weekLineChartData = ref<LineChartData>({ xAxis: [], series: [] });
 const monthLineChartData = ref<LineChartData>({ xAxis: [], series: [] });
 
-// ===================== 统一请求封装 =====================
-const requestApi = async <T>(url: string, params?: ProductionQueryParams): Promise<RealApiResponse<T>> => {
-  // 模拟接口返回（适配真实接口格式：code=0，message字段）
-  const mockApiMap: Record<string, () => Promise<RealApiResponse<T>>> = {
-    '/api/production/core': async () => ({
-      code: 0,
-      message: 'ok',
-      description: null,
-      data: {
-        yesterday: Math.floor(Math.random() * 2000 + 12000),
-        week: Math.floor(Math.random() * 5000 + 85000),
-        month: Math.floor(Math.random() * 10000 + 380000),
-        year: Math.floor(Math.random() * 50000 + 4200000)
-      } as T
-    }),
-    '/api/production/pie': async () => ({
-      code: 0,
-      message: 'ok',
-      description: null,
-      data: [
-        { name: '车间A', value: Math.floor(Math.random() * 10000 + 180000) },
-        { name: '车间B', value: Math.floor(Math.random() * 8000 + 120000) },
-        { name: '车间C', value: Math.floor(Math.random() * 5000 + 70000) },
-        { name: '外协加工', value: Math.floor(Math.random() * 3000 + 40000) }
-      ] as T
-    })
-  };
-
-  if (mockApiMap[url]) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockApiMap[url]();
-  }
-
-  throw new Error(`未找到模拟接口: ${url}`);
-};
 
 // ===================== 业务接口封装（独立调用版） =====================
 // 获取核心产量数据
 const fetchProductionData = async (params?: ProductionQueryParams) => {
   try {
-    const res = await requestApi<ProductionData>('/api/production/core', params);
+    const axiosRes = await getCoreChart();
+    const res = axiosRes.data as RealApiResponse<ProductionData>;
     // 适配真实接口的code判断（0表示成功）
     if (res.code === 0) {
       Object.assign(productionData, res.data);
@@ -302,7 +268,9 @@ const fetchProductionData = async (params?: ProductionQueryParams) => {
 const fetchPieChartData = async (params?: ProductionQueryParams) => {
   try {
     chartLoading.pie = true;
-    const res = await requestApi<PieChartData[]>('/api/production/pie', params);
+ 
+    const axiosRes = await getPieChart();
+    const res = axiosRes.data as RealApiResponse<PieChartData[]>;
     if (res.code === 0) {
       pieChartData.value = res.data;
       // 数据更新后立即更新图表
@@ -325,10 +293,8 @@ const fetchDayLineChartData = async (params?: ProductionQueryParams) => {
     chartLoading.dayLine = true;
     // 调用实际的getLineChartOne接口
     const axiosRes = await getLineChartOne();
-    
     const res = axiosRes.data as RealApiResponse<LineChartData>;
     // 核心修复：适配真实接口的判断逻辑
-    // 1. 判断code为0（而非200）
     // 2. 读取message（而非msg）
     if (res.code === 0) {
       // 安全赋值：先判断数据是否存在，避免undefined

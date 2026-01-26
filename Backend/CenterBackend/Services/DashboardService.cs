@@ -152,9 +152,32 @@ namespace CenterBackend.Services
             };
         }
 
+        public async Task<List<PieChartItemDto>> getPieChart(DateTime time)
+        {
+            await Task.Delay(1);
+            var pieChartItems = new List<PieChartItemDto>
+        {
+            new PieChartItemDto { Name = "类别A", Value = 40 },
+            new PieChartItemDto { Name = "类别B", Value = 30 },
+            new PieChartItemDto { Name = "类别C", Value = 20 },
+            new PieChartItemDto { Name = "类别D", Value = 10 }
+        };
 
+            return pieChartItems;
+        }
 
-
+        public async Task<CoreChartDto>  getCoreChart(DateTime time)
+        {
+            await Task.Delay(1);
+            var coreChartDto = new CoreChartDto
+            {
+                Yesterday=55.23,
+                Week=66.22,
+                Month=21.21,
+                Year=12.33
+            };
+            return coreChartDto;
+        }
     }
 
 

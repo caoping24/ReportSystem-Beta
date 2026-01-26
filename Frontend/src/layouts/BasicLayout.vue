@@ -30,13 +30,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, h } from "vue"; // 新增导入 h 函数
+import { ref, h } from "vue";
 import { MenuProps } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue";
-// 导入小房子图标
-import { HomeOutlined, DashboardOutlined } from "@ant-design/icons-vue";
+// 1. 替换图标：导入新的报表图标（FileTextOutlined），保留数据看板的 DashboardOutlined
+import { HomeOutlined, DashboardOutlined, FileTextOutlined } from "@ant-design/icons-vue";
 import { userLogout } from "@/api/user";
 
 const router = useRouter();
@@ -53,8 +53,8 @@ const items = ref<MenuProps["items"]>([
     key: "/app/home", 
     label: "报表", 
     title: "报表",
-    // 使用 h 函数创建图标 VNode，解决类型错误
-    icon: () => h(HomeOutlined)  
+    // 2. 核心修改：将 HomeOutlined 替换为 FileTextOutlined
+    icon: () => h(FileTextOutlined)  
   },
 
 ]);
@@ -112,7 +112,7 @@ const clearAllCookies = () => {
 </script>
 
 <style scoped>
-/* 蓝白主题样式保持不变 */
+/* 样式部分保持不变 */
 .layout-container {
   display: flex;
   height: 100vh;

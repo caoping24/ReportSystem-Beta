@@ -1,5 +1,4 @@
 <template>
-  <!-- 模板部分完全不变 -->
   <div id="userManagePage">
     <a-tabs 
       default-active-key="1" 
@@ -25,7 +24,7 @@
           <div class="batch-download-header">
             <h3 class="batch-download-title">批量报表下载</h3>
             <p class="batch-download-desc">
-              根据选择的报表类型和时间范围，批量下载报表文件并打包为ZIP格式
+              根据选择的报表类型和月份，下载对应月份的报表文件
             </p>
           </div>
           
@@ -60,39 +59,22 @@
                 </a-select>
               </a-form-item>
 
-              <div class="date-range-group">
-                <a-form-item 
-                  label="开始时间" 
-                  :validate-status="!batchStartDate && batchReportType ? 'error' : ''"
-                  :help="!batchStartDate && batchReportType ? '请选择开始时间' : ''"
-                >
-                  <a-date-picker
-                    v-model:value="batchStartDate"
-                    :picker="batchDatePickerType"
-                    style="width: 100%; max-width: 300px;"
-                    placeholder="选择开始时间"
-                    :format="batchDateFormat"
-                    allow-clear
-                    :disabled-date="disabledFutureDate"
-                  />
-                </a-form-item>
-
-                <a-form-item 
-                  label="结束时间" 
-                  :validate-status="!batchEndDate && batchReportType ? 'error' : ''"
-                  :help="!batchEndDate && batchReportType ? '请选择结束时间' : ''"
-                >
-                  <a-date-picker
-                    v-model:value="batchEndDate"
-                    :picker="batchDatePickerType"
-                    style="width: 100%; max-width: 300px;"
-                    placeholder="选择结束时间"
-                    :format="batchDateFormat"
-                    allow-clear
-                    :disabled-date="disabledFutureDate"
-                  />
-                </a-form-item>
-              </div>
+              <!-- 修改点2：替换为单个月份选择框 -->
+              <a-form-item 
+                label="选择月份" 
+                :validate-status="!batchMonth && batchReportType ? 'error' : ''"
+                :help="!batchMonth && batchReportType ? '请选择报表月份' : ''"
+              >
+                <a-date-picker
+                  v-model:value="batchMonth"
+                  picker="month"  
+                  style="width: 100%; max-width: 300px;"
+                  placeholder="选择报表月份"
+                  format="YYYY年MM月"  
+                  allow-clear
+                  :disabled-date="disabledFutureDate"
+                />
+              </a-form-item>
 
               <!-- 操作按钮区域 -->
               <a-form-item :wrapper-col="{ offset: 4 }">
@@ -103,7 +85,7 @@
                   class="batch-download-btn"
                 >
                   <template #icon><DownloadOutlined /></template>
-                  批量下载ZIP
+                  下载报表
                 </a-button>
                 
                 <a-button 
@@ -115,7 +97,7 @@
                 
                 <div class="batch-tips">
                   <InfoCircleOutlined style="margin-right: 4px;" />
-                  提示：下载的ZIP包包含所选时间范围内的所有对应类型报表文件
+                  提示：下载所选月份的对应类型报表文件（默认按当月01日查询）
                 </div>
               </a-form-item>
             </a-form>
@@ -187,8 +169,8 @@ const tableData: Record<string, TableDataItem> = reactive({
 });
 
 const batchReportType = ref<string>("");
-const batchStartDate = ref<dayjs.Dayjs | null>(null);
-const batchEndDate = ref<dayjs.Dayjs | null>(null);
+// 修改点3：替换开始/结束时间为单个月份选择
+const batchMonth = ref<dayjs.Dayjs | null>(null);
 const isBatchDownloading = ref<boolean>(false);
 
 // ===================== 计算属性（简化年报表相关逻辑） =====================
@@ -220,30 +202,19 @@ const paginationConfig = computed(() => ({
   }
 }));
 
-const batchDatePickerType = computed(() => {
-  return batchReportType.value ? typeMap[batchReportType.value] || "date" : "date";
-});
-
-const batchDateFormat = computed(() => {
-  return batchReportType.value ? formatMap[batchReportType.value] || "YYYY-MM-DD" : "YYYY-MM-DD";
-});
-
 // ===================== 方法定义（封装精简） =====================
 const disabledFutureDate = (current: dayjs.Dayjs) => {
-  return current?.isAfter(dayjs().endOf('day')) || false;
+  return current?.isAfter(dayjs().endOf('month')) || false; // 调整为禁用未来月份
 };
 
+// 修改点4：更新表单验证逻辑
 const validateBatchParams = () => {
   if (!batchReportType.value) {
     message.warning("请选择报表类型");
     return false;
   }
-  if (!batchStartDate.value || !batchEndDate.value) {
-    message.warning("请选择开始时间和结束时间");
-    return false;
-  }
-  if (batchStartDate.value.isAfter(batchEndDate.value)) {
-    message.warning("开始时间不能晚于结束时间");
+  if (!batchMonth.value) {
+    message.warning("请选择报表月份");
     return false;
   }
   return true;
@@ -296,19 +267,23 @@ const downloadExcel = async (tabKey: string, createTime: string) => {
   }
 };
 
+// 修改点5：更新批量下载参数组装逻辑
 const batchDownloadZip = async () => {
   if (!validateBatchParams()) return;
 
+  // 将选中的月份补全为 yyyy-mm-01 格式
+  const selectedTime = batchMonth.value!.format('YYYY-MM-01');
+  
   const params = {
     type: Number(batchReportType.value),
-    startTime: batchStartDate.value!.format(batchDateFormat.value),
-    endTime: batchEndDate.value!.format(batchDateFormat.value)
+    timeStr: selectedTime  // 参数名改为time，格式为yyyy-mm-dd
   };
 
   try {
     isBatchDownloading.value = true;
     const res = await batchDownloadReportZip(params);
-    handleFileDownload(res, `批量报表_${dayjs().format("YYYYMMDDHHmmss")}.zip`, 'zip');
+    // 根据实际返回的文件类型调整，这里假设还是zip，也可以改为xlsx
+    handleFileDownload(res, `报表_${batchMonth.value!.format("YYYYMM")}.zip`, 'zip');
   } catch (error) {
     console.error("批量下载ZIP失败：", error);
     message.error("批量下载失败：网络异常或接口错误");
@@ -325,15 +300,15 @@ const handleTabChange = (key: string) => {
   }
 };
 
+// 修改点6：更新报表类型变更处理
 const handleReportTypeChange = () => {
-  batchStartDate.value = null;
-  batchEndDate.value = null;
+  batchMonth.value = null; // 清空月份选择
 };
 
+// 修改点7：更新重置表单逻辑
 const resetBatchForm = () => {
   batchReportType.value = "";
-  batchStartDate.value = null;
-  batchEndDate.value = null;
+  batchMonth.value = null;
 };
 
 const fetchData = async (tabKey: string) => {
@@ -457,16 +432,8 @@ fetchData("1");
   max-width: 800px;
 }
 
-.date-range-group {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.date-range-group .ant-form-item {
-  flex: 1;
-  min-width: 280px;
+/* 修改点8：移除日期范围组样式，调整表单间距 */
+.batch-download-form .ant-form-item {
   margin-bottom: 16px !important;
 }
 
@@ -496,12 +463,7 @@ fetchData("1");
     padding: 16px;
   }
   
-  .date-range-group {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .date-range-group .ant-form-item {
+  .batch-download-form .ant-form-item {
     min-width: 100%;
   }
 }

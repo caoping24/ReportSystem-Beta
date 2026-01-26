@@ -74,5 +74,39 @@ namespace CenterBackend.Controllers
             }
         }
 
+
+        [HttpGet("getPieChart")]
+        public async Task<BaseResponse<List<PieChartItemDto>>> getPieChart()
+        {
+            try
+            {
+
+                var result = await _dashboardService.getPieChart(DateTime.Now);
+                return ResultUtils<List<PieChartItemDto>>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                // 异常处理（实际项目可封装全局异常过滤器）
+                return ResultUtils<List<PieChartItemDto>>.error();
+            }
+        }
+
+
+        [HttpGet("getCoreChart")]
+        public async Task<BaseResponse<CoreChartDto>> getCoreChart()
+        {
+            try
+            {
+
+                var result = await _dashboardService.getCoreChart(DateTime.Now);
+                return ResultUtils<CoreChartDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                // 异常处理（实际项目可封装全局异常过滤器）
+                return ResultUtils< CoreChartDto >.error();
+            }
+        }
+
     }
 }
