@@ -57,7 +57,7 @@ namespace CenterBackend.Services
             {
                 case 1: // 昨天
                     StartTime = _Dto.Time.Date.AddDays(-1).AddHours(8); // 开始时间等于昨天的8点0分
-                    StopTime = StartTime.AddHours(24).AddMinutes(59); // 结束时间等于昨天的20点59分
+                    StopTime = StartTime.AddHours(24).AddMinutes(59); // 结束时间等于今天的8点59分
                     break;
                 case 2: // 上周
                     DateTime currentDayOfWeek = _Dto.Time.Date;// 计算上周的开始时间（星期一）
