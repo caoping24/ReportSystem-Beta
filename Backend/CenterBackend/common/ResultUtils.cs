@@ -7,5 +7,10 @@
         {
             return new BaseResponse<T>(0, data, "ok");
         }
+
+        public static BaseResponse<T> error()
+        {
+            return new BaseResponse<T>(500, default(T), "查询失败");
+        }
     }
 }

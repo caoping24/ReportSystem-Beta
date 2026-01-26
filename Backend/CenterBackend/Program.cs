@@ -1,5 +1,6 @@
 ﻿using CenterBackend.IFileService;
 using CenterBackend.IReportServices;
+using CenterBackend.IServices;
 using CenterBackend.IUserServices;
 using CenterBackend.Middlewares;
 using CenterBackend.Services;
@@ -51,7 +52,7 @@ namespace CenterBackend
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IFileServices, FileService>();
             builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
-
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
             // 显式注册控制器所在的程序集，确保在 ReportServer 进程内也能发现控制器
             builder.Services.AddControllers()
                 .AddApplicationPart(typeof(Program).Assembly) // 确保包含 CenterBackend 的控制器
