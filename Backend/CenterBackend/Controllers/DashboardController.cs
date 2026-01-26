@@ -42,5 +42,37 @@ namespace CenterBackend.Controllers
             }
         }
 
+        [HttpGet("getLineChartTwo")]
+        public async Task<BaseResponse<LineChartDataDto>> getLineChartTwo()
+        {
+            try
+            {
+
+                var result = await _dashboardService.getLineCharTwo(DateTime.Now);
+                return ResultUtils<LineChartDataDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                // 异常处理（实际项目可封装全局异常过滤器）
+                return ResultUtils<LineChartDataDto>.error();
+            }
+        }
+
+        [HttpGet("getLineChartThree")]
+        public async Task<BaseResponse<LineChartDataDto>> getLineChartThree()
+        {
+            try
+            {
+
+                var result = await _dashboardService.getLineCharThree(DateTime.Now);
+                return ResultUtils<LineChartDataDto>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                // 异常处理（实际项目可封装全局异常过滤器）
+                return ResultUtils<LineChartDataDto>.error();
+            }
+        }
+
     }
 }
