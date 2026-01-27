@@ -54,12 +54,7 @@ namespace CenterBackend.Controllers
         [HttpGet("GetFolderPathTest")]
         public async  Task<FilePathAndName> Test3()
         {
-            //var msg = "测试";
-            //await _logger.LogAsync(msg);
-            //await _logger.LogAsync(msg, "INFO");
-            //await _logger.LogInfoAsync( msg);
-            //await _logger.LogWarnAsync(msg);
-            //await _logger.LogErrorAsync(msg);
+            await _logger.LogInfoAsync($"Test3:timeStr");
             var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
             return temp;
         }
@@ -75,12 +70,13 @@ namespace CenterBackend.Controllers
             string zipFileName = "default.zip";
             string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");
             string tempZipPath = string.Empty;
+            await _logger.LogInfoAsync($"DownloadZipFileBig:timeStr: {timeStr},type: {type}");
             try 
             {
                 // 日期解析容错：严格匹配yyyy-MM-dd
                 if (!DateTime.TryParseExact(timeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime))
                 {
-                    var msg  = $"日期格式无效，入参timeStr=${timeStr}";
+                    var msg  = $"日期格式无效.";
                     await _logger.LogErrorAsync(msg);
                     return BadRequest(msg);
                 }
@@ -101,16 +97,27 @@ namespace CenterBackend.Controllers
                     default:
                         return BadRequest("类型无效，请检查类型！");
                 }
+                string tempFolder = Path.Combine(_webHostEnv.WebRootPath, "Temp");
+                
+                if (Directory.Exists(tempFolder))//清理temp文件夹
+                {
+                    try
+                    {
+                        Directory.Delete(tempFolder, recursive: true);// 直接删除整个目录及所有内容
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                        await _logger.LogErrorAsync($"删除Temp目录失败：{ex.Message}");
+                    }
+                }
                 tempZipPath = Path.Combine(_webHostEnv.WebRootPath, "Temp", zipFileName);// 服务器临时压缩包路径
                 string tempDir = Path.GetDirectoryName(tempZipPath);
-                if (!Directory.Exists(tempDir))
-                {
-                    Directory.CreateDirectory(tempDir);
-                }
+                Directory.CreateDirectory(tempDir);
                 bool compressSuccess = _fileService.CompressFolderToZip(sourceFolder, tempZipPath);//调用FileService 压缩文件夹为Zip包
                 if (!compressSuccess)
                 {
-                    var msg = "文件压缩失败，请检查服务器磁盘权限或文件是否被占用.";
+                    var msg = "压缩失败，文件不存在或被占用.";
                     await _logger.LogErrorAsync(msg);
                     return BadRequest(msg);
                 }
@@ -122,6 +129,7 @@ namespace CenterBackend.Controllers
                 }
                 var fileStream = new FileStream(tempZipPath, FileMode.Open, FileAccess.Read, FileShare.Read,
                     bufferSize: 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await _logger.LogInfoAsync($"下载Zip文件成功.");
                 return File(fileStream, MediaTypeNames.Application.Zip, zipFileName);// 流式返回，ASP.NET Core自动管理流释放
             }
             catch (Exception ex)
@@ -130,46 +138,6 @@ namespace CenterBackend.Controllers
                 await _logger.LogErrorAsync(msg);
                 return BadRequest(msg);
             }
-            finally
-            {
-                // 无论成败，保证临时文件被清理，清理失败仅记录日志不影响主流程
-                if (!string.IsNullOrEmpty(tempZipPath) && System.IO.File.Exists(tempZipPath))
-                {
-                    try
-                    {
-                        System.IO.File.Delete(tempZipPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        var msg = $"临时压缩包清理失败$：{ex.Message}";
-                        await _logger.LogErrorAsync(msg);
-                    }
-                }
-            }
-
-
-            //DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd", null);
-            
-            //string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");//压缩wwwroot内的指定文件夹
-            //try
-            //{
-
-            //    string tempZipPath = Path.Combine(_webHostEnv.WebRootPath, "Temp", zipFileName);// 服务器临时压缩包路径（生成在wwwroot的Temp文件夹，会自动创建）
-            //    bool compressSuccess = _fileService.CompressFolderToZip(sourceFolder, tempZipPath);//调用FileService 压缩文件夹为Zip包
-            //    if (!compressSuccess)
-            //    {
-            //        return BadRequest("压缩失败，请检查文件路径或权限！");
-            //    }
-            //    var fileBytes = System.IO.File.ReadAllBytes(tempZipPath);//读取压缩包，返回给浏览器自动下载
-            //    string encodeFileName = HttpUtility.UrlEncode(zipFileName, System.Text.Encoding.UTF8);// 解决中文文件名下载乱码问题
-            //    var result = File(fileBytes, MediaTypeNames.Application.Zip, zipFileName);// 文件字节流 + MIME类型 + 下载的文件名 → 浏览器自动弹窗下载
-            //    System.IO.File.Delete(tempZipPath);
-            //    return result;
-            //}
-            //catch (Exception ex)
-            //{
-            //    return BadRequest($"下载失败：{ex.Message}");
-            //}
         }
     }
 }

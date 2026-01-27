@@ -3,6 +3,7 @@ using CenterBackend.Dto;
 using CenterBackend.Exceptions;
 using CenterBackend.IFileService;
 using CenterBackend.IReportServices;
+using CenterBackend.Logging;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CenterBackend.Controllers
@@ -14,12 +15,14 @@ namespace CenterBackend.Controllers
         private readonly IReportService reportService;
         private readonly IFileServices _fileService;
         private readonly IWebHostEnvironment _webHostEnv;
+        private readonly IAppLogger _logger;
 
-        public ReportController(IReportService reportService, IFileServices fileService, IWebHostEnvironment webHostEnv)
+        public ReportController(IReportService reportService, IFileServices fileService, IWebHostEnvironment webHostEnv, IAppLogger _IAppLogger)
         {
             this.reportService = reportService;
             this._fileService = fileService;
             this._webHostEnv = webHostEnv;
+            this._logger = _IAppLogger;
         }
         /// <summary>
         /// 根据dto.Type 统计数据并且插入表中
@@ -30,6 +33,7 @@ namespace CenterBackend.Controllers
         [HttpPost("AnalysesInsert")]
         public async Task<BaseResponse<bool>> AnalysesInsert([FromBody] CalculateAndInsertDto _CalculateAndInsertDto)
         {
+            await _logger.LogInfoAsync($"AnalysesInsert:CalculateAndInsertDto: {_CalculateAndInsertDto.Time},{_CalculateAndInsertDto.Time}");
             if (_CalculateAndInsertDto.Type == 0)
             {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "类型错误");
@@ -45,6 +49,7 @@ namespace CenterBackend.Controllers
         [HttpPost("BuildReport")]
         public async Task<IActionResult> CreateAndBuildReport([FromBody] CreateReportDto _CreateReportDto)
         {
+            await _logger.LogInfoAsync($"CreateAndBuildReport:CreateReportDto: {_CreateReportDto.Time},{_CreateReportDto.Time}");
             var reportFileRoot = Path.Combine(_webHostEnv.WebRootPath, "Report");//所有报表汇总文件夹
             DateTime tempTime = _CreateReportDto.Time;
             int reportType = _CreateReportDto.Type;
@@ -95,8 +100,10 @@ namespace CenterBackend.Controllers
         /// <param name="loginDto"></param>
         /// <returns></returns>
         [HttpGet("DownloadExcel")]
-        public IActionResult DownloadFile(String timeStr ,int  Type)
+        public async Task<IActionResult> DownloadFile(String timeStr ,int  Type)
         {
+            await _logger.LogInfoAsync($"DownloadFile:timeStr:{timeStr},Type:{Type}");
+
             var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
              
             DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd HH:mm:ss", null);
