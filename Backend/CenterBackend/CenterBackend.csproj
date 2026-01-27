@@ -11,15 +11,19 @@
     <Compile Remove="IServer\**" />
     <Compile Remove="Server\**" />
     <Compile Remove="wwwroot\Images\**" />
+    <Compile Remove="wwwroot\新文件夹\**" />
     <Content Remove="IServer\**" />
     <Content Remove="Server\**" />
     <Content Remove="wwwroot\Images\**" />
+    <Content Remove="wwwroot\新文件夹\**" />
     <EmbeddedResource Remove="IServer\**" />
     <EmbeddedResource Remove="Server\**" />
     <EmbeddedResource Remove="wwwroot\Images\**" />
+    <EmbeddedResource Remove="wwwroot\新文件夹\**" />
     <None Remove="IServer\**" />
     <None Remove="Server\**" />
     <None Remove="wwwroot\Images\**" />
+    <None Remove="wwwroot\新文件夹\**" />
   </ItemGroup>
 
 	<ItemGroup>
