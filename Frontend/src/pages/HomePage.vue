@@ -284,11 +284,11 @@ const handleFileDownload = (res: any, defaultFileName: string, fileType: 'xlsx' 
   message.success(`${fileType === 'xlsx' ? '报表' : 'ZIP包'}下载成功`);
 };
 
-const downloadExcel = async (tabKey: string, id: string) => {
-  if (!id) return message.warning("ID 不能为空");
+const downloadExcel = async (tabKey: string, createTime: string) => {
+  if (!createTime) return message.warning("ID 不能为空");
   
   try {
-    const res = await downloadReport(Number(id), Number(tabKey));
+    const res = await downloadReport(createTime, Number(tabKey));
     handleFileDownload(res, `报表.xlsx`, 'xlsx');
   } catch (error) {
     console.error("报表下载失败：", error);
