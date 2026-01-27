@@ -127,45 +127,45 @@ namespace CenterBackend.Services
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell2 = dataList.Select(x => x.cell2 ?? 0).Average();
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Average();
-            target.cell4 = dataList.Select(x => x.cell4 ?? 0).Average();
-            target.cell5 = dataList.Select(x => x.cell5 ?? 0).Average();
+            target.cell4 = dataList.Last().cell4- dataList.First().cell4;//差值
+            target.cell5 = dataList.Last().cell5 - dataList.First().cell5;//差值
             target.cell6 = dataList.Select(x => x.cell6 ?? 0).Average();
             target.cell7 = dataList.Select(x => x.cell7 ?? 0).Average();
-            target.cell8 = dataList.Select(x => x.cell8 ?? 0).Average();
+            target.cell8 = dataList.Last().cell8 - dataList.First().cell8;//差值
             target.cell9 = dataList.Select(x => x.cell9 ?? 0).Average();
             target.cell10 = dataList.Select(x => x.cell10 ?? 0).Average();
             target.cell11 = dataList.Select(x => x.cell11 ?? 0).Average();
             target.cell12 = dataList.Select(x => x.cell12 ?? 0).Average();
             target.cell13 = dataList.Select(x => x.cell13 ?? 0).Average();
-            target.cell14 = dataList.Select(x => x.cell14 ?? 0).Average();
+            target.cell14 = dataList.Last().cell14 - dataList.First().cell14;//差值
             target.cell15 = dataList.Select(x => x.cell15 ?? 0).Average();
-            target.cell16 = dataList.Select(x => x.cell16 ?? 0).Average();
+            target.cell16 = dataList.Last().cell16 - dataList.First().cell16;//差值
             target.cell17 = dataList.Select(x => x.cell17 ?? 0).Average();
             target.cell18 = dataList.Select(x => x.cell18 ?? 0).Average();
             target.cell19 = dataList.Select(x => x.cell19 ?? 0).Average();
-            target.cell20 = dataList.Select(x => x.cell20 ?? 0).Average();
+            target.cell20 = dataList.Last().cell20 - dataList.First().cell20;//差值
             target.cell21 = dataList.Select(x => x.cell21 ?? 0).Average();
             target.cell22 = dataList.Select(x => x.cell22 ?? 0).Average();
             target.cell23 = dataList.Select(x => x.cell23 ?? 0).Average();
-            target.cell24 = dataList.Select(x => x.cell24 ?? 0).Average();
+            target.cell24 = dataList.Last().cell24;//最后一个值
             target.cell25 = dataList.Select(x => x.cell25 ?? 0).Average();
             target.cell26 = dataList.Select(x => x.cell26 ?? 0).Average();
             target.cell27 = dataList.Select(x => x.cell27 ?? 0).Average();
             target.cell28 = dataList.Select(x => x.cell28 ?? 0).Average();
-            target.cell29 = dataList.Select(x => x.cell29 ?? 0).Average();
-            target.cell30 = dataList.Select(x => x.cell30 ?? 0).Average();
-            target.cell31 = dataList.Select(x => x.cell31 ?? 0).Average();
-            target.cell32 = dataList.Select(x => x.cell32 ?? 0).Average();
-            target.cell33 = dataList.Select(x => x.cell33 ?? 0).Average();
-            target.cell34 = dataList.Select(x => x.cell34 ?? 0).Average();
-            target.cell35 = dataList.Select(x => x.cell35 ?? 0).Average();
+            //target.cell29 = dataList.Select(x => x.cell29 ?? 0).Average();//人工填写
+            //target.cell30 = dataList.Select(x => x.cell30 ?? 0).Average();//人工填写
+            //target.cell31 = dataList.Select(x => x.cell31 ?? 0).Average();//人工填写
+            //target.cell32 = dataList.Select(x => x.cell32 ?? 0).Average();//人工填写
+            //target.cell33 = dataList.Select(x => x.cell33 ?? 0).Average();//人工填写
+            //target.cell34 = dataList.Select(x => x.cell34 ?? 0).Average();//人工填写
+            //target.cell35 = dataList.Select(x => x.cell35 ?? 0).Average();//人工填写
             target.cell36 = dataList.Select(x => x.cell36 ?? 0).Average();
-            target.cell37 = dataList.Select(x => x.cell37 ?? 0).Average();
+            target.cell37 = dataList.Last().cell37 - dataList.First().cell37;//差值
             target.cell38 = dataList.Select(x => x.cell38 ?? 0).Average();
             target.cell39 = dataList.Select(x => x.cell39 ?? 0).Average();
             target.cell40 = dataList.Select(x => x.cell40 ?? 0).Average();
             target.cell41 = dataList.Select(x => x.cell41 ?? 0).Average();
-            target.cell42 = dataList.Select(x => x.cell42 ?? 0).Average();
+            target.cell42 = dataList.Last().cell42 - dataList.First().cell42;//差值
             target.cell43 = dataList.Select(x => x.cell43 ?? 0).Average();
             target.cell44 = dataList.Select(x => x.cell44 ?? 0).Average();
             target.cell45 = dataList.Select(x => x.cell45 ?? 0).Average();
@@ -179,7 +179,7 @@ namespace CenterBackend.Services
             target.cell52 = dataList.Select(x => x.cell52 ?? 0).Average();
             target.cell53 = dataList.Select(x => x.cell53 ?? 0).Average();
             target.cell54 = dataList.Select(x => x.cell54 ?? 0).Average();
-            target.cell55 = dataList.Select(x => x.cell55 ?? 0).Average();
+            target.cell55 = dataList.Last().cell55 - dataList.First().cell55;//差值
             target.cell56 = dataList.Select(x => x.cell56 ?? 0).Average();
             target.cell57 = dataList.Select(x => x.cell57 ?? 0).Average();
             target.cell58 = dataList.Select(x => x.cell58 ?? 0).Average();
@@ -203,7 +203,7 @@ namespace CenterBackend.Services
             target.cell76 = dataList.Select(x => x.cell76 ?? 0).Average();
             target.cell77 = dataList.Select(x => x.cell77 ?? 0).Average();
             target.cell78 = dataList.Select(x => x.cell78 ?? 0).Average();
-            target.cell79 = dataList.Select(x => x.cell79 ?? 0).Average();
+            target.cell79 = dataList.Last().cell79 - dataList.First().cell79;//差值
             target.cell80 = dataList.Select(x => x.cell80 ?? 0).Average();
             target.cell81 = dataList.Select(x => x.cell81 ?? 0).Average();
             target.cell82 = dataList.Select(x => x.cell82 ?? 0).Average();
@@ -227,23 +227,23 @@ namespace CenterBackend.Services
             target.cell100 = dataList.Select(x => x.cell100 ?? 0).Average();
             // 第三组：cell101-cell150
             target.cell101 = dataList.Select(x => x.cell101 ?? 0).Average();
-            target.cell102 = dataList.Select(x => x.cell102 ?? 0).Average();
+            target.cell102 = dataList.Last().cell102 - dataList.First().cell102;//差值
             target.cell103 = dataList.Select(x => x.cell103 ?? 0).Average();
-            target.cell104 = dataList.Select(x => x.cell104 ?? 0).Average();
+            target.cell104 = dataList.Last().cell104 - dataList.First().cell104;//差值
             target.cell105 = dataList.Select(x => x.cell105 ?? 0).Average();
             target.cell106 = dataList.Select(x => x.cell106 ?? 0).Average();
             target.cell107 = dataList.Select(x => x.cell107 ?? 0).Average();
             target.cell108 = dataList.Select(x => x.cell108 ?? 0).Average();
             target.cell109 = dataList.Select(x => x.cell109 ?? 0).Average();
-            target.cell110 = dataList.Select(x => x.cell110 ?? 0).Average();
+            target.cell110 = dataList.Last().cell110 - dataList.First().cell110;//差值
             target.cell111 = dataList.Select(x => x.cell111 ?? 0).Average();
             target.cell112 = dataList.Select(x => x.cell112 ?? 0).Average();
             target.cell113 = dataList.Select(x => x.cell113 ?? 0).Average();
-            target.cell114 = dataList.Select(x => x.cell114 ?? 0).Average();
+            target.cell114 = dataList.Last().cell114 - dataList.First().cell114;//差值
             target.cell115 = dataList.Select(x => x.cell115 ?? 0).Average();
-            target.cell116 = dataList.Select(x => x.cell116 ?? 0).Average();
+            target.cell116 = dataList.Last().cell116 - dataList.First().cell116;//差值
             target.cell117 = dataList.Select(x => x.cell117 ?? 0).Average();
-            target.cell118 = dataList.Select(x => x.cell118 ?? 0).Average();
+            target.cell118 = dataList.Last().cell118 - dataList.First().cell118;//差值
             target.cell119 = dataList.Select(x => x.cell119 ?? 0).Average();
             target.cell120 = dataList.Select(x => x.cell120 ?? 0).Average();
             target.cell121 = dataList.Select(x => x.cell121 ?? 0).Average();
@@ -254,10 +254,10 @@ namespace CenterBackend.Services
             target.cell126 = dataList.Select(x => x.cell126 ?? 0).Average();
             target.cell127 = dataList.Select(x => x.cell127 ?? 0).Average();
             target.cell128 = dataList.Select(x => x.cell128 ?? 0).Average();
-            target.cell129 = dataList.Select(x => x.cell129 ?? 0).Average();
+            target.cell129 = dataList.Last().cell129 - dataList.First().cell129;//差值
             target.cell130 = dataList.Select(x => x.cell130 ?? 0).Average();
             target.cell131 = dataList.Select(x => x.cell131 ?? 0).Average();
-            target.cell132 = dataList.Select(x => x.cell132 ?? 0).Average();
+            target.cell132 = dataList.Last().cell132 - dataList.First().cell132;//差值
             target.cell133 = dataList.Select(x => x.cell133 ?? 0).Average();
             target.cell134 = dataList.Select(x => x.cell134 ?? 0).Average();
             target.cell135 = dataList.Select(x => x.cell135 ?? 0).Average();
@@ -511,23 +511,35 @@ namespace CenterBackend.Services
                 if (data.cell1 != null) { SetXlsxCellValue(srcSheet, Range1, 2, (float)Math.Round(Convert.ToSingle(data.cell1), 2)); }
                 if (data.cell2 != null) { SetXlsxCellValue(srcSheet, Range1, 3, (float)Math.Round(Convert.ToSingle(data.cell2), 2)); }
                 if (data.cell3 != null) { SetXlsxCellValue(srcSheet, Range1, 4, (float)Math.Round(Convert.ToSingle(data.cell3), 2)); }
-                if (data.cell4 != null) { SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell4), 2)); }
-                if (data.cell5 != null) { SetXlsxCellValue(srcSheet, Range1, 6, (float)Math.Round(Convert.ToSingle(data.cell5), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell4 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell4 - dataList.ElementAt(i - 1).cell4), 2));
+                else SetXlsxCellValue(srcSheet, Range1, 5, 0);
+                if (i != 0)// 每小时的差值
+                    if (data.cell5 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell5 - dataList.ElementAt(i - 1).cell5), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell6 != null) { SetXlsxCellValue(srcSheet, Range1, 7, (float)Math.Round(Convert.ToSingle(data.cell6), 2)); }
                 if (data.cell7 != null) { SetXlsxCellValue(srcSheet, Range1, 8, (float)Math.Round(Convert.ToSingle(data.cell7), 2)); }
-                if (data.cell8 != null) { SetXlsxCellValue(srcSheet, Range1, 9, (float)Math.Round(Convert.ToSingle(data.cell8), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell8 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell8 - dataList.ElementAt(i - 1).cell8), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell9 != null) { SetXlsxCellValue(srcSheet, Range1, 10, (float)Math.Round(Convert.ToSingle(data.cell9), 2)); }
                 if (data.cell10 != null) { SetXlsxCellValue(srcSheet, Range1, 11, (float)Math.Round(Convert.ToSingle(data.cell10), 2)); }
                 if (data.cell11 != null) { SetXlsxCellValue(srcSheet, Range1, 12, (float)Math.Round(Convert.ToSingle(data.cell11), 2)); }
                 if (data.cell12 != null) { SetXlsxCellValue(srcSheet, Range1, 13, (float)Math.Round(Convert.ToSingle(data.cell12), 2)); }
                 if (data.cell13 != null) { SetXlsxCellValue(srcSheet, Range1, 14, (float)Math.Round(Convert.ToSingle(data.cell13), 2)); }
-                if (data.cell14 != null) { SetXlsxCellValue(srcSheet, Range1, 15, (float)Math.Round(Convert.ToSingle(data.cell14), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell14 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell14 - dataList.ElementAt(i - 1).cell14), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell15 != null) { SetXlsxCellValue(srcSheet, Range1, 16, (float)Math.Round(Convert.ToSingle(data.cell15), 2)); }
-                if (data.cell16 != null) { SetXlsxCellValue(srcSheet, Range1, 17, (float)Math.Round(Convert.ToSingle(data.cell16), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell16 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell16 - dataList.ElementAt(i - 1).cell16), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell17 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
                 if (data.cell18 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
                 if (data.cell19 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell19), 2)); }
-                if (data.cell20 != null) { SetXlsxCellValue(srcSheet, Range1, 21, (float)Math.Round(Convert.ToSingle(data.cell20), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell20 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell20 - dataList.ElementAt(i - 1).cell20), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell21 != null) { SetXlsxCellValue(srcSheet, Range1, 22, (float)Math.Round(Convert.ToSingle(data.cell21), 2)); }
                 if (data.cell22 != null) { SetXlsxCellValue(srcSheet, Range1, 23, (float)Math.Round(Convert.ToSingle(data.cell22), 2)); }
                 if (data.cell23 != null) { SetXlsxCellValue(srcSheet, Range1, 24, (float)Math.Round(Convert.ToSingle(data.cell23), 2)); }
@@ -544,12 +556,16 @@ namespace CenterBackend.Services
                 if (data.cell34 != null) { SetXlsxCellValue(srcSheet, Range1, 35, (float)Math.Round(Convert.ToSingle(data.cell34), 2)); }
                 if (data.cell35 != null) { SetXlsxCellValue(srcSheet, Range1, 36, (float)Math.Round(Convert.ToSingle(data.cell35), 2)); }
                 if (data.cell36 != null) { SetXlsxCellValue(srcSheet, Range1, 37, (float)Math.Round(Convert.ToSingle(data.cell36), 2)); }
-                if (data.cell37 != null) { SetXlsxCellValue(srcSheet, Range1, 38, (float)Math.Round(Convert.ToSingle(data.cell37), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell37 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell37 - dataList.ElementAt(i - 1).cell37), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 if (data.cell38 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
                 if (data.cell39 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
                 if (data.cell40 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
                 if (data.cell41 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell41), 2)); }
-                if (data.cell42 != null) { SetXlsxCellValue(srcSheet, Range1, 43, (float)Math.Round(Convert.ToSingle(data.cell42), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell42 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range1, 5, (float)Math.Round(Convert.ToSingle(data.cell42 - dataList.ElementAt(i - 1).cell42), 2));
+                    else SetXlsxCellValue(srcSheet, Range1, 5, 0);
                 //if (data.cell43 != null) { SetXlsxCellValue(srcSheet, Range1, 44, (float)Math.Round(Convert.ToSingle(data.cell43), 2)); }
                 //if (data.cell44 != null) { SetXlsxCellValue(srcSheet, Range1, 45, (float)Math.Round(Convert.ToSingle(data.cell44), 2)); }
                 //if (data.cell45 != null) { SetXlsxCellValue(srcSheet, Range1, 46, (float)Math.Round(Convert.ToSingle(data.cell45), 2)); }
@@ -564,7 +580,9 @@ namespace CenterBackend.Services
                 if (data.cell52 != null) { SetXlsxCellValue(srcSheet, Range2, 3, (float)Math.Round(Convert.ToSingle(data.cell52), 2)); }
                 if (data.cell53 != null) { SetXlsxCellValue(srcSheet, Range2, 4, (float)Math.Round(Convert.ToSingle(data.cell53), 2)); }
                 if (data.cell54 != null) { SetXlsxCellValue(srcSheet, Range2, 5, (float)Math.Round(Convert.ToSingle(data.cell54), 2)); }
-                if (data.cell55 != null) { SetXlsxCellValue(srcSheet, Range2, 6, (float)Math.Round(Convert.ToSingle(data.cell55), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell55 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range2, 5, (float)Math.Round(Convert.ToSingle(data.cell55 - dataList.ElementAt(i - 1).cell55), 2));
+                    else SetXlsxCellValue(srcSheet, Range2, 5, 0);
                 if (data.cell56 != null) { SetXlsxCellValue(srcSheet, Range2, 7, (float)Math.Round(Convert.ToSingle(data.cell56), 2)); }
                 if (data.cell57 != null) { SetXlsxCellValue(srcSheet, Range2, 8, (float)Math.Round(Convert.ToSingle(data.cell57), 2)); }
                 if (data.cell58 != null) { SetXlsxCellValue(srcSheet, Range2, 9, (float)Math.Round(Convert.ToSingle(data.cell58), 2)); }
@@ -588,7 +606,9 @@ namespace CenterBackend.Services
                 if (data.cell76 != null) { SetXlsxCellValue(srcSheet, Range2, 27, (float)Math.Round(Convert.ToSingle(data.cell76), 2)); }
                 if (data.cell77 != null) { SetXlsxCellValue(srcSheet, Range2, 28, (float)Math.Round(Convert.ToSingle(data.cell77), 2)); }
                 if (data.cell78 != null) { SetXlsxCellValue(srcSheet, Range2, 29, (float)Math.Round(Convert.ToSingle(data.cell78), 2)); }
-                if (data.cell79 != null) { SetXlsxCellValue(srcSheet, Range2, 30, (float)Math.Round(Convert.ToSingle(data.cell79), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell79 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range2, 5, (float)Math.Round(Convert.ToSingle(data.cell79 - dataList.ElementAt(i - 1).cell79), 2));
+                    else SetXlsxCellValue(srcSheet, Range2, 5, 0);
                 if (data.cell80 != null) { SetXlsxCellValue(srcSheet, Range2, 31, (float)Math.Round(Convert.ToSingle(data.cell80), 2)); }
                 if (data.cell81 != null) { SetXlsxCellValue(srcSheet, Range2, 32, (float)Math.Round(Convert.ToSingle(data.cell81), 2)); }
                 if (data.cell82 != null) { SetXlsxCellValue(srcSheet, Range2, 33, (float)Math.Round(Convert.ToSingle(data.cell82), 2)); }
@@ -613,23 +633,35 @@ namespace CenterBackend.Services
 
                 //Rang3
                 if (data.cell101 != null) { SetXlsxCellValue(srcSheet, Range3, 2, (float)Math.Round(Convert.ToSingle(data.cell101), 2)); }
-                if (data.cell102 != null) { SetXlsxCellValue(srcSheet, Range3, 3, (float)Math.Round(Convert.ToSingle(data.cell102), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell102 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell102 - dataList.ElementAt(i - 1).cell102), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell103 != null) { SetXlsxCellValue(srcSheet, Range3, 4, (float)Math.Round(Convert.ToSingle(data.cell103), 2)); }
                 if (data.cell104 != null) { SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell104), 2)); }
-                if (data.cell105 != null) { SetXlsxCellValue(srcSheet, Range3, 6, (float)Math.Round(Convert.ToSingle(data.cell105), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell105 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell105 - dataList.ElementAt(i - 1).cell105), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell106 != null) { SetXlsxCellValue(srcSheet, Range3, 7, (float)Math.Round(Convert.ToSingle(data.cell106), 2)); }
                 if (data.cell107 != null) { SetXlsxCellValue(srcSheet, Range3, 8, (float)Math.Round(Convert.ToSingle(data.cell107), 2)); }
                 if (data.cell108 != null) { SetXlsxCellValue(srcSheet, Range3, 9, (float)Math.Round(Convert.ToSingle(data.cell108), 2)); }
                 if (data.cell109 != null) { SetXlsxCellValue(srcSheet, Range3, 10, (float)Math.Round(Convert.ToSingle(data.cell109), 2)); }
-                if (data.cell110 != null) { SetXlsxCellValue(srcSheet, Range3, 11, (float)Math.Round(Convert.ToSingle(data.cell110), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell110 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell110 - dataList.ElementAt(i - 1).cell110), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell111 != null) { SetXlsxCellValue(srcSheet, Range3, 12, (float)Math.Round(Convert.ToSingle(data.cell111), 2)); }
                 if (data.cell112 != null) { SetXlsxCellValue(srcSheet, Range3, 13, (float)Math.Round(Convert.ToSingle(data.cell112), 2)); }
                 if (data.cell113 != null) { SetXlsxCellValue(srcSheet, Range3, 14, (float)Math.Round(Convert.ToSingle(data.cell113), 2)); }
-                if (data.cell114 != null) { SetXlsxCellValue(srcSheet, Range3, 15, (float)Math.Round(Convert.ToSingle(data.cell114), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell114 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell114 - dataList.ElementAt(i - 1).cell114), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell115 != null) { SetXlsxCellValue(srcSheet, Range3, 16, (float)Math.Round(Convert.ToSingle(data.cell115), 2)); }
-                if (data.cell116 != null) { SetXlsxCellValue(srcSheet, Range3, 17, (float)Math.Round(Convert.ToSingle(data.cell116), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell116 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell116 - dataList.ElementAt(i - 1).cell116), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell117 != null) { SetXlsxCellValue(srcSheet, Range3, 18, (float)Math.Round(Convert.ToSingle(data.cell117), 2)); }
-                if (data.cell118 != null) { SetXlsxCellValue(srcSheet, Range3, 19, (float)Math.Round(Convert.ToSingle(data.cell118), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell118 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell118 - dataList.ElementAt(i - 1).cell118), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell119 != null) { SetXlsxCellValue(srcSheet, Range3, 20, (float)Math.Round(Convert.ToSingle(data.cell119), 2)); }
                 if (data.cell120 != null) { SetXlsxCellValue(srcSheet, Range3, 21, (float)Math.Round(Convert.ToSingle(data.cell120), 2)); }
                 if (data.cell121 != null) { SetXlsxCellValue(srcSheet, Range3, 22, (float)Math.Round(Convert.ToSingle(data.cell121), 2)); }
@@ -640,10 +672,14 @@ namespace CenterBackend.Services
                 if (data.cell126 != null) { SetXlsxCellValue(srcSheet, Range3, 27, (float)Math.Round(Convert.ToSingle(data.cell126), 2)); }
                 if (data.cell127 != null) { SetXlsxCellValue(srcSheet, Range3, 28, (float)Math.Round(Convert.ToSingle(data.cell127), 2)); }
                 if (data.cell128 != null) { SetXlsxCellValue(srcSheet, Range3, 29, (float)Math.Round(Convert.ToSingle(data.cell128), 2)); }
-                if (data.cell129 != null) { SetXlsxCellValue(srcSheet, Range3, 30, (float)Math.Round(Convert.ToSingle(data.cell129), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell129 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell129 - dataList.ElementAt(i - 1).cell129), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell130 != null) { SetXlsxCellValue(srcSheet, Range3, 31, (float)Math.Round(Convert.ToSingle(data.cell130), 2)); }
                 if (data.cell131 != null) { SetXlsxCellValue(srcSheet, Range3, 32, (float)Math.Round(Convert.ToSingle(data.cell131), 2)); }
-                if (data.cell132 != null) { SetXlsxCellValue(srcSheet, Range3, 33, (float)Math.Round(Convert.ToSingle(data.cell132), 2)); }
+                if (i != 0)// 每小时的差值
+                    if (data.cell132 != null && dataList.ElementAt(i - 1) != null) SetXlsxCellValue(srcSheet, Range3, 5, (float)Math.Round(Convert.ToSingle(data.cell132 - dataList.ElementAt(i - 1).cell132), 2));
+                    else SetXlsxCellValue(srcSheet, Range3, 5, 0);
                 if (data.cell133 != null) { SetXlsxCellValue(srcSheet, Range3, 34, (float)Math.Round(Convert.ToSingle(data.cell133), 2)); }
                 if (data.cell134 != null) { SetXlsxCellValue(srcSheet, Range3, 35, (float)Math.Round(Convert.ToSingle(data.cell134), 2)); }
                 if (data.cell135 != null) { SetXlsxCellValue(srcSheet, Range3, 36, (float)Math.Round(Convert.ToSingle(data.cell135), 2)); }
