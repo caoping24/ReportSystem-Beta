@@ -14,7 +14,7 @@
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
       </template>
       <template v-else-if="column.key === 'action'">
-        <a-button @click="handleDownload(record.id)">下载</a-button>
+        <a-button @click="handleDownload(record.createdtime)">下载</a-button>
       </template>
     </template>
   </a-table>
@@ -38,13 +38,15 @@ interface ReportTableProps {
 }
 
 const emit = defineEmits<{
-  (e: 'download', tabKey: string, id: string): void;
+  (e: 'download', tabKey: string, createTime: string): void;
 }>();
 
 const props = defineProps<ReportTableProps>();
 
-const handleDownload = (id: string) => {
-  emit('download', props.tabKey, id);
+const handleDownload = (createTime: string | Date) => {
+  // 格式化时间为 YYYY-MM-DD HH:mm:ss 格式
+  const formattedTime = dayjs(createTime).format("YYYY-MM-DD HH:mm:ss");
+  emit('download', props.tabKey, formattedTime);
 };
 </script>
 
