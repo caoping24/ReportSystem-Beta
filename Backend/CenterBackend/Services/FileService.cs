@@ -1,6 +1,10 @@
 ﻿using CenterBackend.IFileService;
+using CenterBackend.Logging;
 using CenterBackend.Models;
+using CenterReport.Repository;
+using CenterReport.Repository.Models;
 using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Logging;
 using System.Web;
 namespace CenterBackend.Services
 {
@@ -9,6 +13,11 @@ namespace CenterBackend.Services
     /// </summary>
     public class FileService : IFileServices
     {
+        private readonly IAppLogger _logger;
+        public FileService(IAppLogger _IAppLogger)
+        {
+            this._logger = _IAppLogger;
+        }
         /// <summary>
         /// 创建文件夹兼容单层/多层，路径存在则跳过，无异常抛出
         /// </summary>

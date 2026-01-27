@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
-
+using CenterBackend.Logging;
 namespace CenterBackend
 {
     public class Program
@@ -53,6 +53,9 @@ namespace CenterBackend
             builder.Services.AddScoped<IFileServices, FileService>();
             builder.Services.AddScoped<IReportRecordService, ReportRecordService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            // 注册日志服务（单例），FileLogger 会使用 IWebHostEnvironment.ContentRootPath 定位到 wwwroot/log
+            builder.Services.AddSingleton<IAppLogger, FileLogger>();
+
             // 显式注册控制器所在的程序集，确保在 ReportServer 进程内也能发现控制器
             builder.Services.AddControllers()
                 .AddApplicationPart(typeof(Program).Assembly) // 确保包含 CenterBackend 的控制器

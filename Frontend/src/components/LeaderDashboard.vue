@@ -102,11 +102,11 @@
 
     <!-- 下部：折线图区域（三个趋势图） -->
     <div class="chart-section line-charts-section">
-      <!-- 日产量趋势 -->
+
       <a-card 
         class="chart-card line-chart-card" 
         :loading="chartLoading.dayLine"
-        title="昨日时段产量趋势"
+        title="趋势1"
         :title-style="{ color: '#003399', fontWeight: 600 }"
       >
         <div style="width: 100%; height: 300px;">
@@ -114,11 +114,11 @@
         </div>
       </a-card>
 
-      <!-- 周产量趋势 -->
+
       <a-card 
         class="chart-card line-chart-card" 
         :loading="chartLoading.weekLine"
-        title="周产量趋势"
+        title="趋势2"
         :title-style="{ color: '#003399', fontWeight: 600 }"
       >
         <div style="width: 100%; height: 300px;">
@@ -126,11 +126,11 @@
         </div>
       </a-card>
 
-      <!-- 月产量趋势 -->
+
       <a-card 
         class="chart-card line-chart-card" 
         :loading="chartLoading.monthLine"
-        title="月产量趋势"
+        title="趋势3"
         :title-style="{ color: '#003399', fontWeight: 600 }"
       >
         <div style="width: 100%; height: 300px;">
@@ -183,6 +183,7 @@ interface LineChartData {
     name: string;
     data: number[];
   }[];
+
 }
 
 interface ProductionQueryParams {
@@ -292,7 +293,7 @@ const fetchDayLineChartData = async (params?: ProductionQueryParams) => {
   try {
     chartLoading.dayLine = true;
     // 调用实际的getLineChartOne接口
-    const axiosRes = await getLineChartOne();
+    const axiosRes = await getLineChartThree();
     const res = axiosRes.data as RealApiResponse<LineChartData>;
     // 核心修复：适配真实接口的判断逻辑
     // 2. 读取message（而非msg）

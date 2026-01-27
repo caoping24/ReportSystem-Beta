@@ -1,6 +1,10 @@
 using CenterBackend.IFileService;
+using CenterBackend.Logging;
 using CenterBackend.Models;
+using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.SS.Formula.Atp;
+using Org.BouncyCastle.Asn1.X509;
 using System.Net.Mime;
 using System.Web;
 
@@ -12,10 +16,12 @@ namespace CenterBackend.Controllers
     {
         private readonly IFileServices _fileService;
         private readonly IWebHostEnvironment _webHostEnv;
-        public FileController(IFileServices fileService, IWebHostEnvironment webHostEnv)
+        private readonly IAppLogger _logger;
+        public FileController(IFileServices fileService, IWebHostEnvironment webHostEnv, IAppLogger _IAppLogger)
         {
             this._fileService = fileService;
             this._webHostEnv = webHostEnv;
+            this._logger = _IAppLogger;
         }
 
         /// <summary>
@@ -44,24 +50,48 @@ namespace CenterBackend.Controllers
         /// <returns></returns>
         /// <exception cref=""></exception>
         [HttpGet("GetFolderPathTest")]
-        public Task<FilePathAndName> Test3()
+        public async  Task<FilePathAndName> Test3()
         {
+            //var msg = "测试";
+            //await _logger.LogAsync(msg);
+            //await _logger.LogAsync(msg, "INFO");
+            //await _logger.LogInfoAsync( msg);
+            //await _logger.LogWarnAsync(msg);
+            //await _logger.LogErrorAsync(msg);
             var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
-            return Task.FromResult(temp);
+            return temp;
         }
 
         /// <summary>
         /// 下载大文件压缩包测试
         /// </summary>
-        /// <returns></returns>
+        /// <returns></returns>2026-01-26
         /// <exception cref=""></exception>
         [HttpGet("ZipDownloadFile")]
         public IActionResult DownloadZipFileBig(String timeStr, int type)
         {
+            DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd", null);
+            string zipFileName = "default.zip";// 压缩包名称
+            string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");//压缩wwwroot内的指定文件夹
             try
             {
-                string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "FILE");//方式A：压缩wwwroot内的指定文件夹(推荐，你的项目内文件，如之前的Upload文件夹)
-                string zipFileName = $"文件备份_{DateTime.Now:yyyyMMddHHmmss}.zip";// 压缩包名称（带时间戳，避免重复，用户下载的文件名）
+                switch (type)
+                {
+                    case 1://day
+                        sourceFolder = Path.Combine(sourceFolder, "日报表", $"{dateTime.Year}-{dateTime.Month:00}");
+                        zipFileName = $"日报表_{dateTime.Year}-{dateTime.Month:00}.zip";
+                        break;
+                    case 2://week
+                        sourceFolder = Path.Combine(sourceFolder, "周报表", $"{dateTime.Year}-{dateTime.Month:00}");
+                        zipFileName = $"周报表_{dateTime.Year}-{dateTime.Month:00}.zip";
+                        break;
+                    case 3://month
+                        sourceFolder = Path.Combine(sourceFolder, "月报表",$"{dateTime.Year}");
+                        zipFileName = $"月报表_{dateTime.Year}-{dateTime.Month:00}.zip";
+                        break;
+                    default:
+                        return BadRequest("类型无效，请检查类型！");
+                }
                 string tempZipPath = Path.Combine(_webHostEnv.WebRootPath, "Temp", zipFileName);// 服务器临时压缩包路径（生成在wwwroot的Temp文件夹，会自动创建）
                 bool compressSuccess = _fileService.CompressFolderToZip(sourceFolder, tempZipPath);//调用FileService 压缩文件夹为Zip包
                 if (!compressSuccess)
