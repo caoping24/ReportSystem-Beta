@@ -2,6 +2,7 @@ import axios, { AxiosResponse, AxiosError } from "axios";
 import { message } from "ant-design-vue";
 import router from "@/router"; // 引入路由实例
 import { useLoginUserStore } from "@/store/useLoginUserStore"; // 引入Pinia store
+import { checkSessionTimeout, handleSessionTimeout } from "@/utils/sessionTimeout";
 
 // 扩展AxiosResponse类型
 declare module 'axios' {
@@ -30,18 +31,31 @@ myAxios.interceptors.request.use(
     if (!config.headers['Content-Type']) {
       config.headers['Content-Type'] = 'application/json;charset=UTF-8';
     }
+     const loginUserStore = useLoginUserStore();
+    // 从内存的loginUser中获取token，而非localStorage
+    if (loginUserStore.loginUser.token) {
+      config.headers.Authorization = `Bearer ${loginUserStore.loginUser.token}`;
+    }
     return config;
   },
   function (error: AxiosError) {
     message.error('请求配置异常，请检查参数或网络设置');
     console.error('请求拦截器错误：', error);
     return Promise.reject(error);
-  }
+  },
+  
 );
 
 // 响应拦截器
 myAxios.interceptors.response.use(
   function (response: AxiosResponse): AxiosResponse {
+      // 新增：请求成功但会话超时 → 强制登出
+    const loginUserStore = useLoginUserStore();
+    if (loginUserStore.loginUser.id && checkSessionTimeout()) {
+      handleSessionTimeout();
+      return response;
+    }
+
     // blob文件下载处理
     if (response.config.responseType === 'blob') {
       let fileName = '导出文件.xlsx';
@@ -65,28 +79,24 @@ myAxios.interceptors.response.use(
 
     // 40100状态码处理（核心修复：添加.value）
     if (data.code === 40100) {
-      const isUserCurrentApi = response.request.responseURL.includes("user/current");
-      // 修复1：router.currentRoute → router.currentRoute.value
-      const isLoginPage = router.currentRoute.value.path.includes("/user/login");
-      
-      if (!isUserCurrentApi && !isLoginPage && !isRedirecting) {
-        isRedirecting = true;
-        message.warning('登录状态已过期，请重新登录');
-        
-        const loginUserStore = useLoginUserStore();
-        loginUserStore.setLoginUser({ id: '' });
-        localStorage.removeItem("loginUser");
-        
-        // 修复2：router.currentRoute.fullPath → router.currentRoute.value.fullPath
-        router.push({
-          path: "/user/login",
-          query: { redirect: encodeURIComponent(router.currentRoute.value.fullPath) }
-        }).finally(() => {
-          isRedirecting = false;
-        });
-      }
-    }
-
+        const isUserCurrentApi = response.request.responseURL.includes("user/current");
+  const isLoginPage = router.currentRoute.value.path.includes("/user/login");
+  
+  if (!isUserCurrentApi && !isLoginPage && !isRedirecting) {
+    isRedirecting = true;
+    message.warning('登录状态已过期，请重新登录');
+    
+    const loginUserStore = useLoginUserStore();
+    loginUserStore.clearLoginUser(); // 改用clearLoginUser，自动清空sessionStorage
+    
+    router.push({
+      path: "/user/login",
+      query: { redirect: encodeURIComponent(router.currentRoute.value.fullPath) }
+    }).finally(() => {
+      isRedirecting = false;
+    });
+  }
+}
     // 业务错误处理
     if (data.code && data.code !== 0 && data.code !== 40100) {
       message.error(data.message || `请求失败（错误码：${data.code}）`);

@@ -48,7 +48,7 @@ import { reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { userLogin } from "@/api/user";
-
+import { recordLastOperateTime, resetTimeoutTimer } from "@/utils/sessionTimeout";
 const router = useRouter();
 const loginUserStore = useLoginUserStore();
 
@@ -69,20 +69,26 @@ const handleSubmit = async (values: any) => {
     const res = await userLogin(values);
     console.log("登录接口返回：", res);
 
-    // 适配接口返回格式（res.data.code === 0 为成功）
     const responseData = res.data || res;
     if (responseData.code === 0 && responseData.data) {
-      // 保存用户信息到Store（自动持久化到本地）
+      // 保存用户信息到Store
       loginUserStore.setLoginUser(responseData.data);
       message.success("登录成功");
       
-      // 延时跳转，避免弹窗和路由冲突
+      // 新增：登录成功后初始化会话超时状态
+      recordLastOperateTime();
+      resetTimeoutTimer();
+      
+      // 延时跳转
       setTimeout(async () => {
+        // 优先跳转到redirect参数指定的页面（如果有）
+        const redirect = router.currentRoute.value.query.redirect;
+        const targetPath = redirect ? decodeURIComponent(redirect as string) : "/app/components/leader-dashboard";
         await router.push({
-          path: "/app/components/leader-dashboard",
+          path: targetPath,
           replace: true,
         });
-        console.log("登录成功，跳转到首页");
+        console.log("登录成功，跳转到目标页面");
       }, 500);
     } else {
       message.error(responseData.message || "登录失败：账号或密码错误");
@@ -92,7 +98,6 @@ const handleSubmit = async (values: any) => {
     console.error("登录请求失败：", error);
   }
 };
-
 // 表单验证失败
 const onFinishFailed = (errorInfo: any) => {
   console.log("表单验证失败：", errorInfo);

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue"; // 可选：提示信息
-
+import { checkSessionTimeout } from "@/utils/sessionTimeout";
 // 页面组件导入
 import HomePage from "@/pages/HomePage.vue";
 import UserManagePage from "@/pages/admin/UserManagePage.vue";
@@ -83,31 +83,26 @@ const router = createRouter({
 // 路由守卫：登录校验
 router.beforeEach((to, from, next) => {
   const loginUserStore = useLoginUserStore();
-  
-  // 优先从本地存储恢复登录状态（核心修复刷新丢失问题）
-  const savedUser = localStorage.getItem("loginUser");
-  if (savedUser) {
-    try {
-      const parsedUser = JSON.parse(savedUser);
-      if (parsedUser.id && !loginUserStore.loginUser.id) {
-        loginUserStore.setLoginUser(parsedUser);
-      }
-    } catch (e) {
-      console.error("本地存储用户信息异常：", e);
-      localStorage.removeItem("loginUser");
-      loginUserStore.setLoginUser({ id: '' }); // 清空store
-    }
+  // 从sessionStorage恢复登录状态（核心：刷新时恢复）
+  loginUserStore.restoreLoginUser();
+
+  // 新增：已登录但会话超时 → 强制登出
+  const isLogin = !!loginUserStore.loginUser.id;
+  if (isLogin && checkSessionTimeout()) {
+    message.warning("登录状态已超时，请重新登录");
+    loginUserStore.clearLoginUser();
+    next({
+      path: "/user/login",
+      query: { redirect: encodeURIComponent(to.fullPath) }
+    });
+    return;
   }
 
-  // 判断登录状态
-  const isLogin = !!loginUserStore.loginUser.id;
-
-  // 权限校验逻辑
+  // 原有权限校验逻辑
   if (to.meta.requiresAuth) {
     if (isLogin) {
       next();
     } else {
-      // 优化3：跳登录页时携带redirect参数，登录后可返回原页面
       message.warning("请先登录后再访问");
       next({
         path: "/user/login",
@@ -115,7 +110,6 @@ router.beforeEach((to, from, next) => {
       });
     }
   } else {
-    // 已登录访问登录/注册页，跳首页
     if (isLogin && (to.path === "/user/login" || to.path === "/user/register")) {
       next("/app/home");
     } else {
