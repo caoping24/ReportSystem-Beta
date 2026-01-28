@@ -12,6 +12,14 @@
         LostFocus="Window_LostFocus"
         Closing="MainWindow_Closing">
     <Grid>
-
+        <!-- 定义两行：第一行占满剩余空间，第二行自适应高度 -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- 版本信息放在第二行，可加左右边距适配美观度 -->
+        <StackPanel Grid.Row="1" >
+            <Label Content="Ver:1.0.0" Height="24" Background="AliceBlue"/>
+        </StackPanel>
     </Grid>
 </Window>
