@@ -21,20 +21,27 @@ namespace CenterReport.Repository
             await _context.AddAsync(entity);
         }
 
-        public async  Task<PaginationResult<ReportRecord>> GetReportByPageAsync(PaginationRequest request)
+        public async Task<PaginationResult<ReportRecord>> GetReportByPageAsync(PaginationRequest request)
         {
             // 校验分页参数（避免无效参数）
             var pageIndex = Math.Max(1, request.PageIndex);
             var pageSize = Math.Clamp(request.PageSize, 1, 100); // 限制每页最大条数为100
 
-            // 核心分页逻辑：先查总条数，再查当前页数据
+            // 核心优化：先过滤，再排序（避免类型转换问题）
             var query = _context.ReportRecord
-                                  .AsNoTracking() // 只读场景提升性能
-                                  .OrderByDescending(r => r.createdtime);// AsNoTracking提升查询性能（只读场景）
-            var totalCount = await query.LongCountAsync(); // 总记录数
-            var data = await query
-                .Skip((pageIndex - 1) * pageSize) // 跳过前面的记录
-                .Take(pageSize) // 取当前页的记录
+                               .AsNoTracking(); // 只读场景提升性能
+
+            // 第一步：执行过滤条件（先过滤，不影响排序类型）
+            query = query.Where(r => r.Type == request.Type);
+
+            // 第二步：执行排序（此时 query 是 IQueryable，排序后转为 IOrderedQueryable）
+            var orderedQuery = query.OrderByDescending(r => r.createdtime);
+
+            // 第三步：基于排序后的查询执行分页
+            var totalCount = await orderedQuery.LongCountAsync();
+            var data = await orderedQuery
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             // 构造分页结果返回

@@ -56,7 +56,11 @@ const items = ref<MenuProps["items"]>([
     // 2. 核心修改：将 HomeOutlined 替换为 FileTextOutlined
     icon: () => h(FileTextOutlined)  
   },
-
+ { key: "/app/components/TableEditable", 
+   label: "手动填写", 
+   title: "手动填写" ,
+  icon: () => h(DashboardOutlined)  
+   },
 ]);
 
 // 菜单点击跳转
