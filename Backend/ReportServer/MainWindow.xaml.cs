@@ -29,15 +29,8 @@ namespace ReportServer
         public MainWindow()
         {
             InitializeComponent();
-
-            //this.Title = $"WPF GitInfo示例 - {GitInfo.InformationalVersion}";
-            //txtVersion.Text = $"版本：{GitInfo.Version}\n" +
-            //                  $"提交哈希：{GitInfo.CommitHash}\n" +
-            //                  $"提交时间：{GitInfo.CommitDate:yyyy-MM-dd HH:mm:ss}\n" +
-            //                  $"当前分支：{GitInfo.Branch}\n" +
-            //                  $"标签：{GitInfo.Tag}";
-            //this.Loaded += MainWindow_Loaded;
-            //this.Closing += MainWindow_Closing;
+            this.Loaded += MainWindow_Loaded;
+            this.Closing += MainWindow_Closing;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
