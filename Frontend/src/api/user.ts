@@ -78,7 +78,7 @@ export const deleteUser = async (id: string) => {
 export const getReportByPage = async (params: {
   pageIndex: number;
   pageSize: number;
-  type: number;
+  Type: number;
 }) => {
   return myAxios.request({
     url: "/api/ReportRecord/GetReportByPage", // 对应后端接口地址
