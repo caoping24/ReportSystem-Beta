@@ -166,25 +166,25 @@ namespace CenterBackend.Services
             target.cell40 = dataList.Select(x => x.cell40 ?? 0).Average();
             target.cell41 = dataList.Select(x => x.cell41 ?? 0).Average();
             target.cell42 = dataList.Last().cell42 - dataList.First().cell42;//差值
-            target.cell43 = dataList.Select(x => x.cell43 ?? 0).Average();
-            target.cell44 = dataList.Select(x => x.cell44 ?? 0).Average();
-            target.cell45 = dataList.Select(x => x.cell45 ?? 0).Average();
-            target.cell46 = dataList.Select(x => x.cell46 ?? 0).Average();
-            target.cell47 = dataList.Select(x => x.cell47 ?? 0).Average();
-            target.cell48 = dataList.Select(x => x.cell48 ?? 0).Average();
-            target.cell49 = dataList.Select(x => x.cell49 ?? 0).Average();
-            target.cell50 = dataList.Select(x => x.cell50 ?? 0).Average();
+            //target.cell43 = dataList.Select(x => x.cell43 ?? 0).Average();
+            //target.cell44 = dataList.Select(x => x.cell44 ?? 0).Average();
+            //target.cell45 = dataList.Select(x => x.cell45 ?? 0).Average();
+            //target.cell46 = dataList.Select(x => x.cell46 ?? 0).Average();
+            //target.cell47 = dataList.Select(x => x.cell47 ?? 0).Average();
+            //target.cell48 = dataList.Select(x => x.cell48 ?? 0).Average();
+            //target.cell49 = dataList.Select(x => x.cell49 ?? 0).Average();
+            //target.cell50 = dataList.Select(x => x.cell50 ?? 0).Average();
             // 第二组：cell51-cell100
             target.cell51 = dataList.Select(x => x.cell51 ?? 0).Average();
             target.cell52 = dataList.Select(x => x.cell52 ?? 0).Average();
             target.cell53 = dataList.Select(x => x.cell53 ?? 0).Average();
             target.cell54 = dataList.Select(x => x.cell54 ?? 0).Average();
             target.cell55 = dataList.Last().cell55 - dataList.First().cell55;//差值
-            target.cell56 = dataList.Select(x => x.cell56 ?? 0).Average();
-            target.cell57 = dataList.Select(x => x.cell57 ?? 0).Average();
-            target.cell58 = dataList.Select(x => x.cell58 ?? 0).Average();
-            target.cell59 = dataList.Select(x => x.cell59 ?? 0).Average();
-            target.cell60 = dataList.Select(x => x.cell60 ?? 0).Average();
+            //target.cell56 = dataList.Select(x => x.cell56 ?? 0).Average();
+            //target.cell57 = dataList.Select(x => x.cell57 ?? 0).Average();
+            //target.cell58 = dataList.Select(x => x.cell58 ?? 0).Average();
+            //target.cell59 = dataList.Select(x => x.cell59 ?? 0).Average();
+            //target.cell60 = dataList.Select(x => x.cell60 ?? 0).Average();
             target.cell61 = dataList.Select(x => x.cell61 ?? 0).Average();
             target.cell62 = dataList.Select(x => x.cell62 ?? 0).Average();
             target.cell63 = dataList.Select(x => x.cell63 ?? 0).Average();
@@ -206,25 +206,25 @@ namespace CenterBackend.Services
             target.cell79 = dataList.Last().cell79 - dataList.First().cell79;//差值
             target.cell80 = dataList.Select(x => x.cell80 ?? 0).Average();
             target.cell81 = dataList.Select(x => x.cell81 ?? 0).Average();
-            target.cell82 = dataList.Select(x => x.cell82 ?? 0).Average();
-            target.cell83 = dataList.Select(x => x.cell83 ?? 0).Average();
-            target.cell84 = dataList.Select(x => x.cell84 ?? 0).Average();
-            target.cell85 = dataList.Select(x => x.cell85 ?? 0).Average();
-            target.cell86 = dataList.Select(x => x.cell86 ?? 0).Average();
-            target.cell87 = dataList.Select(x => x.cell87 ?? 0).Average();
+            //target.cell82 = dataList.Select(x => x.cell82 ?? 0).Average();
+            //target.cell83 = dataList.Select(x => x.cell83 ?? 0).Average();
+            //target.cell84 = dataList.Select(x => x.cell84 ?? 0).Average();
+            //target.cell85 = dataList.Select(x => x.cell85 ?? 0).Average();
+            //target.cell86 = dataList.Select(x => x.cell86 ?? 0).Average();
+            //target.cell87 = dataList.Select(x => x.cell87 ?? 0).Average();
             target.cell88 = dataList.Select(x => x.cell88 ?? 0).Average();
             target.cell89 = dataList.Select(x => x.cell89 ?? 0).Average();
             target.cell90 = dataList.Select(x => x.cell90 ?? 0).Average();
             target.cell91 = dataList.Select(x => x.cell91 ?? 0).Average();
             target.cell92 = dataList.Select(x => x.cell92 ?? 0).Average();
-            target.cell93 = dataList.Select(x => x.cell93 ?? 0).Average();
-            target.cell94 = dataList.Select(x => x.cell94 ?? 0).Average();
-            target.cell95 = dataList.Select(x => x.cell95 ?? 0).Average();
-            target.cell96 = dataList.Select(x => x.cell96 ?? 0).Average();
-            target.cell97 = dataList.Select(x => x.cell97 ?? 0).Average();
-            target.cell98 = dataList.Select(x => x.cell98 ?? 0).Average();
-            target.cell99 = dataList.Select(x => x.cell99 ?? 0).Average();
-            target.cell100 = dataList.Select(x => x.cell100 ?? 0).Average();
+            //target.cell93 = dataList.Select(x => x.cell93 ?? 0).Average();
+            //target.cell94 = dataList.Select(x => x.cell94 ?? 0).Average();
+            //target.cell95 = dataList.Select(x => x.cell95 ?? 0).Average();
+            //target.cell96 = dataList.Select(x => x.cell96 ?? 0).Average();
+            //target.cell97 = dataList.Select(x => x.cell97 ?? 0).Average();
+            //target.cell98 = dataList.Select(x => x.cell98 ?? 0).Average();
+            //target.cell99 = dataList.Select(x => x.cell99 ?? 0).Average();
+            //target.cell100 = dataList.Select(x => x.cell100 ?? 0).Average();
             // 第三组：cell101-cell150
             target.cell101 = dataList.Select(x => x.cell101 ?? 0).Average();
             target.cell102 = dataList.Last().cell102 - dataList.First().cell102;//差值
@@ -254,28 +254,28 @@ namespace CenterBackend.Services
             target.cell126 = dataList.Select(x => x.cell126 ?? 0).Average();
             target.cell127 = dataList.Select(x => x.cell127 ?? 0).Average();
             target.cell128 = dataList.Select(x => x.cell128 ?? 0).Average();
-            target.cell129 = dataList.Last().cell129 - dataList.First().cell129;//差值
+            //target.cell129 = dataList.Last().cell129 - dataList.First().cell129;//差值
             target.cell130 = dataList.Select(x => x.cell130 ?? 0).Average();
             target.cell131 = dataList.Select(x => x.cell131 ?? 0).Average();
             target.cell132 = dataList.Last().cell132 - dataList.First().cell132;//差值
             target.cell133 = dataList.Select(x => x.cell133 ?? 0).Average();
             target.cell134 = dataList.Select(x => x.cell134 ?? 0).Average();
-            target.cell135 = dataList.Select(x => x.cell135 ?? 0).Average();
-            target.cell136 = dataList.Select(x => x.cell136 ?? 0).Average();
-            target.cell137 = dataList.Select(x => x.cell137 ?? 0).Average();
-            target.cell138 = dataList.Select(x => x.cell138 ?? 0).Average();
-            target.cell139 = dataList.Select(x => x.cell139 ?? 0).Average();
-            target.cell140 = dataList.Select(x => x.cell140 ?? 0).Average();
-            target.cell141 = dataList.Select(x => x.cell141 ?? 0).Average();
-            target.cell142 = dataList.Select(x => x.cell142 ?? 0).Average();
-            target.cell143 = dataList.Select(x => x.cell143 ?? 0).Average();
-            target.cell144 = dataList.Select(x => x.cell144 ?? 0).Average();
-            target.cell145 = dataList.Select(x => x.cell145 ?? 0).Average();
-            target.cell146 = dataList.Select(x => x.cell146 ?? 0).Average();
-            target.cell147 = dataList.Select(x => x.cell147 ?? 0).Average();
-            target.cell148 = dataList.Select(x => x.cell148 ?? 0).Average();
-            target.cell149 = dataList.Select(x => x.cell149 ?? 0).Average();
-            target.cell150 = dataList.Select(x => x.cell150 ?? 0).Average();
+            //target.cell135 = dataList.Select(x => x.cell135 ?? 0).Average();
+            //target.cell136 = dataList.Select(x => x.cell136 ?? 0).Average();
+            //target.cell137 = dataList.Select(x => x.cell137 ?? 0).Average();
+            //target.cell138 = dataList.Select(x => x.cell138 ?? 0).Average();
+            //target.cell139 = dataList.Select(x => x.cell139 ?? 0).Average();
+            //target.cell140 = dataList.Select(x => x.cell140 ?? 0).Average();
+            //target.cell141 = dataList.Select(x => x.cell141 ?? 0).Average();
+            //target.cell142 = dataList.Select(x => x.cell142 ?? 0).Average();
+            //target.cell143 = dataList.Select(x => x.cell143 ?? 0).Average();
+            //target.cell144 = dataList.Select(x => x.cell144 ?? 0).Average();
+            //target.cell145 = dataList.Select(x => x.cell145 ?? 0).Average();
+            //target.cell146 = dataList.Select(x => x.cell146 ?? 0).Average();
+            //target.cell147 = dataList.Select(x => x.cell147 ?? 0).Average();
+            //target.cell148 = dataList.Select(x => x.cell148 ?? 0).Average();
+            //target.cell149 = dataList.Select(x => x.cell149 ?? 0).Average();
+            //target.cell150 = dataList.Select(x => x.cell150 ?? 0).Average();
 
         }
         private async Task WeekDataCalculate(CalculatedData target, List<CalculatedData> dataList)
