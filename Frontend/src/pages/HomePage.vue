@@ -319,7 +319,7 @@ const fetchData = async (tabKey: string) => {
     const res = await getReportByPage({
       pageIndex: paginationParams.pageIndex,
       pageSize: paginationParams.pageSize,
-      type: Number(tabKey)
+      Type: Number(tabKey)
     });
     
     if (res.data) {

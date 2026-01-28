@@ -11,6 +11,8 @@ import UserRegisterPage from "@/pages/user/UserRegisterPage.vue";
 import BasicLayout from "@/layouts/BasicLayout.vue";
 //领导仓
 import LeaderDashboard from '@/components/LeaderDashboard.vue';
+//手动table填写数据
+import TableEditable from '@/components/TableEditable.vue';
 // 路由规则
 const routes: Array<RouteRecordRaw> = [
   // 根路径重定向到登录页
@@ -54,7 +56,13 @@ const routes: Array<RouteRecordRaw> = [
         path: 'components/leader-dashboard',
         name: 'LeaderDashboard',
         component: LeaderDashboard,
-        meta: { title: '领导仓数据看板' }
+        meta: { title: '数据看板' }
+      },
+       {
+        path: 'components/TableEditable',
+        name: 'TableEditable',
+        component: TableEditable,
+        meta: { title: '手动填写' }
       },
     ]
   },

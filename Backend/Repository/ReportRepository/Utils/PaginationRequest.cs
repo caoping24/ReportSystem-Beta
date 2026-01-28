@@ -18,6 +18,8 @@ namespace CenterReport.Repository.Utils
         /// 每页条数（默认10条）
         /// </summary>
         public int PageSize { get; set; } = 10;
+
+        public int Type { get; set; }=1;
     }
 
     // 分页响应结果
