@@ -35,8 +35,8 @@ import { MenuProps } from "ant-design-vue";
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue";
-// 1. 替换图标：导入新的报表图标（FileTextOutlined），保留数据看板的 DashboardOutlined
-import { HomeOutlined, DashboardOutlined, FileTextOutlined } from "@ant-design/icons-vue";
+// 1. 新增导入 EditOutlined 图标（可替换为你需要的任意图标）
+import { HomeOutlined, DashboardOutlined, FileTextOutlined, EditOutlined } from "@ant-design/icons-vue";
 import { userLogout } from "@/api/user";
 
 const router = useRouter();
@@ -53,13 +53,14 @@ const items = ref<MenuProps["items"]>([
     key: "/app/home", 
     label: "报表", 
     title: "报表",
-    // 2. 核心修改：将 HomeOutlined 替换为 FileTextOutlined
+    // 报表图标：FileTextOutlined
     icon: () => h(FileTextOutlined)  
   },
  { key: "/app/components/TableEditable", 
    label: "手动填写", 
    title: "手动填写" ,
-  icon: () => h(DashboardOutlined)  
+  // 2. 核心修改：将 DashboardOutlined 替换为 EditOutlined（手动填写的新图标）
+  icon: () => h(EditOutlined)  
    },
 ]);
 
