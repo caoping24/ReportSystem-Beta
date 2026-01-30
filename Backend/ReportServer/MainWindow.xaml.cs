@@ -21,7 +21,7 @@ namespace ReportServer
         private ToolStripMenuItem? _startMenuItem;
         private ToolStripMenuItem? _stopMenuItem;
         private ToolStripMenuItem? _openMainWindow; 
-        private const string HomePageUrl = "http://Localhost:5260/"; // 主页地址（常量，便于修改）
+        private const string HomePageUrl = "http://localhost:5260/user/login"; // 主页地址（常量，便于修改）
         private readonly object _apiLock = new();
         private Icon? _iconRunning; // 服务运行时图标（图标A）
         private Icon? _iconStopped; // 服务停止时图标（图标B）
