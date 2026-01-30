@@ -40,4 +40,16 @@ app.use(Antd) // 注册 antd 组件插件（可选，只用 message 则不需要
 const loginUserStore = useLoginUserStore()
 loginUserStore.restoreLoginUser()
 
+const originalResizeObserver = window.ResizeObserver;
+window.ResizeObserver = class ResizeObserver extends originalResizeObserver {
+  constructor(callback: ResizeObserverCallback) {
+    // 用requestAnimationFrame做0ms延迟，避免循环通知
+    super((entries, observer) => {
+      requestAnimationFrame(() => {
+        callback(entries, observer);
+      });
+    });
+  }
+};
+
 app.mount('#app')
