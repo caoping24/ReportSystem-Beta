@@ -445,7 +445,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
       dayLineChartInstance.setOption({
         // 新增日折线图标题配置（趋势1）
         title: {
-          text: '趋势1',
+          text: '羟基乙腈',
           left: 'center',
           top: 10,
           textStyle: {
@@ -485,7 +485,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
         },
         yAxis: {
           type: 'value',
-          name: '产量(件)',
+          name: 'L/h',
           nameTextStyle: { color: '#003399' },
           axisLine: { lineStyle: { color: '#e8f4fc' } },
           axisLabel: { color: '#666' },
@@ -531,7 +531,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
       weekLineChartInstance.setOption({
         // 新增周折线图标题配置（趋势2）
         title: {
-          text: '趋势2',
+          text: '摩尔比',
           left: 'center',
           top: 10,
           textStyle: {
@@ -571,7 +571,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
         },
         yAxis: {
           type: 'value',
-          name: '产量(件)',
+          name: '-',
           nameTextStyle: { color: '#003399' },
           axisLine: { lineStyle: { color: '#e8f4fc' } },
           axisLabel: { color: '#666' },
@@ -617,7 +617,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
       monthLineChartInstance.setOption({
         // 新增月折线图标题配置（趋势3）
         title: {
-          text: '趋势3',
+          text: '羟基乙腈配料',
           left: 'center',
           top: 10,
           textStyle: {
@@ -657,7 +657,7 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
         },
         yAxis: {
           type: 'value',
-          name: '产量(件)',
+          name: 'g/L',
           nameTextStyle: { color: '#003399' },
           axisLine: { lineStyle: { color: '#e8f4fc' } },
           axisLabel: { color: '#666' },
