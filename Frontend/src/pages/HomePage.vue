@@ -14,6 +14,7 @@
           :pagination-config="paginationConfig"
           :pagination-params="paginationParams"
           @download="downloadExcel"
+          @regenerate="handleRegenerateRow"
         />
       </a-tab-pane>
 
@@ -110,7 +111,7 @@
 
 <script lang="ts" setup>
 // script部分代码完全不变
-import { getReportByPage, downloadReport, batchDownloadReportZip } from "@/api/user";
+import { getReportByPage, downloadReport, batchDownloadReportZip, regenerateReports } from "@/api/user";
 import { message } from "ant-design-vue";
 import { ref, reactive, computed } from "vue";
 import dayjs from "dayjs"; 
@@ -172,6 +173,8 @@ const batchReportType = ref<string>("");
 // 修改点3：替换开始/结束时间为单个月份选择
 const batchMonth = ref<dayjs.Dayjs | null>(null);
 const isBatchDownloading = ref<boolean>(false);
+// 新增：重新生成状态（避免并发）
+const isRegenerating = ref<boolean>(false);
 
 // ===================== 计算属性（简化年报表相关逻辑） =====================
 const typeMap = { 
@@ -310,6 +313,32 @@ const resetBatchForm = () => {
   batchReportType.value = "";
   batchMonth.value = null;
 };
+    
+    // 新增：处理表格行的重新生成请求
+    const handleRegenerateRow = async (tabKey: number, createTime: string) => {
+        if (!tabKey || !createTime) {
+            return message.warning("参数缺失，无法重新生成");
+        }
+        try {
+            isRegenerating.value = true;
+            // 生成后端可直接解析的ISO 8601格式
+            const timeStr = new Date(createTime).toISOString();
+            message.warning(timeStr); // 调试用，可保留或删除
+
+            // 核心修改：将发送的字段名从 timeStr 改为 time
+            await regenerateReports({
+                type: Number(tabKey),
+                time: timeStr // 字段名改为 time，与后端DTO的Time字段对应
+            });
+
+            message.success("已提交重新生成请求，任务完成后请下载或刷新查看");
+        } catch (error) {
+            console.error("重新生成失败：", error);
+            message.error("重新生成失败：网络异常或接口错误");
+        } finally {
+            isRegenerating.value = false;
+        }
+    };
 
 const fetchData = async (tabKey: string) => {
   if (isFetching.value) return;

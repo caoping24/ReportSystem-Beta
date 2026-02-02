@@ -515,7 +515,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell4 != null && prevData.cell4 != null)
+                    if (data.cell4 != null && prevData != null && prevData != null && prevData.cell4 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell4);
                         float prevVal = Convert.ToSingle(prevData.cell4);
@@ -527,7 +527,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell5 != null && prevData.cell5 != null)
+                    if (data.cell5 != null && prevData != null && prevData.cell5 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell5);
                         float prevVal = Convert.ToSingle(prevData.cell5);
@@ -541,7 +541,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell8 != null && prevData.cell8 != null)
+                    if (data.cell8 != null && prevData != null && prevData.cell8 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell8);
                         float prevVal = Convert.ToSingle(prevData.cell8);
@@ -558,7 +558,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell14 != null && prevData.cell14 != null)
+                    if (data.cell14 != null && prevData != null && prevData.cell14 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell14);
                         float prevVal = Convert.ToSingle(prevData.cell14);
@@ -571,7 +571,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell16 != null && prevData.cell16 != null)
+                    if (data.cell16 != null && prevData != null && prevData.cell16 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell16);
                         float prevVal = Convert.ToSingle(prevData.cell16);
@@ -586,7 +586,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell20 != null && prevData.cell20 != null)
+                    if (data.cell20 != null && prevData != null && prevData.cell20 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell20);
                         float prevVal = Convert.ToSingle(prevData.cell20);
@@ -618,7 +618,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell37 != null && prevData.cell37 != null)
+                    if (data.cell37 != null && prevData != null && prevData.cell37 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell37);
                         float prevVal = Convert.ToSingle(prevData.cell37);
@@ -634,7 +634,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell42 != null && prevData.cell42 != null)
+                    if (data.cell42 != null && prevData != null && prevData.cell42 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell42);
                         float prevVal = Convert.ToSingle(prevData.cell42);
@@ -660,7 +660,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell55 != null && prevData.cell55 != null)
+                    if (data.cell55 != null && prevData != null && prevData.cell55 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell55);
                         float prevVal = Convert.ToSingle(prevData.cell55);
@@ -695,7 +695,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell79 != null && prevData.cell79 != null)
+                    if (data.cell79 != null && prevData != null && prevData.cell79 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell79);
                         float prevVal = Convert.ToSingle(prevData.cell79);
@@ -731,7 +731,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell102 != null && prevData.cell102 != null)
+                    if (data.cell102 != null && prevData != null && prevData.cell102 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell102);
                         float prevVal = Convert.ToSingle(prevData.cell102);
@@ -745,7 +745,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell105 != null && prevData.cell105 != null)
+                    if (data.cell105 != null && prevData != null && prevData.cell105 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell105);
                         float prevVal = Convert.ToSingle(prevData.cell105);
@@ -761,7 +761,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell110 != null && prevData.cell110 != null)
+                    if (data.cell110 != null && prevData != null && prevData.cell110 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell110);
                         float prevVal = Convert.ToSingle(prevData.cell110);
@@ -776,7 +776,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell114 != null && prevData.cell114 != null)
+                    if (data.cell114 != null && prevData != null && prevData.cell114 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell114);
                         float prevVal = Convert.ToSingle(prevData.cell114);
@@ -789,7 +789,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell116 != null && prevData.cell116 != null)
+                    if (data.cell116 != null && prevData != null && prevData.cell116 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell116);
                         float prevVal = Convert.ToSingle(prevData.cell116);
@@ -802,7 +802,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell118 != null && prevData.cell118 != null)
+                    if (data.cell118 != null && prevData != null && prevData.cell118 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell118);
                         float prevVal = Convert.ToSingle(prevData.cell118);
@@ -824,7 +824,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell129 != null && prevData.cell129 != null)
+                    if (data.cell129 != null && prevData != null && prevData.cell129 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell129);
                         float prevVal = Convert.ToSingle(prevData.cell129);
@@ -838,7 +838,7 @@ namespace CenterBackend.Services
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell132 != null && prevData.cell132 != null)
+                    if (data.cell132 != null && prevData != null && prevData.cell132 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell132);
                         float prevVal = Convert.ToSingle(prevData.cell132);
@@ -896,7 +896,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell4 != null && prevData.cell4 != null)
+                    if (data.cell4 != null && prevData != null && prevData.cell4 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell4);
                         float prevVal = Convert.ToSingle(prevData.cell4);
@@ -908,7 +908,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell5 != null && prevData.cell5 != null)
+                    if (data.cell5 != null && prevData != null && prevData.cell5 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell5);
                         float prevVal = Convert.ToSingle(prevData.cell5);
@@ -922,7 +922,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell8 != null && prevData.cell8 != null)
+                    if (data.cell8 != null && prevData != null && prevData.cell8 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell8);
                         float prevVal = Convert.ToSingle(prevData.cell8);
@@ -939,7 +939,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell14 != null && prevData.cell14 != null)
+                    if (data.cell14 != null && prevData != null && prevData.cell14 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell14);
                         float prevVal = Convert.ToSingle(prevData.cell14);
@@ -952,7 +952,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell16 != null && prevData.cell16 != null)
+                    if (data.cell16 != null && prevData != null && prevData.cell16 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell16);
                         float prevVal = Convert.ToSingle(prevData.cell16);
@@ -967,7 +967,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell20 != null && prevData.cell20 != null)
+                    if (data.cell20 != null && prevData != null && prevData.cell20 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell20);
                         float prevVal = Convert.ToSingle(prevData.cell20);
@@ -999,7 +999,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell37 != null && prevData.cell37 != null)
+                    if (data.cell37 != null && prevData != null && prevData.cell37 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell37);
                         float prevVal = Convert.ToSingle(prevData.cell37);
@@ -1015,7 +1015,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell42 != null && prevData.cell42 != null)
+                    if (data.cell42 != null && prevData != null && prevData.cell42 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell42);
                         float prevVal = Convert.ToSingle(prevData.cell42);
@@ -1041,7 +1041,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell55 != null && prevData.cell55 != null)
+                    if (data.cell55 != null && prevData != null && prevData.cell55 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell55);
                         float prevVal = Convert.ToSingle(prevData.cell55);
@@ -1076,7 +1076,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell79 != null && prevData.cell79 != null)
+                    if (data.cell79 != null && prevData != null && prevData.cell79 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell79);
                         float prevVal = Convert.ToSingle(prevData.cell79);
@@ -1112,7 +1112,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell102 != null && prevData.cell102 != null)
+                    if (data.cell102 != null && prevData != null && prevData.cell102 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell102);
                         float prevVal = Convert.ToSingle(prevData.cell102);
@@ -1126,7 +1126,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell105 != null && prevData.cell105 != null)
+                    if (data.cell105 != null && prevData != null && prevData.cell105 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell105);
                         float prevVal = Convert.ToSingle(prevData.cell105);
@@ -1142,7 +1142,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell110 != null && prevData.cell110 != null)
+                    if (data.cell110 != null && prevData != null && prevData.cell110 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell110);
                         float prevVal = Convert.ToSingle(prevData.cell110);
@@ -1157,7 +1157,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell114 != null && prevData.cell114 != null)
+                    if (data.cell114 != null && prevData != null && prevData.cell114 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell114);
                         float prevVal = Convert.ToSingle(prevData.cell114);
@@ -1170,7 +1170,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell116 != null && prevData.cell116 != null)
+                    if (data.cell116 != null && prevData != null && prevData.cell116 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell116);
                         float prevVal = Convert.ToSingle(prevData.cell116);
@@ -1183,7 +1183,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell118 != null && prevData.cell118 != null)
+                    if (data.cell118 != null && prevData != null && prevData.cell118 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell118);
                         float prevVal = Convert.ToSingle(prevData.cell118);
@@ -1205,7 +1205,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell129 != null && prevData.cell129 != null)
+                    if (data.cell129 != null && prevData != null && prevData.cell129 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell129);
                         float prevVal = Convert.ToSingle(prevData.cell129);
@@ -1219,7 +1219,7 @@ namespace CenterBackend.Services
                 if (i != 12)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
-                    if (data.cell132 != null && prevData.cell132 != null)
+                    if (data.cell132 != null && prevData != null && prevData.cell132 != null)
                     {
                         float currentVal = Convert.ToSingle(data.cell132);
                         float prevVal = Convert.ToSingle(prevData.cell132);
