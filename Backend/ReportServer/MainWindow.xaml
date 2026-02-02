@@ -5,12 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ReportServer"
         mc:Ignorable="d"
-        Title="报表运行系统" 
-        Height="184" 
-        Width="296"
+        Title="报表运行系统"
         GotFocus="Window_GotFocus"
         LostFocus="Window_LostFocus"
-        Closing="MainWindow_Closing">
+        Closing="MainWindow_Closing" Width="500" Height="275">
     <Grid>
         <!-- 定义两行：第一行占满剩余空间，第二行自适应高度 -->
         <Grid.RowDefinitions>
@@ -20,11 +18,11 @@
         <!-- 版本信息放在第二行，可加左右边距适配美观度 -->
 
         <StackPanel Grid.Row="0">
-            <Image HorizontalAlignment="Center"  Margin="1,1,1,1" VerticalAlignment="Top" Width="300"  Source="/Picture/MainPciture.jpg"/>
+            <Image HorizontalAlignment="Center"  Margin="1,1,1,1"  Source="/Picture/MainPciture.jpg"/>
         </StackPanel>
         <StackPanel Grid.Row="1" >
             <Label Content="Ver:1.0.0.1" Height="25" Background="AliceBlue"/>
         </StackPanel>
-        
+
     </Grid>
 </Window>

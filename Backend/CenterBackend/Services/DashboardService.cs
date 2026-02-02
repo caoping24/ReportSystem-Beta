@@ -19,8 +19,12 @@ namespace CenterBackend.Services
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
-           
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
+
             if (sourceDatas == null || !sourceDatas.Any())
             {
                 return new LineChartDataDto
@@ -63,7 +67,11 @@ namespace CenterBackend.Services
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
 
             if (sourceDatas == null || !sourceDatas.Any())
             {
@@ -106,7 +114,11 @@ namespace CenterBackend.Services
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
 
             if (sourceDatas == null || !sourceDatas.Any())
             {
