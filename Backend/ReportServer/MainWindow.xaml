@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:ReportServer"
         mc:Ignorable="d"
         Title="报表运行系统" 
-        Height="200" 
-        Width="300"
+        Height="184" 
+        Width="296"
         GotFocus="Window_GotFocus"
         LostFocus="Window_LostFocus"
         Closing="MainWindow_Closing">
@@ -18,8 +18,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <!-- 版本信息放在第二行，可加左右边距适配美观度 -->
-        <StackPanel Grid.Row="1" >
-            <Label Content="Ver:1.0.0" Height="24" Background="AliceBlue"/>
+
+        <StackPanel Grid.Row="0">
+            <Image HorizontalAlignment="Center"  Margin="1,1,1,1" VerticalAlignment="Top" Width="300"  Source="/Picture/MainPciture.jpg"/>
         </StackPanel>
+        <StackPanel Grid.Row="1" >
+            <Label Content="Ver:1.0.0.1" Height="25" Background="AliceBlue"/>
+        </StackPanel>
+        
     </Grid>
 </Window>
