@@ -57,7 +57,6 @@ namespace CenterBackend.Controllers
         {
             try
             {
-
                 var result = await _dashboardService.getLineCharThree(DateTime.Now);
                 return ResultUtils<LineChartDataDto>.Success(result);
             }

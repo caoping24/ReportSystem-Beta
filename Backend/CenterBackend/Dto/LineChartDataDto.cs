@@ -36,5 +36,5 @@ public class LineChartSeriesDto
     /// 折线数值数组（与XAxis长度一致）
     /// </summary>
     [JsonPropertyName("data")]
-    public required double?[] Data { get; set; } // 产量为整数，若需小数可改为double[]
+    public required float?[] Data { get; set; } // 产量为整数，若需小数可改为double[]
 }

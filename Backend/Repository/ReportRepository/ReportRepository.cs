@@ -61,10 +61,7 @@ namespace CenterReport.Repository
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
                 .ToListAsync();
         }
-        public async Task<List<T>> GetByDataTimeAsync(DateTime dateTime, int Type)
-        {
-            return await GetByDataTimeAsync(dateTime, dateTime, Type);
-        }
+
         public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end, int _Type)
         {
             var from = DateTime.Compare(start, end) > 0 ? end : start;

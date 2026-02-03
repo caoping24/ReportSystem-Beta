@@ -17,7 +17,10 @@
           name="userAccount"
           :rules="[{ required: true, message: '请输入账号！' }]"
         >
-          <a-input v-model:value="formState.userAccount" placeholder="请输入账号" />
+          <a-input
+            v-model:value="formState.userAccount"
+            placeholder="请输入账号"
+          />
         </a-form-item>
 
         <a-form-item
@@ -48,7 +51,10 @@ import { reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { userLogin } from "@/api/user";
-import { recordLastOperateTime, resetTimeoutTimer } from "@/utils/sessionTimeout";
+import {
+  recordLastOperateTime,
+  resetTimeoutTimer,
+} from "@/utils/sessionTimeout";
 const router = useRouter();
 const loginUserStore = useLoginUserStore();
 
@@ -74,16 +80,18 @@ const handleSubmit = async (values: any) => {
       // 保存用户信息到Store
       loginUserStore.setLoginUser(responseData.data);
       message.success("登录成功");
-      
+
       // 新增：登录成功后初始化会话超时状态
       recordLastOperateTime();
       resetTimeoutTimer();
-      
+
       // 延时跳转
       setTimeout(async () => {
         // 优先跳转到redirect参数指定的页面（如果有）
         const redirect = router.currentRoute.value.query.redirect;
-        const targetPath = redirect ? decodeURIComponent(redirect as string) : "/app/components/leader-dashboard";
+        const targetPath = redirect
+          ? decodeURIComponent(redirect as string)
+          : "/app/components/leader-dashboard";
         await router.push({
           path: targetPath,
           replace: true,
@@ -110,8 +118,12 @@ const onFinishFailed = (errorInfo: any) => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.3) 100%), 
-              url('@/assets/login-background.jpg') center/cover no-repeat;
+  background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    url("@/assets/login-background.jpg") center/cover no-repeat;
   background-attachment: fixed;
 }
 

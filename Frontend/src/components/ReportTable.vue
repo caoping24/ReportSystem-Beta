@@ -1,44 +1,46 @@
 <template>
-  <a-table 
-    :columns="columns" 
-    :data-source="dataSource" 
+  <a-table
+    :columns="columns"
+    :data-source="dataSource"
     bordered
     :pagination="paginationConfig"
     :row-key="(record) => record.id"
   >
     <template #bodyCell="{ column, record, index }">
       <template v-if="column.key === 'index'">
-        {{ (paginationParams.pageIndex - 1) * paginationParams.pageSize + index + 1 }}
+        {{
+          (paginationParams.pageIndex - 1) * paginationParams.pageSize +
+          index +
+          1
+        }}
       </template>
-          <template v-else-if="column.dataIndex === 'reportedTime'">
-        {{ record.reportedTime  }}
+      <template v-else-if="column.dataIndex === 'reportedTime'">
+        {{ record.reportedTime }}
       </template>
-        <template v-else-if="column.dataIndex === 'createTime'">
+      <template v-else-if="column.dataIndex === 'createTime'">
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
       </template>
-  
+
       <template v-else-if="column.key === 'action'">
-          <!-- 新增：重新生成按钮（放在下载按钮前） -->
-          <a-button @click="emitRegenerate(record.reportedTime)">重建</a-button>
-          <!--传报表日期-->
-          <a-button @click="handleDownload(record.reportedTime)">下载</a-button>
+        <a-button @click="emitRegenerate(record.reportedTime)">重建</a-button>
+        <a-button @click="handleDownload(record.reportedTime)">下载</a-button>
       </template>
     </template>
   </a-table>
 </template>
 
 <script lang="ts" setup>
-import dayjs from 'dayjs';
-import { defineProps, defineEmits } from 'vue';
-import type { TableProps } from 'ant-design-vue/es/table';
-import type { PaginationProps } from 'ant-design-vue/es/pagination';
+import dayjs from "dayjs";
+import { defineProps, defineEmits } from "vue";
+import type { TableProps } from "ant-design-vue/es/table";
+import type { PaginationProps } from "ant-design-vue/es/pagination";
 
 interface ReportTableProps {
-    tabKey: string;
-    columns: TableProps['columns'];
-    dataSource: any[];
-    paginationConfig: PaginationProps;
-    paginationParams: {
+  tabKey: string;
+  columns: TableProps["columns"];
+  dataSource: any[];
+  paginationConfig: PaginationProps;
+  paginationParams: {
     pageIndex: number;
     pageSize: number;
   };
@@ -47,41 +49,40 @@ interface ReportTableProps {
 const props = defineProps<ReportTableProps>();
 
 const emit = defineEmits<{
-    (e: 'download', tabKey: string, reportedTime: string): void;
-    (e: 'regenerate', tabKey: string, reportedTime: string): void;
+  (e: "download", tabKey: string, reportedTime: string): void;
+  (e: "regenerate", tabKey: string, reportedTime: string): void;
 }>();
 
 // 导出给模板使用：格式化并触发 download 事件
 const handleDownload = (reportedTime: string | Date | undefined) => {
-    if (!reportedTime) {
-
-        emit('download', props.tabKey, '');
-        return;
-    }
-    // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
-    const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
-    emit('download', props.tabKey, formattedTime);
+  if (!reportedTime) {
+    emit("download", props.tabKey, "");
+    return;
+  }
+  // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
+  const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
+  emit("download", props.tabKey, formattedTime);
 };
 
 // 导出给模板使用：格式化并触发 regenerate 事件
-    const emitRegenerate = (reportedTime: string | Date | undefined) => {
-        if (!reportedTime) {
+const emitRegenerate = (reportedTime: string | Date | undefined) => {
+  if (!reportedTime) {
+    emit("regenerate", props.tabKey, "");
+    return;
+  }
 
-            emit('regenerate', props.tabKey, '');
-        return;
-    }
-    // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
-    const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
-    emit('regenerate', props.tabKey, formattedTime);
+  // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
+  const formattedTime =
+    dayjs(reportedTime).add(1, "day").format("YYYY-MM-DD") + " 09:00:01";
+  emit("regenerate", props.tabKey, formattedTime);
 };
-
 </script>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'ReportTable'
+  name: "ReportTable",
 });
 </script>
 
@@ -97,7 +98,7 @@ export default defineComponent({
 ::v-deep .ant-table-thead > tr > th {
   background: #ffffff !important; /* 表头背景纯白 */
   color: #003399; /* 表头文字深蓝 */
-  border-bottom: 2px solid #00AEEF; /* 表头下边框（浅蓝飘带色） */
+  border-bottom: 2px solid #00aeef; /* 表头下边框（浅蓝飘带色） */
 }
 
 /* 下载按钮配色 */
@@ -108,8 +109,8 @@ export default defineComponent({
 }
 ::v-deep .ant-table-cell .ant-btn:hover {
   color: #fff;
-  background: #00AEEF;
-  border-color: #00AEEF;
+  background: #00aeef;
+  border-color: #00aeef;
 }
 
 /* 表格行边框 */

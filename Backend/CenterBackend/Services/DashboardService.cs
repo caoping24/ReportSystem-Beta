@@ -2,95 +2,82 @@
 using CenterBackend.IServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CenterBackend.Services
 {
     public class DashboardService : IDashboardService
     {
-        private readonly IReportRepository<SourceData> _reportRepository;
-
-        public DashboardService(IReportRepository<SourceData> _reportRepository)
+        private readonly IReportRepository<SourceData> _sourceData;
+        private readonly IReportRepository<CalculatedData> _calculatedData;
+        public DashboardService(IReportRepository<SourceData> _SourceData, IReportRepository<CalculatedData> _CalculatedData)
         {
-            this._reportRepository = _reportRepository;
+            this._sourceData = _SourceData;
+            this._calculatedData = _CalculatedData;
         }
         public async Task<LineChartDataDto> getLineChartOne(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            string[] xAxis = Enumerable.Range(0, 24)
-                           .Select(n => time.AddHours(-23 + n))
-                           .Select(t => t.Hour.ToString("D2"))
-                           .ToArray();
+            //时间范围昨日0点到现在
+            var queryStartTime = time.AddHours(-24).Date;
+            var queryEndTime = time;
+            var totalHours = (int)Math.Ceiling((queryEndTime - queryStartTime).TotalHours); // 总小时数（X轴长度）
 
-            if (sourceDatas == null || !sourceDatas.Any())
-            {
-                return new LineChartDataDto
-                {
-                    XAxis = xAxis,
-                    Series = new List<LineChartSeriesDto>
-                    {
-                        new LineChartSeriesDto
-                        {
-                            Name = "无数据",
-                            // 替换NaN为null
-                            Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
-                        }
-                    }
-                };
-            }
-            double?[] data = new double?[sourceDatas.Count()];
-            int index = 0;
-            foreach (var item in sourceDatas)
-            {
-                data[index] = item.cell19;
-                index++;
-            }
-            return new LineChartDataDto
+            // 生成X轴刻度：0~totalHours-1（可按需替换为实际时间文本，如「昨日8点」）
+            string[] xAxis = Enumerable.Range(0, totalHours)
+                                       .Select(i => (i % 24).ToString())
+                                       .ToArray();
+
+            var chartDataDto = new LineChartDataDto//[全null基础DTO]
             {
                 XAxis = xAxis,
                 Series = new List<LineChartSeriesDto>
                 {
                     new LineChartSeriesDto
                     {
-                        Name = "羟基乙睛进料流量",
-                        Data = data
+                        Name = "羟基进料流量",
+                        Data = Enumerable.Repeat((float?)null, totalHours).ToArray() // 全null数组
                     }
                 }
             };
+
+            List<SourceData> sourceDatas = await _sourceData.GetByDataTimeAsync(queryStartTime, queryEndTime)//查询
+                                                 .ConfigureAwait(false);
+            if (sourceDatas == null || !sourceDatas.Any())// 无数据
+            {
+                return chartDataDto; // 直接返回全null基础DTO
+            }
+
+            // 有数据：按「时间→X轴索引」映射，填充对应位置的非null值
+            float?[] DataLine1 = chartDataDto.Series[0].Data;
+            foreach (var sourceData in sourceDatas)
+            {
+                var hourDiff = (int)Math.Floor((sourceData.createdtime - queryStartTime).TotalHours); // 计算当前数据时间与查询开始时间的小时差 → 对应X轴索引
+                if (hourDiff < 0 || hourDiff >= totalHours)// 索引越界校验：过滤异常时间数据，避免数组报错
+                {
+                    continue;
+                }
+                if (sourceData.cell19 != null && Convert.ToSingle(sourceData.cell19) is float TempValue1)
+                {
+                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                }
+            }
+            return chartDataDto;
         }
 
 
         public async Task<LineChartDataDto> getLineCharTwo(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            string[] xAxis = Enumerable.Range(0, 24)
-                           .Select(n => time.AddHours(-23 + n))
-                           .Select(t => t.Hour.ToString("D2"))
-                           .ToArray();
+            //时间范围昨日0点到现在
+            var queryStartTime = time.AddHours(-24).Date;
+            var queryEndTime = time;
+            var totalHours = (int)Math.Ceiling((queryEndTime - queryStartTime).TotalHours); // 总小时数（X轴长度）
 
-            if (sourceDatas == null || !sourceDatas.Any())
-            {
-                return new LineChartDataDto
-                {
-                    XAxis = xAxis,
-                    Series = new List<LineChartSeriesDto>
-                    {
-                        new LineChartSeriesDto
-                        {
-                            Name = "无数据",
-                            // 替换NaN为null
-                            Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
-                        }
-                    }
-                };
-            }
-            double?[] data = new double?[sourceDatas.Count()];
-            int index = 0;
-            foreach (var item in sourceDatas)
-            {
-                data[index] = item.cell22;
-                index++;
-            }
-            return new LineChartDataDto
+            // 生成X轴刻度：0~totalHours-1（可按需替换为实际时间文本，如「昨日8点」）
+            string[] xAxis = Enumerable.Range(0, totalHours)
+                                       .Select(i => (i % 24).ToString())
+                                       .ToArray();
+
+            var chartDataDto = new LineChartDataDto//[全null基础DTO]
             {
                 XAxis = xAxis,
                 Series = new List<LineChartSeriesDto>
@@ -98,45 +85,60 @@ namespace CenterBackend.Services
                     new LineChartSeriesDto
                     {
                         Name = "摩尔比",
-                        Data = data
+                        Data = Enumerable.Repeat((float?)null, totalHours).ToArray() // 全null数组
+                    },
+                    new LineChartSeriesDto
+                    {
+                        Name = "累计配比",
+                        Data = Enumerable.Repeat((float?)null, totalHours).ToArray() // 全null数组
                     }
                 }
             };
+
+            List<SourceData> sourceDatas = await _sourceData.GetByDataTimeAsync(queryStartTime, queryEndTime)//查询
+                                                 .ConfigureAwait(false);
+            if (sourceDatas == null || !sourceDatas.Any())// 无数据
+            {
+                return chartDataDto; // 直接返回全null基础DTO
+            }
+
+            // 有数据：按「时间→X轴索引」映射，填充对应位置的非null值
+            float?[] DataLine1 = chartDataDto.Series[0].Data;
+            float?[] DataLine2 = chartDataDto.Series[1].Data;
+            foreach (var sourceData in sourceDatas)
+            {
+                var hourDiff = (int)Math.Floor((sourceData.createdtime - queryStartTime).TotalHours); // 计算当前数据时间与查询开始时间的小时差 → 对应X轴索引
+                if (hourDiff < 0 || hourDiff >= totalHours)// 索引越界校验：过滤异常时间数据，避免数组报错
+                {
+                    continue;
+                }
+                if (sourceData.cell22 != null && Convert.ToSingle(sourceData.cell22) is float TempValue1)
+                {
+                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                }
+
+                if (sourceData.cell23 != null && Convert.ToSingle(sourceData.cell23) is float TempValue2)
+                {
+                    DataLine2[hourDiff] = (float)Math.Round(TempValue2, 4);
+                }
+            }
+            return chartDataDto;
         }
 
         public async Task<LineChartDataDto> getLineCharThree(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            string[] xAxis = Enumerable.Range(0, 24)
-                           .Select(n => time.AddHours(-23 + n))
-                           .Select(t => t.Hour.ToString("D2"))
-                           .ToArray();
+            //时间范围昨日0点到现在
+            var queryStartTime = time.AddHours(-24).Date;
+            var queryEndTime = time;
+            var totalHours = (int)Math.Ceiling((queryEndTime - queryStartTime).TotalHours); // 总小时数（X轴长度）
 
-            if (sourceDatas == null || !sourceDatas.Any())
-            {
-                return new LineChartDataDto
-                {
-                    XAxis = xAxis,
-                    Series = new List<LineChartSeriesDto>
-            {
-                new LineChartSeriesDto
-                {
-                    Name = "无数据",
-                    Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
-                }
-            }
-                };
-            }
-            double?[] data1 = new double?[sourceDatas.Count()];
-            double?[] data2 = new double?[sourceDatas.Count()];
-            int index = 0;
-            foreach (var item in sourceDatas)
-            {
-                data1[index] = item.cell3;
-                data2[index] = item.cell6;
-                index++;
-            }
-            return new LineChartDataDto
+            // 生成X轴刻度：0~totalHours-1（可按需替换为实际时间文本，如「昨日8点」）
+            string[] xAxis = Enumerable.Range(0, totalHours)
+                                       .Select(i => (i % 24).ToString())
+                                       .ToArray();
+
+            //[全null基础DTO]
+            var chartDataDto = new LineChartDataDto
             {
                 XAxis = xAxis,
                 Series = new List<LineChartSeriesDto>
@@ -144,15 +146,44 @@ namespace CenterBackend.Services
                     new LineChartSeriesDto
                     {
                         Name = "羟基原料浓度1",
-                        Data = data1
+                        Data = Enumerable.Repeat((float?)null, totalHours).ToArray() // 全null数组
                     },
-                     new LineChartSeriesDto
+                    new LineChartSeriesDto
                     {
                         Name = "羟基配后浓度2",
-                        Data = data2
+                        Data = Enumerable.Repeat((float?)null, totalHours).ToArray() // 全null数组
                     }
                 }
             };
+
+            List<SourceData> sourceDatas = await _sourceData.GetByDataTimeAsync(queryStartTime, queryEndTime)//查询
+                                                 .ConfigureAwait(false);
+            if (sourceDatas == null || !sourceDatas.Any())// 无数据
+            {
+                return chartDataDto; // 直接返回全null基础DTO
+            }
+
+            // 有数据：按「时间→X轴索引」映射，填充对应位置的非null值
+            float?[] DataLine1 = chartDataDto.Series[0].Data;
+            float?[] DataLine2 = chartDataDto.Series[1].Data;
+            foreach (var sourceData in sourceDatas)
+            {
+                var hourDiff = (int)Math.Floor((sourceData.createdtime - queryStartTime).TotalHours); // 计算当前数据时间与查询开始时间的小时差 → 对应X轴索引
+                if (hourDiff < 0 || hourDiff >= totalHours)// 索引越界校验：过滤异常时间数据，避免数组报错
+                {
+                    continue;
+                }
+                if (sourceData.cell3 != null && Convert.ToSingle(sourceData.cell3) is float TempValue1)
+                {
+                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                }
+
+                if (sourceData.cell6 != null && Convert.ToSingle(sourceData.cell6) is float TempValue2)
+                {
+                    DataLine2[hourDiff] = (float)Math.Round(TempValue2, 4);
+                }
+            }
+            return chartDataDto;
         }
 
         public async Task<List<PieChartItemDto>> getPieChart(DateTime time)
@@ -171,14 +202,31 @@ namespace CenterBackend.Services
 
         public async Task<CoreChartDto> getCoreChart(DateTime time)
         {
-            await Task.Delay(1);
+            var StartTime = time.AddDays(-1).Date;
+                StartTime = StartTime.AddHours(8).AddMinutes(30);
+            var EndTime = time.AddDays(-1).Date;
+                EndTime = EndTime.AddHours(8).AddMinutes(40);
+
+            List<CalculatedData> dataList = await _calculatedData.GetByDataTimeAsync(StartTime, EndTime, 1);
+
             var coreChartDto = new CoreChartDto
             {
-                Yesterday = 55.23,
-                Week = 66.22,
-                Month = 21.21,
-                Year = 12.33
+                Yesterday = 0,
+                Week = 0,
+                Month = 0,
+                Year = 0
             };
+            if (dataList == null || !dataList.Any())
+            {
+                return coreChartDto;
+
+            }
+
+            coreChartDto.Yesterday = (double)dataList.ElementAt(0).cell3;
+            coreChartDto.Week = (double)dataList.ElementAt(0).cell6;
+            coreChartDto.Month = (double)dataList.ElementAt(0).cell22;
+            coreChartDto.Year = (double)dataList.ElementAt(0).cell23;
+
             return coreChartDto;
         }
     }

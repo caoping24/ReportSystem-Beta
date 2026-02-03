@@ -5,7 +5,10 @@ import { message } from "ant-design-vue";
 // 超时时间（毫秒），按需调整：如30分钟 = 30 * 60 * 1000
 export const SESSION_TIMEOUT = 30 * 60 * 1000;
 // 优先从sessionStorage恢复最后操作时间（刷新保留）
-let lastOperateTime = parseInt(sessionStorage.getItem("lastOperateTime") || `${Date.now()}`, 10);
+let lastOperateTime = parseInt(
+  sessionStorage.getItem("lastOperateTime") || `${Date.now()}`,
+  10
+);
 // 定时器实例
 let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
 

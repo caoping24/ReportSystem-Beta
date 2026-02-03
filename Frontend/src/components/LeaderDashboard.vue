@@ -1,19 +1,14 @@
 <template>
   <div id="leaderDashboardPage">
-
     <!-- 上部：产量指标卡片区 -->
     <div class="production-cards">
       <!-- 昨日产量卡片 -->
-      <a-card 
-        class="production-card" 
-        :loading="isLoading"
-        hoverable
-      >
+      <a-card class="production-card" :loading="isLoading" hoverable>
         <a-statistic
-          title="昨日产量"
+          title="昨日羟基原料浓度"
           :value="productionData.yesterday"
           :precision="2"
-          suffix="kg"
+          suffix="g/L"
           class="stat-item"
         >
           <template #prefix>
@@ -23,16 +18,12 @@
       </a-card>
 
       <!-- 当周产量卡片 -->
-      <a-card 
-        class="production-card" 
-        :loading="isLoading"
-        hoverable
-      >
+      <a-card class="production-card" :loading="isLoading" hoverable>
         <a-statistic
-          title="当周产量"
+          title="昨日羟基配料浓度"
           :value="productionData.week"
           :precision="2"
-          suffix="kg"
+          suffix="g/L"
           class="stat-item"
         >
           <template #prefix>
@@ -42,16 +33,12 @@
       </a-card>
 
       <!-- 当月产量卡片 -->
-      <a-card 
-        class="production-card" 
-        :loading="isLoading"
-        hoverable
-      >
+      <a-card class="production-card" :loading="isLoading" hoverable>
         <a-statistic
-          title="当月产量"
+          title="昨日摩尔比"
           :value="productionData.month"
           :precision="2"
-          suffix="kg"
+          suffix=" "
           class="stat-item"
         >
           <template #prefix>
@@ -61,16 +48,12 @@
       </a-card>
 
       <!-- 今年产量卡片 -->
-      <a-card 
-        class="production-card" 
-        :loading="isLoading"
-        hoverable
-      >
+      <a-card class="production-card" :loading="isLoading" hoverable>
         <a-statistic
-          title="今年产量"
+          title="昨日累计配比"
           :value="productionData.year"
           :precision="2"
-          suffix="kg"
+          suffix=" "
           class="stat-item"
         >
           <template #prefix>
@@ -82,62 +65,55 @@
 
     <!-- 中部：折线图区域（三个趋势图） -->
     <div class="chart-section line-charts-section">
-
-      <a-card 
-        class="chart-card line-chart-card" 
+      <a-card
+        class="chart-card line-chart-card"
         :loading="chartLoading.dayLine"
-       
+        :body-style="{ padding: '5px' }"
       >
-        <!-- 移除手动下载按钮 -->
-        <div style="width: 100%; height: 300px;">
+        <div style="width: 100%; height: 300px">
           <div ref="dayLineChartRef" class="chart-container"></div>
         </div>
       </a-card>
 
-      <a-card 
-        class="chart-card line-chart-card" 
+      <a-card
+        class="chart-card line-chart-card"
         :loading="chartLoading.weekLine"
+        :body-style="{ padding: '5px' }"
       >
-        <!-- 移除手动下载按钮 -->
-        <div style="width: 100%; height: 300px;">
+        <div style="width: 100%; height: 300px">
           <div ref="weekLineChartRef" class="chart-container"></div>
         </div>
       </a-card>
 
-      <a-card 
-        class="chart-card line-chart-card" 
+      <a-card
+        class="chart-card line-chart-card"
         :loading="chartLoading.monthLine"
+        :body-style="{ padding: '5px' }"
       >
-        <!-- 移除手动下载按钮 -->
-        <div style="width: 100%; height: 300px;">
+        <div style="width: 100%; height: 300px">
           <div ref="monthLineChartRef" class="chart-container"></div>
         </div>
       </a-card>
     </div>
-    
+
     <!-- 下部：饼图区域（产量占比） -->
     <div class="chart-section pie-chart-section">
-      <a-card 
-        class="chart-card" 
-        :loading="chartLoading.pie"
-      >
+      <a-card class="chart-card" :loading="chartLoading.pie">
         <!-- 移除手动下载按钮 -->
-        <div style="width: 100%; height: 300px;">
+        <div style="width: 100%; height: 300px">
           <div ref="pieChartRef" class="chart-container"></div>
         </div>
       </a-card>
-    </div>
-
-    <!-- 数据刷新按钮 -->
-    <div class="refresh-btn-group">
-      <a-button 
-        type="primary" 
-        @click="fetchAllData"
-        :loading="isLoading"
-        icon="reload"
-      >
-        刷新全部数据
-      </a-button>
+      <!-- 数据刷新按钮 -->
+      <div class="refresh-btn-group">
+        <a-button
+          type="primary"
+          @click="fetchAllData"
+          :loading="isLoading"
+          icon=""
+          >刷新数据</a-button
+        >
+      </div>
     </div>
   </div>
 </template>
@@ -146,12 +122,19 @@
 // 1. 导入所有需要的生命周期和API
 import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { message } from "ant-design-vue";
-import { CalendarOutlined } from '@ant-design/icons-vue';
+import { CalendarOutlined } from "@ant-design/icons-vue";
 // 2. 确保ECharts引入正确（核心修复）
-import * as echarts from 'echarts';
+import * as echarts from "echarts";
 
 //接口
-import{getLineChartOne,getLineChartTwo,getLineChartThree,getPieChart,getCoreChart} from'@/api/Dashboard'
+import {
+  getLineChartOne,
+  getLineChartTwo,
+  getLineChartThree,
+  getPieChart,
+  getCoreChart,
+} from "@/api/Dashboard";
+import myAxios from "@/request";
 
 // ===================== 类型定义 =====================
 interface ProductionData {
@@ -199,18 +182,19 @@ interface ChartLoading {
 
 // ===================== 状态管理 =====================
 const isLoading = ref<boolean>(false); // 整体加载状态
-const chartLoading = reactive<ChartLoading>({ // 各图表独立加载状态
+const chartLoading = reactive<ChartLoading>({
+  // 各图表独立加载状态
   pie: false,
   dayLine: false,
   weekLine: false,
-  monthLine: false
+  monthLine: false,
 });
 
 const productionData = reactive<ProductionData>({
   yesterday: 0,
   week: 0,
   month: 0,
-  year: 0
+  year: 0,
 });
 
 // 图表DOM引用
@@ -259,7 +243,7 @@ const fetchPieChartData = async (params?: ProductionQueryParams) => {
       pieChartData.value = res.data;
       // 数据更新后立即更新图表
       await nextTick();
-      setTimeout(() => safeInitChart('pie'), 100);
+      setTimeout(() => safeInitChart("pie"), 100);
     } else {
       throw new Error(res.message);
     }
@@ -268,7 +252,7 @@ const fetchPieChartData = async (params?: ProductionQueryParams) => {
     message.error("产量占比图表数据加载失败");
     // 空数据也初始化图表（避免实例为null）
     await nextTick();
-    setTimeout(() => safeInitChart('pie'), 100);
+    setTimeout(() => safeInitChart("pie"), 100);
   } finally {
     chartLoading.pie = false;
   }
@@ -279,7 +263,7 @@ const fetchDayLineChartData = async (params?: ProductionQueryParams) => {
   try {
     chartLoading.dayLine = true;
     // 调用实际的getLineChartThree接口
-    const axiosRes = await getLineChartThree();
+    const axiosRes = await getLineChartOne();
     const res = axiosRes.data as RealApiResponse<LineChartData>;
     // 核心修复：适配真实接口的判断逻辑
     if (res.code === 0) {
@@ -287,20 +271,20 @@ const fetchDayLineChartData = async (params?: ProductionQueryParams) => {
       if (res.data && res.data.xAxis && res.data.series) {
         dayLineChartData.value = res.data;
       } else {
-        throw new Error('接口返回数据格式异常');
+        throw new Error("接口返回数据格式异常");
       }
       // 数据更新后立即更新图表
       await nextTick();
-      setTimeout(() => safeInitChart('dayLine'), 100);
+      setTimeout(() => safeInitChart("dayLine"), 100);
     } else {
-      throw new Error(res.message || '获取昨日时段产量数据失败');
+      throw new Error(res.message || "获取昨日时段产量数据失败");
     }
   } catch (error) {
     console.error("获取日折线图数据失败：", error);
     message.error("昨日时段产量趋势图表数据加载失败");
     // 空数据也初始化图表
     await nextTick();
-    setTimeout(() => safeInitChart('dayLine'), 100);
+    setTimeout(() => safeInitChart("dayLine"), 100);
   } finally {
     chartLoading.dayLine = false;
   }
@@ -319,20 +303,20 @@ const fetchWeekLineChartData = async (params?: ProductionQueryParams) => {
       if (res.data && res.data.xAxis && res.data.series) {
         weekLineChartData.value = res.data;
       } else {
-        throw new Error('接口返回数据格式异常');
+        throw new Error("接口返回数据格式异常");
       }
       // 数据更新后立即更新图表
       await nextTick();
-      setTimeout(() => safeInitChart('weekLine'), 100);
+      setTimeout(() => safeInitChart("weekLine"), 100);
     } else {
-      throw new Error(res.message || '获取周产量数据失败');
+      throw new Error(res.message || "获取周产量数据失败");
     }
   } catch (error) {
     console.error("获取周折线图数据失败：", error);
     message.error("周产量趋势图表数据加载失败");
     // 空数据也初始化图表
     await nextTick();
-    setTimeout(() => safeInitChart('weekLine'), 100);
+    setTimeout(() => safeInitChart("weekLine"), 100);
   } finally {
     chartLoading.weekLine = false;
   }
@@ -351,20 +335,20 @@ const fetchMonthLineChartData = async (params?: ProductionQueryParams) => {
       if (res.data && res.data.xAxis && res.data.series) {
         monthLineChartData.value = res.data;
       } else {
-        throw new Error('接口返回数据格式异常');
+        throw new Error("接口返回数据格式异常");
       }
       // 数据更新后立即更新图表
       await nextTick();
-      setTimeout(() => safeInitChart('monthLine'), 100);
+      setTimeout(() => safeInitChart("monthLine"), 100);
     } else {
-      throw new Error(res.message || '获取月产量数据失败');
+      throw new Error(res.message || "获取月产量数据失败");
     }
   } catch (error) {
     console.error("获取月折线图数据失败：", error);
     message.error("月产量趋势图表数据加载失败");
     // 空数据也初始化图表
     await nextTick();
-    setTimeout(() => safeInitChart('monthLine'), 100);
+    setTimeout(() => safeInitChart("monthLine"), 100);
   } finally {
     chartLoading.monthLine = false;
   }
@@ -375,54 +359,66 @@ const fetchMonthLineChartData = async (params?: ProductionQueryParams) => {
  * 安全初始化/更新指定图表（兼容空数据）
  * @param chartType 图表类型：pie | dayLine | weekLine | monthLine | all
  */
-const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' | 'all' = 'all') => {
+// 定义多折线配色（基于你的主色#00AEEF扩展，循环使用）
+
+const safeInitChart = (
+  chartType: "pie" | "dayLine" | "weekLine" | "monthLine" | "all" = "all"
+) => {
   // 初始化饼图（兼容空数据 + 内置下载 + 标题）
-  if (chartType === 'pie' || chartType === 'all') {
+  if (chartType === "pie" || chartType === "all") {
     if (!pieChartRef.value) return;
     try {
       if (pieChartInstance) pieChartInstance.dispose();
       pieChartInstance = echarts.init(pieChartRef.value);
       // 空数据兜底
-      const pieData = pieChartData.value.length ? pieChartData.value : [{ name: '暂无数据', value: 1 }];
+      const pieData = pieChartData.value.length
+        ? pieChartData.value
+        : [{ name: "暂无数据", value: 1 }];
       pieChartInstance.setOption({
         // 新增饼图标题配置
         title: {
-          text: '占比',
-          left: 'center',
+          text: "占比",
+          left: "center",
           top: 10,
           textStyle: {
             fontSize: 16,
             fontWeight: 600,
-            color: '#333'
-          }
+            color: "#333",
+          },
         },
-        color: ['#003399', '#00AEEF', '#0066CC', '#66B2FF'],
-        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} 件 ({d}%)' },
-        legend: { orient: 'horizontal', bottom: 0, textStyle: { color: '#333' } },
+        color: ["#003399", "#00AEEF", "#0066CC", "#66B2FF"],
+        tooltip: { trigger: "item", formatter: "{a} <br/>{b}: {c} 件 ({d}%)" },
+        legend: {
+          orient: "horizontal",
+          bottom: 0,
+          textStyle: { color: "#333" },
+        },
         toolbox: {
           show: true,
           feature: {
             saveAsImage: {
               show: true,
-              title: '下载图片',
-              type: 'png',
+              title: "下载图片",
+              type: "png",
               pixelRatio: 2,
-              backgroundColor: '#ffffff'
-            }
+              backgroundColor: "#ffffff",
+            },
           },
           right: 10,
-          top: 10
+          top: 10,
         },
-        series: [{
-          name: '产量占比',
-          type: 'pie',
-          radius: ['40%', '70%'],
-          avoidLabelOverlap: false,
-          label: { show: false },
-          emphasis: { label: { show: true, fontSize: 16, fontWeight: 600 } },
-          labelLine: { show: false },
-          data: pieData
-        }]
+        series: [
+          {
+            name: "产量占比",
+            type: "pie",
+            radius: ["40%", "70%"],
+            avoidLabelOverlap: false,
+            label: { show: false },
+            emphasis: { label: { show: true, fontSize: 16, fontWeight: 600 } },
+            labelLine: { show: false },
+            data: pieData,
+          },
+        ],
       });
     } catch (error) {
       console.error("初始化饼图失败：", error);
@@ -431,84 +427,94 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
   }
 
   // 初始化日产量折线图（趋势1 + 标题）
-  if (chartType === 'dayLine' || chartType === 'all') {
+  if (chartType === "dayLine" || chartType === "all") {
     if (!dayLineChartRef.value) return;
     try {
       if (dayLineChartInstance) dayLineChartInstance.dispose();
       dayLineChartInstance = echarts.init(dayLineChartRef.value);
       // 空数据兜底
-      const xAxisData = dayLineChartData.value.xAxis.length ? dayLineChartData.value.xAxis : ['暂无数据'];
-      const seriesData = dayLineChartData.value.series.length ? dayLineChartData.value.series : [{
-        name: '产量',
-        data: [0]
-      }];
+      const xAxisData = dayLineChartData.value.xAxis.length
+        ? dayLineChartData.value.xAxis
+        : ["暂无数据"];
+      const seriesData = dayLineChartData.value.series.length
+        ? dayLineChartData.value.series
+        : [
+            {
+              name: "产量",
+              data: [0],
+            },
+          ];
       dayLineChartInstance.setOption({
         // 新增日折线图标题配置（趋势1）
         title: {
-          text: '羟基乙腈',
-          left: 'center',
+          // text: '羟基乙腈',
+          left: "center",
           top: 10,
           textStyle: {
             fontSize: 16,
             fontWeight: 600,
-            color: '#333'
-          }
+            color: "#333",
+          },
         },
-        color: ['#003399'],
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        legend: { 
-          orient: 'horizontal', 
+        color: ["#003399"],
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+        legend: {
+          orient: "horizontal",
           top: 40, // 调整legend位置，避免与标题重叠
-          left: 'center',
-          textStyle: { color: '#333', fontSize: 12 } 
+          left: "center",
+          textStyle: { color: "#333", fontSize: 12 },
         },
         toolbox: {
           show: true,
           feature: {
             saveAsImage: {
               show: true,
-              title: '下载图片',
-              type: 'png',
+              title: "下载图片",
+              type: "png",
               pixelRatio: 2,
-              backgroundColor: '#ffffff'
-            }
+              backgroundColor: "#ffffff",
+            },
           },
           right: 10,
-          top: 10
+          top: 10,
         },
-        grid: { left: '3%', right: '4%', bottom: '3%', top: '70px', containLabel: true }, // 调整top适配标题+legend
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          top: "70px",
+          containLabel: true,
+        }, // 调整top适配标题+legend
         xAxis: {
-          type: 'category',
+          type: "category",
           data: xAxisData,
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' }
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
         },
         yAxis: {
-          type: 'value',
-          name: 'L/h',
-          nameTextStyle: { color: '#003399' },
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' },
-          splitLine: { lineStyle: { color: '#e8f4fc' } }
+          type: "value",
+          name: "L/h",
+          nameTextStyle: { color: "#003399" },
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
+          splitLine: { lineStyle: { color: "#e8f4fc" } },
+          min: function (value: { min: number }) {
+            return Math.floor(value.min);
+          },
+          max: function (value: { max: number }) {
+            return Math.ceil(value.max);
+          },
         },
-        series: seriesData.map(item => ({
-          name: item.name,
-          type: 'line',
-          smooth: true,
-          data: item.data,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#00AEEF', borderColor: '#003399', borderWidth: 2 },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(0, 174, 239, 0.2)' },
-                { offset: 0, color: 'rgba(0, 174, 239, 0.05)' }
-              ]
-            }
-          }
-        }))
+        series: seriesData.map((item, index) => {
+          return {
+            name: item.name,
+            type: "line",
+            smooth: true,
+            data: item.data,
+            showSymbol: false,
+            lineStyle: { width: 1 }, // 线条颜色绑定当前色
+          };
+        }),
       });
     } catch (error) {
       console.error("初始化日折线图失败：", error);
@@ -517,84 +523,96 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
   }
 
   // 初始化周产量折线图（趋势2 + 标题）
-  if (chartType === 'weekLine' || chartType === 'all') {
+  if (chartType === "weekLine" || chartType === "all") {
     if (!weekLineChartRef.value) return;
     try {
       if (weekLineChartInstance) weekLineChartInstance.dispose();
       weekLineChartInstance = echarts.init(weekLineChartRef.value);
       // 空数据兜底
-      const xAxisData = weekLineChartData.value.xAxis.length ? weekLineChartData.value.xAxis : ['暂无数据'];
-      const seriesData = weekLineChartData.value.series.length ? weekLineChartData.value.series : [{
-        name: '产量',
-        data: [0]
-      }];
+      const xAxisData = weekLineChartData.value.xAxis.length
+        ? weekLineChartData.value.xAxis
+        : ["暂无数据"];
+      const seriesData = weekLineChartData.value.series.length
+        ? weekLineChartData.value.series
+        : [
+            {
+              name: "产量",
+              data: [0],
+            },
+          ];
       weekLineChartInstance.setOption({
         // 新增周折线图标题配置（趋势2）
         title: {
-          text: '摩尔比',
-          left: 'center',
+          // text: '摩尔比',
+          left: "center",
           top: 10,
           textStyle: {
             fontSize: 16,
             fontWeight: 600,
-            color: '#333'
-          }
+            color: "#333",
+          },
         },
-        color: ['#003399'],
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        legend: { 
-          orient: 'horizontal', 
+        color: ["#003399"],
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+        legend: {
+          orient: "horizontal",
           top: 40, // 调整legend位置，避免与标题重叠
-          left: 'center',
-          textStyle: { color: '#333', fontSize: 12 } 
+          left: "center",
+          textStyle: { color: "#333", fontSize: 12 },
         },
         toolbox: {
           show: true,
           feature: {
             saveAsImage: {
               show: true,
-              title: '下载图片',
-              type: 'png',
+              title: "下载图片",
+              type: "png",
               pixelRatio: 2,
-              backgroundColor: '#ffffff'
-            }
+              backgroundColor: "#ffffff",
+            },
           },
           right: 10,
-          top: 10
+          top: 10,
         },
-        grid: { left: '3%', right: '4%', bottom: '3%', top: '70px', containLabel: true }, // 调整top适配标题+legend
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          top: "70px",
+          containLabel: true,
+        }, // 调整top适配标题+legend
         xAxis: {
-          type: 'category',
+          type: "category",
           data: xAxisData,
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' }
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
         },
         yAxis: {
-          type: 'value',
-          name: '-',
-          nameTextStyle: { color: '#003399' },
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' },
-          splitLine: { lineStyle: { color: '#e8f4fc' } }
+          type: "value",
+          name: "-",
+          nameTextStyle: { color: "#003399" },
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
+          splitLine: { lineStyle: { color: "#e8f4fc" } },
+          min: function (value: { min: number }) {
+            return Math.floor(value.min);
+          },
+          max: function (value: { max: number }) {
+            return Math.ceil(value.max);
+          },
         },
-        series: seriesData.map(item => ({
-          name: item.name,
-          type: 'line',
-          smooth: true,
-          data: item.data,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#00AEEF', borderColor: '#003399', borderWidth: 2 },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(0, 174, 239, 0.2)' },
-                { offset: 0, color: 'rgba(0, 174, 239, 0.05)' }
-              ]
-            }
-          }
-        }))
+        series: seriesData.map((item, index) => {
+          // 按索引循环取色，避免颜色数组长度不足
+
+          return {
+            name: item.name,
+            type: "line",
+            smooth: true,
+            data: item.data,
+            showSymbol: false,
+            lineStyle: { width: 1 }, // 线条颜色绑定当前色
+          };
+        }),
       });
     } catch (error) {
       console.error("初始化周折线图失败：", error);
@@ -603,84 +621,94 @@ const safeInitChart = (chartType: 'pie' | 'dayLine' | 'weekLine' | 'monthLine' |
   }
 
   // 初始化月产量折线图（趋势3 + 标题）
-  if (chartType === 'monthLine' || chartType === 'all') {
+  if (chartType === "monthLine" || chartType === "all") {
     if (!monthLineChartRef.value) return;
     try {
       if (monthLineChartInstance) monthLineChartInstance.dispose();
       monthLineChartInstance = echarts.init(monthLineChartRef.value);
       // 空数据兜底
-      const xAxisData = monthLineChartData.value.xAxis.length ? monthLineChartData.value.xAxis : ['暂无数据'];
-      const seriesData = monthLineChartData.value.series.length ? monthLineChartData.value.series : [{
-        name: '产量',
-        data: [0]
-      }];
+      const xAxisData = monthLineChartData.value.xAxis.length
+        ? monthLineChartData.value.xAxis
+        : ["暂无数据"];
+      const seriesData = monthLineChartData.value.series.length
+        ? monthLineChartData.value.series
+        : [
+            {
+              name: "产量",
+              data: [0],
+            },
+          ];
       monthLineChartInstance.setOption({
         // 新增月折线图标题配置（趋势3）
         title: {
-          text: '羟基乙腈配料',
-          left: 'center',
+          // text: '羟基乙腈配料',
+          left: "center",
           top: 10,
           textStyle: {
             fontSize: 16,
             fontWeight: 600,
-            color: '#333'
-          }
+            color: "#333",
+          },
         },
-        color: ['#003399'],
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        legend: { 
-          orient: 'horizontal', 
+        color: ["#003399"],
+        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+        legend: {
+          orient: "horizontal",
           top: 40, // 调整legend位置，避免与标题重叠
-          left: 'center',
-          textStyle: { color: '#333', fontSize: 12 } 
+          left: "center",
+          textStyle: { color: "#333", fontSize: 12 },
         },
         toolbox: {
           show: true,
           feature: {
             saveAsImage: {
               show: true,
-              title: '下载图片',
-              type: 'png',
+              title: "下载图片",
+              type: "png",
               pixelRatio: 2,
-              backgroundColor: '#ffffff'
-            }
+              backgroundColor: "#ffffff",
+            },
           },
           right: 10,
-          top: 10
+          top: 10,
         },
-        grid: { left: '3%', right: '4%', bottom: '3%', top: '70px', containLabel: true }, // 调整top适配标题+legend
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
+          top: "70px",
+          containLabel: true,
+        }, // 调整top适配标题+legend
         xAxis: {
-          type: 'category',
+          type: "category",
           data: xAxisData,
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' }
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
         },
         yAxis: {
-          type: 'value',
-          name: 'g/L',
-          nameTextStyle: { color: '#003399' },
-          axisLine: { lineStyle: { color: '#e8f4fc' } },
-          axisLabel: { color: '#666' },
-          splitLine: { lineStyle: { color: '#e8f4fc' } }
+          type: "value",
+          name: "g/L",
+          nameTextStyle: { color: "#003399" },
+          axisLine: { lineStyle: { color: "#e8f4fc" } },
+          axisLabel: { color: "#666" },
+          splitLine: { lineStyle: { color: "#e8f4fc" } },
+          min: function (value: { min: number }) {
+            return Math.floor(value.min);
+          },
+          max: function (value: { max: number }) {
+            return Math.ceil(value.max);
+          },
         },
-        series: seriesData.map(item => ({
-          name: item.name,
-          type: 'line',
-          smooth: true,
-          data: item.data,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#00AEEF', borderColor: '#003399', borderWidth: 2 },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(0, 174, 239, 0.2)' },
-                { offset: 0, color: 'rgba(0, 174, 239, 0.05)' }
-              ]
-            }
-          }
-        }))
+        series: seriesData.map((item, index) => {
+          return {
+            name: item.name,
+            type: "line",
+            smooth: true,
+            data: item.data,
+            showSymbol: false,
+            lineStyle: { width: 1 }, // 线条颜色绑定当前色
+          };
+        }),
       });
     } catch (error) {
       console.error("初始化月折线图失败：", error);
@@ -700,14 +728,14 @@ const fetchAllData = async () => {
       fetchPieChartData(params),
       fetchDayLineChartData(params),
       fetchWeekLineChartData(params),
-      fetchMonthLineChartData(params)
+      fetchMonthLineChartData(params),
     ]);
 
     message.success("数据刷新请求已发送");
-    
+
     // 延迟初始化所有图表（确保数据和DOM都就绪）
     setTimeout(() => {
-      safeInitChart('all');
+      safeInitChart("all");
     }, 500);
   } catch (error) {
     console.error("获取核心数据失败：", error);
@@ -723,7 +751,7 @@ const fetchAllData = async () => {
 // 页面挂载时加载数据
 onMounted(async () => {
   await fetchAllData();
-  
+
   // 监听窗口大小变化，自适应图表
   const resizeHandler = () => {
     if (pieChartInstance) pieChartInstance.resize();
@@ -731,11 +759,11 @@ onMounted(async () => {
     if (weekLineChartInstance) weekLineChartInstance.resize();
     if (monthLineChartInstance) monthLineChartInstance.resize();
   };
-  window.addEventListener('resize', resizeHandler);
-  
+  window.addEventListener("resize", resizeHandler);
+
   // 组件卸载时移除监听
   onUnmounted(() => {
-    window.removeEventListener('resize', resizeHandler);
+    window.removeEventListener("resize", resizeHandler);
     // 销毁图表实例，避免内存泄漏
     if (pieChartInstance) pieChartInstance.dispose();
     if (dayLineChartInstance) dayLineChartInstance.dispose();
@@ -747,7 +775,7 @@ onMounted(async () => {
 
 <style scoped>
 #leaderDashboardPage {
-  padding: 20px;
+  padding: 10px;
   background-color: #f5f7fa;
   min-height: 100vh;
 }
@@ -756,17 +784,24 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .production-card {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* 核心：固定高度（可按需调整）+ Flex垂直居中 */
+  height: 80px;
+  display: flex;
+  align-items: center;
+  /* 左右内边距，让内容不贴边，视觉更舒展 */
+  padding: 0 24px;
 }
-
+/* 让统计项占满卡片宽度，避免内容偏移 */
 .stat-item {
   padding: 8px 0;
+  width: 100%;
 }
 
 .stat-icon {
@@ -775,7 +810,7 @@ onMounted(async () => {
 }
 
 .chart-section {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .line-charts-section {
@@ -791,7 +826,7 @@ onMounted(async () => {
 }
 
 .line-chart-card {
-  height: 380px;
+  height: 300px;
 }
 
 .chart-container {
@@ -800,7 +835,7 @@ onMounted(async () => {
 }
 
 .refresh-btn-group {
-  margin-top: 20px;
+  margin-top: 10px;
   text-align: right;
 }
 

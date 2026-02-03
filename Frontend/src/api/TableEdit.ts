@@ -8,13 +8,11 @@ export const Headers = async () => {
 };
 
 //列表
-export const HourData = async (params: {
-  date: string;
-}) => {
+export const HourData = async (params: { date: string }) => {
   return myAxios.request({
     url: "/api/ReportRecord/HourData", // 对应后端接口地址
     method: "GET",
-    params: params
+    params: params,
   });
 };
 

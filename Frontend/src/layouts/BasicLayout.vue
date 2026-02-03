@@ -6,7 +6,7 @@
       <div class="sidebar-header">
         <img class="logo" src="../assets/hb.png" alt="logo" />
       </div>
-      
+
       <!-- 侧边栏菜单 -->
       <a-menu
         v-model:selectedKeys="current"
@@ -36,7 +36,12 @@ import { useRouter } from "vue-router";
 import { useLoginUserStore } from "@/store/useLoginUserStore";
 import { message } from "ant-design-vue";
 // 1. 新增导入 EditOutlined 图标（可替换为你需要的任意图标）
-import { HomeOutlined, DashboardOutlined, FileTextOutlined, EditOutlined } from "@ant-design/icons-vue";
+import {
+  HomeOutlined,
+  DashboardOutlined,
+  FileTextOutlined,
+  EditOutlined,
+} from "@ant-design/icons-vue";
 import { userLogout } from "@/api/user";
 
 const router = useRouter();
@@ -44,24 +49,26 @@ const loginUserStore = useLoginUserStore();
 
 // 修复 TS 类型错误：使用 h 函数创建 VNode，避免类型推断问题
 const items = ref<MenuProps["items"]>([
- { key: "/app/components/leader-dashboard", 
-   label: "数据看板", 
-   title: "数据看板" ,
-  icon: () => h(DashboardOutlined)  
-   },
-  { 
-    key: "/app/home", 
-    label: "报表下载", 
+  {
+    key: "/app/components/leader-dashboard",
+    label: "数据看板",
+    title: "数据看板",
+    icon: () => h(DashboardOutlined),
+  },
+  {
+    key: "/app/home",
+    label: "报表下载",
     title: "报表下载",
     // 报表图标：FileTextOutlined
-    icon: () => h(FileTextOutlined)  
+    icon: () => h(FileTextOutlined),
   },
- { key: "/app/components/TableEditable", 
-   label: "数据录入", 
-   title: "数据录入" ,
-  // 2. 核心修改：将 DashboardOutlined 替换为 EditOutlined（手动填写的新图标）
-  icon: () => h(EditOutlined)  
-   },
+  {
+    key: "/app/components/TableEditable",
+    label: "数据录入",
+    title: "数据录入",
+    // 2. 核心修改：将 DashboardOutlined 替换为 EditOutlined（手动填写的新图标）
+    icon: () => h(EditOutlined),
+  },
 ]);
 
 // 菜单点击跳转
@@ -79,7 +86,7 @@ router.afterEach((to) => {
 const handleLogout = async () => {
   try {
     await userLogout({});
-    if (typeof loginUserStore.clearLoginUser === 'function') {
+    if (typeof loginUserStore.clearLoginUser === "function") {
       loginUserStore.clearLoginUser();
     } else {
       loginUserStore.loginUser = { userName: "未登录" };
@@ -91,7 +98,7 @@ const handleLogout = async () => {
     router.replace({ path: "/user/login" });
   } catch (error) {
     console.error("退出登录接口调用失败：", error);
-    if (typeof loginUserStore.clearLoginUser === 'function') {
+    if (typeof loginUserStore.clearLoginUser === "function") {
       loginUserStore.clearLoginUser();
     } else {
       loginUserStore.loginUser = { userName: "未登录" };
@@ -160,9 +167,9 @@ const clearAllCookies = () => {
 }
 .main-content {
   flex: 1;
-  padding: 24px;
+  padding: 2px;
   background-color: #ffffff;
-  overflow-y: auto;
+  overflow-y: 100vh;
 }
 :deep(.ant-menu-vertical .ant-menu-item) {
   height: 44px;

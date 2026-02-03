@@ -60,12 +60,12 @@ export const useLoginUserStore = defineStore("loginUser", () => {
       }
     }
   }
- 
-  return { 
-    loginUser, 
-    setLoginUser, 
-    fetchLoginUser, 
+
+  return {
+    loginUser,
+    setLoginUser,
+    fetchLoginUser,
     clearLoginUser,
-    restoreLoginUser 
+    restoreLoginUser,
   };
 });

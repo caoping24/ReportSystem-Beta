@@ -12,11 +12,13 @@ namespace CenterBackend.Controllers
     public class ReportRecordController : ControllerBase
     {
         private readonly IReportRecordService _reportRecordService;
-        private readonly IReportService reportService;
+        private readonly IReportService _reportService;
+
+
         public ReportRecordController(IReportRecordService reportRecordService, IReportService reportService)
         {
             this._reportRecordService = reportRecordService;
-            this.reportService = reportService;
+            this._reportService = reportService;
         }
 
         /// <summary>
@@ -54,7 +56,9 @@ namespace CenterBackend.Controllers
 
         private readonly List<TableHeaderDto> _mockHeaders = new()
         {
+            
             new TableHeaderDto { Prop = "hour", Label = "小时" },
+            //反应液检测数据
             new TableHeaderDto { Prop = "cell29", Label = "二乙腈含量-化分（%）" },
             new TableHeaderDto { Prop = "cell30", Label = "二乙腈含量-色谱（%）" },
             new TableHeaderDto { Prop = "cell31", Label = "羟基乙腈残余（%）" },
@@ -62,19 +66,23 @@ namespace CenterBackend.Controllers
             new TableHeaderDto { Prop = "cell33", Label = "甘氨腈（g/L）" },
             new TableHeaderDto { Prop = "cell34", Label = "三乙腈（g/L）" },
             new TableHeaderDto { Prop = "cell35", Label = "反应液检测数据pH" },
+            //闪发器冷凝液检测数据记录
             new TableHeaderDto { Prop = "cell56", Label = "COD(mg/L)" },
             new TableHeaderDto { Prop = "cell57", Label = "TCN/总腈(mg/L)" },
             new TableHeaderDto { Prop = "cell58", Label = "NH3-N氨氮(mg/L)" },
             new TableHeaderDto { Prop = "cell59", Label = "HCHO甲醛(mg/L)" },
             new TableHeaderDto { Prop = "cell60", Label = "闪发器冷凝液ph" },
+            //一次母液分析数据
             new TableHeaderDto { Prop = "cell82", Label = "一次分离产量（Kg）" },
             new TableHeaderDto { Prop = "cell83", Label = "二乙腈含量化分（%）" },
             new TableHeaderDto { Prop = "cell84", Label = "二乙腈含量色谱（%）" },
             new TableHeaderDto { Prop = "cell85", Label = "羟基乙腈残余（%）" },
             new TableHeaderDto { Prop = "cell86", Label = "羟基乙腈残余（g/L）" },
             new TableHeaderDto { Prop = "cell87", Label = "硫铵含量（g/L）" },
+            //脱色数据记录
             new TableHeaderDto { Prop = "cell135", Label = "脱色前透光率(%)" },
             new TableHeaderDto { Prop = "cell136", Label = "脱色后透光率(%)" },
+            //巡检参数记录
             new TableHeaderDto { Prop = "cell137", Label = "脱色输送泵（mbar）" },
             new TableHeaderDto { Prop = "cell138", Label = "低蒸出料泵（mbar）" },
             new TableHeaderDto { Prop = "cell139", Label = "低蒸循环泵（mbar）" },
@@ -107,20 +115,17 @@ namespace CenterBackend.Controllers
 
             try
             {
-                // 业务时间范围定义：查询日期8点 → 次日8点（核心划分规则，保留）
-                DateTime startTime = queryDate.Date.AddHours(8);   // 查询日8:00:00
-                DateTime endTime = startTime.AddDays(1);          // 次日8:00:00
-                // 当前系统时间（取到分钟，避免毫秒差异导致误判未来时间）
-                DateTime currentTime = DateTime.Now;
+                // 当天
+                DateTime startTime = queryDate.Date.AddHours(0);   
+                DateTime endTime = startTime.AddHours(23).AddMinutes(59);         
 
-                // 2. 获取该时间段内的所有CalculatedData数据（保留原有逻辑）
-                var calculatedDatas = await reportService.getCalculatedData(queryDate);
+                var calculatedDatas = await _reportService.GetSourceData(startTime, endTime);
 
-                // 3.构建【带日期维度的分组键】，区分今日8点和次日8点（保留原有逻辑）
+                // 3.构建【带日期维度的分组键】
                 var dataWithKey = calculatedDatas.Select(cd => new
                 {
                     Data = cd,
-                    GroupKey = cd.createdtime >= startTime && cd.createdtime < queryDate.Date.AddDays(1)
+                    GroupKey = cd.createdtime >= startTime && cd.createdtime < endTime
                         ? cd.createdtime.Hour
                         : cd.createdtime.Hour + 100
                 }).ToList();
@@ -130,37 +135,22 @@ namespace CenterBackend.Controllers
                     .GroupBy(item => item.GroupKey)
                     .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.Data);
 
-                // 业务小时列表：8点到次日8点（保留原有25个时段）
-                var hourList = new List<int> { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+                var hourList = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
 
-                // 6. 构建返回数据（核心修改：计算真实时间+动态判定IsNextDay）
-                var hourDataList = hourList.Select((hour, index) =>
+                var hourDataList = hourList.Select((hour, index) =>// 6. 构建返回数据（核心修改：计算真实时间+动态判定IsNextDay）
                 {
-                    // ===== 【核心修改1：计算当前小时段的真实业务时间戳】 =====
-                    DateTime realHourTime;
-                    if (index < 16)
-                    {
-                        // 前16个时段：8-23点 → 属于【查询日期】的8:00 - 23:59
-                        realHourTime = queryDate.Date.AddHours(hour);
-                    }
-                    else
-                    {
-                        // 后9个时段：0-7点+最后一个8点 → 属于【查询日期+1天】的0:00 - 8:00
-                        realHourTime = queryDate.Date.AddDays(1).AddHours(hour);
-                    }
-                    // 时间精度统一到分钟（避免毫秒差异导致未来时间误判）
-                    realHourTime = new DateTime(realHourTime.Year, realHourTime.Month, realHourTime.Day,
-                                                realHourTime.Hour, realHourTime.Minute, 0);
 
-                    // ===== 【核心修改2：匹配分组数据（保留原有逻辑）】 =====
-                    int targetKey = index >= 16 ? hour + 100 : hour;
+                    DateTime realHourTime;
+                    realHourTime = queryDate.Date.AddHours(hour);
+
+          
+                    int targetKey = hour;
                     hourGroupDict.TryGetValue(targetKey, out var targetData);
 
-                    // ===== 【核心修改3：动态判定未来时间】 =====
-                    // 未来时间：该时段的真实时间 大于 当前系统时间
-                    bool isFutureTime = realHourTime > currentTime;
 
-                    // ===== 【核心修改4：修正IsNextDay判定条件（严格按需求）】 =====
+                    // 未来时间：该时段的真实时间 大于 当前系统时间
+                    bool isFutureTime =  realHourTime > DateTime.Now;
+
                     // IsNextDay=true（前端禁用）：未来时间 OR 无对应数据
                     // IsNextDay=false（前端可编辑）：过去时间 AND 有对应数据
                     bool isNextDay = isFutureTime || targetData == null;
@@ -221,13 +211,18 @@ namespace CenterBackend.Controllers
             // 校验必填参数
             if (string.IsNullOrEmpty(request.Date)
                 || string.IsNullOrEmpty(request.Prop)
-                || request.Hour < 0 || request.Hour > 23)
+                || request.Hour < 0 || request.Hour > 23 )
             {
                 return StatusCode(500, new { message = "参数不合法" });
             }
+
+            if (string.IsNullOrEmpty(request.Value))
+            {
+                return StatusCode(200, new { message = "数据为空" });
+            }
             try
             {
-                await reportService.UpdateCalculatedDataFieldAsync(
+                await _reportService.UpdateSourceDataFieldAsync(
                         dateStr: request.Date,
                         hour: request.Hour,
                         prop: request.Prop,

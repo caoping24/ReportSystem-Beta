@@ -56,7 +56,7 @@ router.afterEach((to, from) => {
 const items = ref<MenuProps["items"]>([
   {
     key: "/",
- 
+
     label: "主页",
     title: "主页",
   },
@@ -72,11 +72,10 @@ const items = ref<MenuProps["items"]>([
   },
   {
     key: "/admin/userManage",
-  
+
     label: "用户管理",
     title: "用户管理",
   },
-
 ]);
 </script>
 
