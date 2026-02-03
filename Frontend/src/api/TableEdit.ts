@@ -25,3 +25,11 @@ export const SaveCell = async (params: any) => {
     data: params,
   });
 };
+
+export const ReloadData = async (params: any) => {
+  return myAxios.request({
+    url: "api/Report/BuildReport",
+    method: "POST",
+    data: params,
+  });
+};

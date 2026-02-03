@@ -3,11 +3,13 @@ using CenterBackend.IReportServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace CenterBackend.Services
 {
@@ -17,20 +19,24 @@ namespace CenterBackend.Services
         private readonly IReportRecordRepository<ReportRecord> _reportRecord;
         private readonly IReportRepository<CalculatedData> _calculatedDatas;
         private readonly IReportUnitOfWork _reportUnitOfWork;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
+      
+        private readonly IReportRepository<CalculatedData> _reportRepository;
+        private readonly CenterReportDbContext _dbContext;
         // 构造函数注入：按顺序注入5个SourceData仓储 + 原有依赖，一一对应赋值
         public ReportService(IReportRepository<SourceData> SourceData,
                              IReportRecordRepository<ReportRecord> reportRecord,
                              IReportRepository<CalculatedData> CalculatedDatas,
                              IReportUnitOfWork reportUnitOfWork,
-                             IHttpContextAccessor httpContextAccessor)
+                             IHttpContextAccessor httpContextAccessor,
+                             IReportRepository<CalculatedData> _reportRepository,   
+                            CenterReportDbContext _dbContext)
         {
             this._sourceData = SourceData;
             this._reportRecord = reportRecord;
             this._calculatedDatas = CalculatedDatas;
             this._reportUnitOfWork = reportUnitOfWork;
-            this._httpContextAccessor = httpContextAccessor;
+            this._reportRepository = _reportRepository;
+            this._dbContext = _dbContext;
         }
 
 
@@ -1434,6 +1440,73 @@ namespace CenterBackend.Services
 
         }
 
+        async Task<List<CalculatedData>> IReportService.getCalculatedData(DateTime time)
+        {
+            var result = await _calculatedDatas.GetByDayAsyncType(time,1);
+            return result;
+        }
+
+        public async Task<bool> UpdateCalculatedDataFieldAsync(string dateStr, int hour, string prop, string valueStr)
+        {
+            #region 1. 参数校验与解析
+            // 解析日期
+            if (!DateTime.TryParse(dateStr, out DateTime targetDate))
+            {
+                throw new ArgumentException($"日期格式错误，要求yyyy-MM-dd，当前值：{dateStr}", nameof(dateStr));
+            }
+
+            // 构建目标时间（精确到小时，用于筛选记录）
+            DateTime targetDateTime = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, hour, 0, 0);
+
+            // 转换值为float?类型
+            if (!float.TryParse(valueStr, out float value))
+            {
+                throw new ArgumentException($"值转换失败，要求浮点数字符串，当前值：{valueStr}", nameof(valueStr));
+            }
+            float? targetValue = value; // 兼容nullable float类型
+
+            // 校验字段名是否存在
+            PropertyInfo? propInfo = typeof(CalculatedData).GetProperty(prop, BindingFlags.Public | BindingFlags.Instance);
+            if (propInfo == null)
+            {
+                throw new ArgumentException($"CalculatedData不存在字段：{prop}", nameof(prop));
+            }
+            if (propInfo.PropertyType != typeof(float?))
+            {
+                throw new ArgumentException($"字段{prop}类型不是float?，不支持修改", nameof(prop));
+            }
+            #endregion
+
+            #region 2. 查询目标记录（根据时间筛选）
+            // 方式1：精确匹配时间（可根据业务调整为时间范围）
+            var targetData = await _reportRepository.db
+                .FirstOrDefaultAsync(d => d.createdtime >= targetDateTime
+                                        && d.createdtime < targetDateTime.AddHours(1));
+
+            if (targetData == null)
+            {
+                throw new KeyNotFoundException($"未找到{targetDateTime:yyyy-MM-dd HH:mm}时间段的CalculatedData记录");
+            }
+            #endregion
+
+            #region 3. 反射修改字段值
+            try
+            {
+                propInfo.SetValue(targetData, targetValue);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"设置字段{prop}值失败：{ex.Message}", ex);
+            }
+            #endregion
+
+            #region 4. 保存修改
+            _reportRepository.Update(targetData); // 标记实体为修改状态
+            await _dbContext.SaveChangesAsync(); // 提交到数据库
+            #endregion
+
+            return true;
+        }
 
     }
 

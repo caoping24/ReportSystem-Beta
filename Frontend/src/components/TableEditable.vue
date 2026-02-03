@@ -14,6 +14,8 @@
             :picker-options="{ shortcuts: [{ text: '今天', onClick: () => { selectedDate.value = new Date().toISOString().split('T')[0]; fetchTableData(); } }] }"
           />
           <el-button type="primary" @click="fetchTableData">查询</el-button>
+          <!-- 新增重载按钮：样式与查询一致 -->
+          <el-button type="primary" @click="reloadTableData">重载</el-button>
         </div>
         <div class="table-scroll-wrapper">
           <el-table
@@ -68,37 +70,40 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-// 导入TableEdit.ts中对接后端的三个核心接口
-import { Headers, HourData, SaveCell } from "@/api/TableEdit";
+// 导入核心接口，ReloadData为重载接口（已取消注释，直接调用）
+import { Headers, HourData, SaveCell, ReloadData } from "@/api/TableEdit";
 
-// 前端表格表头类型（匹配后端TableHeaderDto）
+// 表格表头类型：prop匹配后端cells的key（cell29/cell30等）
 interface TableHeader {
   prop: string;
   label: string;
 }
 
-// 后端HourDataDto对应的前端类型（首字母大写匹配后端返回，Cells改为可选）
+// 后端返回的小时数据项结构（精准适配，全小写）
 interface HourDataItem {
-  Hour: number;
-  Date: string;
-  IsNextDay: boolean;
-  Cells?: Record<string, string>; // 关键修改：Cells设为可选属性，解决TS类型缺失错误
-}
-
-// 前端表格行最终类型：转换后端字段为小写，继承可选的Cells
-interface TableRow extends Omit<HourDataItem, 'Hour' | 'Date' | 'IsNextDay'> {
   hour: number;
   date: string;
-  isNextDay: boolean;
-  [key: string]: any; // 兼容动态的cell1/cell2等字段
+  isNextDay: boolean; // 后端返回的禁用标识，true=禁用/false=可编辑
+  cells?: Record<string, string>;
 }
 
-// 响应式数据定义
-const selectedDate = ref<string>(''); // 选中的查询日期
-const tableHeaders = ref<TableHeader[]>([]); // 表格表头数据
-const tableData = ref<TableRow[]>([]); // 表格核心数据
+// 前端表格行类型：继承后端结构+动态字段兼容
+interface TableRow extends HourDataItem {
+  [key: string]: any;
+}
 
-// 禁用未来日期选择（原逻辑不变）
+// 【重载接口参数类型】严格匹配后端要求：type固定1，time为日期字符串
+interface ReloadDataParams {
+  type: number;
+  time: string;
+}
+
+// 响应式数据
+const selectedDate = ref<string>(''); // 选中日期
+const tableHeaders = ref<TableHeader[]>([]); // 表格表头
+const tableData = ref<TableRow[]>([]); // 表格数据
+
+// 禁用未来日期选择（日期选择器的禁用，与表格单元格禁用无关）
 const disabledFutureDate = (date: Date): boolean => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -107,42 +112,30 @@ const disabledFutureDate = (date: Date): boolean => {
   return selectDate.getTime() > today.getTime();
 };
 
-// 判断单元格是否禁用（未来时间禁用，原逻辑不变）
+// 判断单元格是否禁用：核心逻辑→根据后端返回的isNextDay字段，true禁用/false可编辑
 const isCellDisabled = (row: TableRow): boolean => {
-  // 基础容错：关键数据缺失直接禁用
+  // 基础非空校验：行数据的日期/小时缺失时，默认禁用单元格
   if (!row.date || row.hour === undefined || row.hour === null) return true;
-
-  const currentTime = new Date().getTime(); // 当前时间戳
-  const rowDate = new Date(row.date);       // 选中的日期对象
-  const targetDate = new Date(rowDate);     // 待计算的真实时间对象
-
-  // 若标记为次日时间，日期+1天（解决8点时间歧义）
-  if (row.isNextDay) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  }
-
-  // 构建真实时间（时分秒毫秒置零，仅比较日期+小时）
-  targetDate.setHours(row.hour, 0, 0, 0);
-  const rowRealTime = targetDate.getTime();
-
-  // 未来时间返回true（禁用），过去/当前时间返回false（可编辑）
-  return rowRealTime > currentTime;
+  // 核心规则：完全遵循后端返回的isNextDay标识
+  return row.isNextDay === true;
 };
 
-// 单元格样式类名（原逻辑不变）
+// 单元格样式：禁用/小时列添加灰色背景（基于isCellDisabled判断）
 const cellClassName = ({ row, column }: { row: TableRow; column: any }): string => {
-  // 小时列和禁用单元格添加灰色背景样式
   if (column.prop === 'hour') return 'disabled-cell';
   return isCellDisabled(row) ? 'disabled-cell' : '';
 };
 
-// 从后端接口获取表格表头（替换原本地mock）
+// 获取表格表头（从后端接口拉取，强制hour列排第一）
 const fetchTableHeaders = async (): Promise<void> => {
   try {
     const res = await Headers();
-    // 接口返回有效数据则赋值，否则为空数组
     if (res?.data) {
       tableHeaders.value = res.data;
+      const hourHeader = tableHeaders.value.find(item => item.prop === 'hour');
+      if (hourHeader) {
+        tableHeaders.value = [hourHeader, ...tableHeaders.value.filter(item => item.prop !== 'hour')];
+      }
     }
   } catch (error) {
     ElMessage.error('获取表格表头失败，请刷新页面');
@@ -150,52 +143,29 @@ const fetchTableHeaders = async (): Promise<void> => {
   }
 };
 
-// 从后端接口获取指定日期的小时数据（替换原本地mock，增加多层容错）
+// 获取指定日期的小时数据，解析后端cells字段为表格可渲染的动态字段
 const fetchTableData = async (): Promise<void> => {
-  // 未选择日期则提示
   if (!selectedDate.value) {
     ElMessage.warning('请先选择查询日期');
     return;
   }
 
   try {
-    // 调用后端HourData接口，传递日期参数
     const res = await HourData({ date: selectedDate.value });
-    // 容错1：后端返回data为空/undefined时，设为空数组
     const originData = res?.data || [];
 
-    // 无数据时清空表格并提示
     if (originData.length === 0) {
       tableData.value = [];
       ElMessage.info(`【${selectedDate.value}】暂无小时数据`);
       return;
     }
 
-    // 转换后端数据结构为前端表格可识别的格式
     const formatTableData = originData.map((item: HourDataItem) => {
-      // 容错2：单个数据项为空时，返回默认空行
-      if (!item) {
-        return {
-          hour: 0,
-          date: selectedDate.value,
-          isNextDay: false,
-          Cells: {}
-        };
-      }
-      // 容错3：Cells为undefined/null时，设为空对象（核心解决TS类型错误）
-      const cellData = item.Cells || {};
-
-      // 后端字段转前端小写，展开单元格数据
-      return {
-        hour: item.Hour,
-        date: item.Date,
-        isNextDay: item.IsNextDay,
-        Cells: cellData, // 显式赋值，符合类型定义
-        ...cellData      // 展开Cells中的cell1/cell2等字段，适配表格渲染
-      } as TableRow;
+      if (!item) return { hour: 0, date: selectedDate.value, isNextDay: false, cells: {} } as TableRow;
+      const cellData = item.cells || {};
+      return { ...item, ...cellData } as TableRow;
     });
 
-    // 赋值给表格响应式数据
     tableData.value = formatTableData;
     ElMessage.success(`【${selectedDate.value}】小时数据加载成功`);
   } catch (error) {
@@ -204,21 +174,18 @@ const fetchTableData = async (): Promise<void> => {
   }
 };
 
-// 单元格编辑失焦后，调用后端接口保存修改
+// 单元格编辑失焦保存，仅保存非禁用、非小时列的修改
 const handleCellEdit = async (row: TableRow, prop: string): Promise<void> => {
-  // 小时列/禁用单元格不执行保存
   if (prop === 'hour' || isCellDisabled(row)) return;
 
-  // 构造后端SaveCell接口所需的参数（首字母大写匹配后端RequestDto）
   const saveParams = {
-    Date: row.date,
-    Hour: row.hour,
-    Prop: prop,
-    Value: row[prop] || '' // 空值兜底，避免传递undefined
+    date: row.date,
+    hour: row.hour,
+    prop: prop,
+    value: row[prop] || ''
   };
 
   try {
-    // 调用后端保存接口
     await SaveCell(saveParams);
     ElMessage.success(`已保存：${row.date} ${row.hour}点 - ${prop} 字段`);
   } catch (error) {
@@ -227,23 +194,48 @@ const handleCellEdit = async (row: TableRow, prop: string): Promise<void> => {
   }
 };
 
-// 页面挂载时初始化：先加载表头，再默认选中今日并加载数据
+// 重载表格数据：调用后端重载接口（参数type=1，time=选中日期），重载后刷新表格
+const reloadTableData = async (): Promise<void> => {
+  if (!selectedDate.value) {
+    ElMessage.warning('请先选择查询日期');
+    return;
+  }
+
+  try {
+    ElMessage.info(`正在重载【${selectedDate.value}】数据，请稍候...`);
+    // 构造重载参数：严格匹配后端要求，type固定传1
+    const reloadParams: ReloadDataParams = {
+      type: 1,
+      time: selectedDate.value
+    };
+    // 调用后端重载接口
+    await ReloadData(reloadParams);
+    // 重载成功后重新拉取数据，保证表格数据最新（含最新的isNextDay标识）
+    await fetchTableData();
+    ElMessage.success(`【${selectedDate.value}】数据重载完成`);
+  } catch (error) {
+    ElMessage.error('数据重载失败，请重试');
+    console.error('reloadTableData error:', error);
+  }
+};
+
+// 页面挂载初始化：先加载表头，再加载今日数据
 onMounted(async () => {
-  await fetchTableHeaders(); // 优先加载表头，避免表格无列
-  // 默认选中当前日期（格式：YYYY-MM-DD）
+  await fetchTableHeaders();
   selectedDate.value = new Date().toISOString().split('T')[0];
-  await fetchTableData(); // 加载今日的小时数据
+  await fetchTableData();
 });
 </script>
 
 <style scoped>
-/* 原样式完全保留，无修改 */
 :deep(.ant-tabs-card) {
   --ant-tabs-card-head-background: #f8f9fa;
   border-radius: 4px;
 }
 .table-container { padding: 15px; }
+/* 日期选择器+按钮布局，新增重载按钮后间距保持一致 */
 .date-selector { margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
+/* 表格横向滚动容器，适配多列 */
 .table-scroll-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -252,6 +244,7 @@ onMounted(async () => {
 }
 .table-scroll-wrapper::-webkit-scrollbar { height: 6px; }
 .table-scroll-wrapper::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
+/* 表格单元格紧凑样式 */
 :deep(.el-table td), :deep(.el-table th) {
   padding: 4px 0 !important;
   white-space: nowrap;
@@ -260,8 +253,11 @@ onMounted(async () => {
 }
 :deep(.el-table th .cell) { font-size: 14px; font-weight: 500; }
 :deep(.el-table td .cell) { font-size: 13px; }
+/* 禁用单元格样式 */
 .disabled-cell { background-color: #f5f5f5; color: #999; cursor: not-allowed; }
+/* 迷你输入框样式适配 */
 :deep(.el-input--mini) { width: 80px !important; }
 :deep(.el-input__wrapper) { padding: 0 5px !important; font-size: 13px; }
+/* 日期选择器禁用样式优化 */
 :deep(.el-picker-panel__content .el-date-table td.disabled) { color: #ccc !important; cursor: not-allowed !important; }
 </style>
