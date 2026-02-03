@@ -20,6 +20,7 @@ namespace CenterBackend.Services
         {
             return await _reportRecord.GetReportByPageAsync(request);
         }
+
     }
 
 

@@ -14,6 +14,7 @@
     <None Remove="AppIco\SL_Icon_Color.ico" />
     <None Remove="AppIco\SL_Icon_Gray.ico" />
     <None Remove="AppIco\SL_Icon_Green.ico" />
+    <None Remove="MainPciture.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +31,7 @@
     <Resource Include="AppIco\SL_Icon_Green.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Picture\MainPciture.jpg" />
   </ItemGroup>
 
   <ItemGroup>

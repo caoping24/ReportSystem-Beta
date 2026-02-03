@@ -9,6 +9,7 @@ namespace CenterReport.Repository
         Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end, int _Type);
         Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end);
         Task<List<T>> GetByDayAsync(DateTime time);
+        Task<List<T>> GetByDayAsyncType(DateTime time, int? type = null);
         Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
         void Update(T entity);

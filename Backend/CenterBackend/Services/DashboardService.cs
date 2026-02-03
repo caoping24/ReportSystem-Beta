@@ -17,31 +17,35 @@ namespace CenterBackend.Services
         }
         public async Task<LineChartDataDto> getLineChartOne(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDayAsync(time);
+            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
-           
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
+
             if (sourceDatas == null || !sourceDatas.Any())
             {
                 return new LineChartDataDto
                 {
                     XAxis = xAxis,
                     Series = new List<LineChartSeriesDto>
-            {
-                new LineChartSeriesDto
-                {
-                    Name = "昨日",
-                    // 替换NaN为null
-                    Data = fixedHours.Select(_ => (double?)null).ToArray()
-                }
-            }
+                    {
+                        new LineChartSeriesDto
+                        {
+                            Name = "无数据",
+                            // 替换NaN为null
+                            Data = fixedHours.Select(_ => (double?)null).ToArray()
+                        }
+                    }
                 };
             }
             double?[] data = new double?[sourceDatas.Count()];
             int index = 0;
             foreach (var item in sourceDatas)
             {
-                data[index] = item.cell1;
+                data[index] = item.cell19;
                 index++;
             }
             return new LineChartDataDto
@@ -51,7 +55,7 @@ namespace CenterBackend.Services
                 {
                     new LineChartSeriesDto
                     {
-                        Name = "昨日",
+                        Name = "羟基乙睛进料流量",
                         Data = data
                     }
                 }
@@ -61,9 +65,13 @@ namespace CenterBackend.Services
 
         public async Task<LineChartDataDto> getLineCharTwo(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDayAsync(time);
+            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
 
             if (sourceDatas == null || !sourceDatas.Any())
             {
@@ -74,7 +82,7 @@ namespace CenterBackend.Services
             {
                 new LineChartSeriesDto
                 {
-                    Name = "昨日",
+                    Name = "无数据",
                     // 替换NaN为null
                     Data = fixedHours.Select(_ => (double?)null).ToArray()
                 }
@@ -85,7 +93,7 @@ namespace CenterBackend.Services
             int index = 0;
             foreach (var item in sourceDatas)
             {
-                data[index] = item.cell2;
+                data[index] = item.cell22;
                 index++;
             }
             return new LineChartDataDto
@@ -95,7 +103,7 @@ namespace CenterBackend.Services
                 {
                     new LineChartSeriesDto
                     {
-                        Name = "昨日",
+                        Name = "摩尔比",
                         Data = data
                     }
                 }
@@ -104,9 +112,13 @@ namespace CenterBackend.Services
 
         public async Task<LineChartDataDto> getLineCharThree(DateTime time)
         {
-            List<SourceData> sourceDatas = await _reportRepository.GetByDayAsync(time);
+            List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
             var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
+            string[] xAxis = Enumerable.Range(0, 24)
+                           .Select(n => time.AddHours(-23 + n))
+                           .Select(t => t.Hour.ToString("D2"))
+                           .ToArray();
 
             if (sourceDatas == null || !sourceDatas.Any())
             {
@@ -117,7 +129,7 @@ namespace CenterBackend.Services
             {
                 new LineChartSeriesDto
                 {
-                    Name = "昨日",
+                    Name = "无数据",
                     // 替换NaN为null
                     Data = fixedHours.Select(_ => (double?)null).ToArray()
                 }
@@ -130,7 +142,7 @@ namespace CenterBackend.Services
             foreach (var item in sourceDatas)
             {
                 data1[index] = item.cell3;
-                data2[index] = item.cell4;
+                data2[index] = item.cell6;
                 index++;
             }
             return new LineChartDataDto
@@ -140,12 +152,12 @@ namespace CenterBackend.Services
                 {
                     new LineChartSeriesDto
                     {
-                        Name = "昨日",
+                        Name = "羟基原料浓度",
                         Data = data1
                     },
                      new LineChartSeriesDto
                     {
-                        Name = "今日",
+                        Name = "羟基配后浓度",
                         Data = data2
                     }
                 }

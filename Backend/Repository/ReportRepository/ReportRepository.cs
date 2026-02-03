@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CenterReport.Repository.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CenterReport.Repository
 {
@@ -33,6 +34,24 @@ namespace CenterReport.Repository
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime")) // 正序排序（默认ASC）
                 .ToListAsync();
         }
+        public async Task<List<T>> GetByDayAsyncType(DateTime queryDate, int? type = null)
+        {
+            DateTime startTime = queryDate.Date.AddHours(8);
+            DateTime endTime = startTime.Date.AddHours(33);
+
+            var query = _entities.Where(e =>
+                    EF.Property<DateTime>(e, "createdtime") >= startTime// 匹配当天所有时间（忽略createdtime的时分秒）
+                    && EF.Property<DateTime>(e, "createdtime") <endTime);
+
+            // 可选按Type筛选
+            if (type.HasValue)
+            {
+                query = query.Where(e => EF.Property<int>(e, "Type") == type.Value);
+            }
+
+            return await query.OrderBy(e => EF.Property<DateTime>(e, "createdtime")).ToListAsync();
+        }
+
         public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end)
         {
             var from = DateTime.Compare(start, end) > 0 ? end : start;
@@ -85,5 +104,7 @@ namespace CenterReport.Repository
                 _context.Remove(entity);
             }
         }
+    
+        
     }
 }

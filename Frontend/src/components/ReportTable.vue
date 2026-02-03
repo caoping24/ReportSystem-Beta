@@ -10,11 +10,17 @@
       <template v-if="column.key === 'index'">
         {{ (paginationParams.pageIndex - 1) * paginationParams.pageSize + index + 1 }}
       </template>
-      <template v-else-if="column.dataIndex === 'createTime'">
+          <template v-else-if="column.dataIndex === 'repoetedtime'">
+        {{ record.repoetedtime  }}
+      </template>
+        <template v-else-if="column.dataIndex === 'createTime'">
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
       </template>
+  
       <template v-else-if="column.key === 'action'">
-        <a-button @click="handleDownload(record.createdtime)">下载</a-button>
+          <!-- 新增：重新生成按钮（放在下载按钮前） -->
+          <a-button @click="emitRegenerate(record.createdtime)">重建</a-button>
+          <a-button @click="handleDownload(record.createdtime)">下载</a-button>
       </template>
     </template>
   </a-table>
@@ -37,17 +43,25 @@ interface ReportTableProps {
   };
 }
 
-const emit = defineEmits<{
-  (e: 'download', tabKey: string, createTime: string): void;
-}>();
-
 const props = defineProps<ReportTableProps>();
+
+const emit = defineEmits<{
+    (e: 'download', tabKey: string, createTime: string): void;
+    (e: 'regenerate', tabKey: string, createTime: string): void;
+}>();
 
 const handleDownload = (createTime: string | Date) => {
   // 格式化时间为 YYYY-MM-DD HH:mm:ss 格式
   const formattedTime = dayjs(createTime).format("YYYY-MM-DD HH:mm:ss");
   emit('download', props.tabKey, formattedTime);
+    };
+
+// 导出给模板使用：格式化并触发 regenerate 事件
+const emitRegenerate = (createTime: string | Date) => {
+    const formattedTime = dayjs(createTime).toISOString();
+    emit('regenerate', props.tabKey, formattedTime);
 };
+
 </script>
 
 <script lang="ts">
