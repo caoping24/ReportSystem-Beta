@@ -314,8 +314,6 @@ namespace CenterBackend.Services
             List<SourceData>? dataList;
             List<CalculatedData>? dataList2;
             string TempRepoetName = "1999-12-31";
-
-
             try
             {
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
@@ -337,7 +335,7 @@ namespace CenterBackend.Services
                         SourceData?[] targetArray = MatchSourceDataDay(dataList, ReportTime);
                         WriteXlsxDaily1(workbook, targetArray, ReportTime);
                         WriteXlsxDaily2(workbook, targetArray, ReportTime);
-                        TempRepoetName = $"{ReportTime.AddDays(-1):yyyy-MM-dd}";
+                        TempRepoetName = $"{ReportTime:yyyy-MM-dd}";
                         break;
                     case 2: // 上周
                         DateTime currentDayOfWeek = ReportTime.Date;// 计算上周的开始时间（星期一）
@@ -385,10 +383,22 @@ namespace CenterBackend.Services
                 using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);// 保存文件到指定路径
                 workbook.Write(outputStream);
 
-                var temp = new ReportRecord();
-                temp.Type = 1;
-                temp.Repoetedtime = TempRepoetName;
-                await _reportRecord.AddAsync(temp);
+
+
+                //插入build记录(只更新时间)
+                var existingRecord = _reportRecord.db.FirstOrDefault(r => r.Type == Type && r.reportedTime == TempRepoetName);
+                if (existingRecord == null)//无记录则新增，有记录则更新
+                {
+                    var temp = new ReportRecord();
+                    temp.Type = Type;
+                    temp.reportedTime = TempRepoetName;
+                    temp.createdtime = DateTime.Now;
+                    await _reportRecord.AddAsync(temp);
+                }
+                else
+                {
+                    existingRecord.createdtime = DateTime.Now;
+                }
                 await _reportUnitOfWork.SaveChangesAsync();
                 return new OkObjectResult(new { success = true, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} Excel生成成功" });
             }

@@ -10,13 +10,18 @@
       <template v-if="column.key === 'index'">
         {{ (paginationParams.pageIndex - 1) * paginationParams.pageSize + index + 1 }}
       </template>
-      <template v-else-if="column.dataIndex === 'createTime'">
+          <template v-else-if="column.dataIndex === 'reportedTime'">
+        {{ record.reportedTime  }}
+      </template>
+        <template v-else-if="column.dataIndex === 'createTime'">
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
       </template>
+  
       <template v-else-if="column.key === 'action'">
           <!-- 新增：重新生成按钮（放在下载按钮前） -->
-          <a-button @click="emitRegenerate(record.createdtime)">重建</a-button>
-          <a-button @click="handleDownload(record.createdtime)">下载</a-button>
+          <a-button @click="emitRegenerate(record.reportedTime)">重建</a-button>
+          <!--传报表日期-->
+          <a-button @click="handleDownload(record.reportedTime)">下载</a-button>
       </template>
     </template>
   </a-table>
@@ -29,11 +34,11 @@ import type { TableProps } from 'ant-design-vue/es/table';
 import type { PaginationProps } from 'ant-design-vue/es/pagination';
 
 interface ReportTableProps {
-  tabKey: string;
-  columns: TableProps['columns'];
-  dataSource: any[];
-  paginationConfig: PaginationProps;
-  paginationParams: {
+    tabKey: string;
+    columns: TableProps['columns'];
+    dataSource: any[];
+    paginationConfig: PaginationProps;
+    paginationParams: {
     pageIndex: number;
     pageSize: number;
   };
@@ -42,19 +47,31 @@ interface ReportTableProps {
 const props = defineProps<ReportTableProps>();
 
 const emit = defineEmits<{
-    (e: 'download', tabKey: string, createTime: string): void;
-    (e: 'regenerate', tabKey: string, createTime: string): void;
+    (e: 'download', tabKey: string, reportedTime: string): void;
+    (e: 'regenerate', tabKey: string, reportedTime: string): void;
 }>();
 
-const handleDownload = (createTime: string | Date) => {
-  // 格式化时间为 YYYY-MM-DD HH:mm:ss 格式
-  const formattedTime = dayjs(createTime).format("YYYY-MM-DD HH:mm:ss");
-  emit('download', props.tabKey, formattedTime);
-    };
+// 导出给模板使用：格式化并触发 download 事件
+const handleDownload = (reportedTime: string | Date | undefined) => {
+    if (!reportedTime) {
+
+        emit('download', props.tabKey, '');
+        return;
+    }
+    // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
+    const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
+    emit('download', props.tabKey, formattedTime);
+};
 
 // 导出给模板使用：格式化并触发 regenerate 事件
-const emitRegenerate = (createTime: string | Date) => {
-    const formattedTime = dayjs(createTime).toISOString();
+    const emitRegenerate = (reportedTime: string | Date | undefined) => {
+        if (!reportedTime) {
+
+            emit('regenerate', props.tabKey, '');
+        return;
+    }
+    // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
+    const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
     emit('regenerate', props.tabKey, formattedTime);
 };
 

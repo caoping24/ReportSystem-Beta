@@ -110,7 +110,9 @@ const onFinishFailed = (errorInfo: any) => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.3) 100%), 
+              url('@/assets/login-background.jpg') center/cover no-repeat;
+  background-attachment: fixed;
 }
 
 .login-card {

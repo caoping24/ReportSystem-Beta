@@ -7,14 +7,16 @@ namespace CenterReport.Repository
     public class ReportRecordRepository<T> : IReportRecordRepository<T> where T : class
     {
         protected readonly CenterReportDbContext _context;
+        private readonly DbSet<T> _entities;
 
         public ReportRecordRepository(CenterReportDbContext context)
         {
             _context = context;
-          
+            _entities = _context.Set<T>();
+
         }
 
-        public IQueryable<T> db => throw new NotImplementedException();
+        public IQueryable<T> db => _entities.AsQueryable();
 
         public async Task AddAsync(T entity)
         {
