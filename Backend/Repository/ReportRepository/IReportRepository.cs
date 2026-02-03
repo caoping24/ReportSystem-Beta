@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace CenterReport.Repository
+﻿namespace CenterReport.Repository
 {
     public interface IReportRepository<T> where T : class
     {

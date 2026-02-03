@@ -1,12 +1,7 @@
 using CenterBackend.common;
 using CenterBackend.Dto;
-using CenterBackend.IReportServices;
 using CenterBackend.IServices;
-using CenterReport.Repository.Utils;
-using CenterUser.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.SS.Formula.Functions;
-using static FastExpressionCompiler.ExpressionCompiler;
 
 namespace CenterBackend.Controllers
 {
@@ -47,11 +42,8 @@ namespace CenterBackend.Controllers
         {
             try
             {
-
-                //var result = await _dashboardService.getLineCharTwo(DateTime.Now);
-                //return ResultUtils<LineChartDataDto>.Success(result);
-                return ResultUtils<LineChartDataDto>.error();
-
+                var result = await _dashboardService.getLineCharTwo(DateTime.Now);
+                return ResultUtils<LineChartDataDto>.Success(result);
             }
             catch (Exception ex)
             {
@@ -106,7 +98,7 @@ namespace CenterBackend.Controllers
             catch (Exception ex)
             {
                 // 异常处理（实际项目可封装全局异常过滤器）
-                return ResultUtils< CoreChartDto >.error();
+                return ResultUtils<CoreChartDto>.error();
             }
         }
 

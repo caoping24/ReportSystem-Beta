@@ -1,10 +1,7 @@
-using AngleSharp.Io;
 using CenterBackend.Dto;
 using CenterBackend.IReportServices;
-using CenterBackend.Services;
 using CenterReport.Repository.Models;
 using CenterReport.Repository.Utils;
-using CenterUser.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 
@@ -54,7 +51,7 @@ namespace CenterBackend.Controllers
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
-       
+
         private readonly List<TableHeaderDto> _mockHeaders = new()
         {
             new TableHeaderDto { Prop = "hour", Label = "小时" },
@@ -83,11 +80,12 @@ namespace CenterBackend.Controllers
             new TableHeaderDto { Prop = "cell139", Label = "低蒸循环泵（mbar）" },
             new TableHeaderDto { Prop = "cell140", Label = "一次结晶清洗泵（mbar）" },
             new TableHeaderDto { Prop = "cell141", Label = "二次结晶清洗泵（mbar）" }
-           
+
         };
         [HttpGet("Headers")]
-        public async Task<ActionResult<List<TableHeaderDto>>> GetHeaders() {
-            
+        public async Task<ActionResult<List<TableHeaderDto>>> GetHeaders()
+        {
+
             try
             {
                 return Ok(_mockHeaders); // 返回200 
@@ -215,16 +213,17 @@ namespace CenterBackend.Controllers
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
-    
+
 
         [HttpPost("SaveCell")]
-        public async Task<ActionResult<List<TableHeaderDto>>> SaveCell([FromBody] SaveCellRequestDto request) {
+        public async Task<ActionResult<List<TableHeaderDto>>> SaveCell([FromBody] SaveCellRequestDto request)
+        {
             // 校验必填参数
             if (string.IsNullOrEmpty(request.Date)
                 || string.IsNullOrEmpty(request.Prop)
                 || request.Hour < 0 || request.Hour > 23)
             {
-                return StatusCode(500, new { message = "参数不合法" });  
+                return StatusCode(500, new { message = "参数不合法" });
             }
             try
             {
@@ -241,7 +240,7 @@ namespace CenterBackend.Controllers
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
-    
-    
+
+
     }
 }

@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace CenterBackend.Logging
 {
     public interface IAppLogger

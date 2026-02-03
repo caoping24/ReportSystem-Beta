@@ -100,12 +100,12 @@ namespace CenterBackend.Controllers
         /// <param name="loginDto"></param>
         /// <returns></returns>
         [HttpGet("DownloadExcel")]
-        public async Task<IActionResult> DownloadFile(String timeStr ,int  Type)
+        public async Task<IActionResult> DownloadFile(String timeStr, int Type)
         {
             await _logger.LogInfoAsync($"DownloadFile:timeStr:{timeStr},Type:{Type}");
 
             var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
-             
+
             DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd HH:mm:ss", null);
             var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, dateTime);
             var DownloadfilePath = string.Empty;
@@ -141,7 +141,7 @@ namespace CenterBackend.Controllers
             {
                 return NotFound("文件不存在。");
             }
-            
+
             Response.Headers.Append("Content-Disposition", $"attachment;filename={Uri.EscapeDataString(fileName)}");
             return File(fileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }

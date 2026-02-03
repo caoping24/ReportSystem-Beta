@@ -1,14 +1,9 @@
 using CenterBackend.IFileService;
 using CenterBackend.Logging;
 using CenterBackend.Models;
-using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.SS.Formula.Atp;
-using Org.BouncyCastle.Asn1.X509;
 using System.Globalization;
 using System.Net.Mime;
-using System.Text;
-using System.Web;
 
 namespace CenterBackend.Controllers
 {
@@ -52,7 +47,7 @@ namespace CenterBackend.Controllers
         /// <returns></returns>
         /// <exception cref=""></exception>
         [HttpGet("GetFolderPathTest")]
-        public async  Task<FilePathAndName> Test3()
+        public async Task<FilePathAndName> Test3()
         {
             await _logger.LogInfoAsync($"Test3:timeStr");
             var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
@@ -72,12 +67,12 @@ namespace CenterBackend.Controllers
             string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");
             string tempZipPath = string.Empty;
             await _logger.LogInfoAsync($"DownloadZipFileBig:timeStr: {timeStr},type: {type}");
-            try 
+            try
             {
                 // 日期解析容错：严格匹配yyyy-MM-dd
                 if (!DateTime.TryParseExact(timeStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime))
                 {
-                    var msg  = $"日期格式无效.";
+                    var msg = $"日期格式无效.";
                     await _logger.LogErrorAsync(msg);
                     return BadRequest(msg);
                 }
@@ -99,7 +94,7 @@ namespace CenterBackend.Controllers
                         return BadRequest("类型无效，请检查类型！");
                 }
                 string tempFolder = Path.Combine(_webHostEnv.WebRootPath, "Temp");
-                
+
                 if (Directory.Exists(tempFolder))//清理temp文件夹
                 {
                     try
@@ -108,7 +103,7 @@ namespace CenterBackend.Controllers
                     }
                     catch (Exception ex)
                     {
-                        
+
                         await _logger.LogErrorAsync($"删除Temp目录失败：{ex.Message}");
                     }
                 }

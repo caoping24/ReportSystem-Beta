@@ -2,6 +2,7 @@
 using CenterBackend.IReportServices;
 using CenterBackend.IServices;
 using CenterBackend.IUserServices;
+using CenterBackend.Logging;
 using CenterBackend.Middlewares;
 using CenterBackend.Services;
 using CenterReport.Repository;
@@ -11,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
-using CenterBackend.Logging;
 namespace CenterBackend
 {
     public class Program

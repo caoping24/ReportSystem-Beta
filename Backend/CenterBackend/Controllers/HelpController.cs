@@ -1,15 +1,7 @@
 ﻿using CenterBackend.IFileService;
 using CenterBackend.Logging;
-using CenterBackend.Models;
-using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.SS.Formula.Atp;
-using Org.BouncyCastle.Asn1.X509;
-using System.Globalization;
-using System.Net.Mime;
 using System.Reflection;
-using System.Text;
-using System.Web;
 
 namespace CenterBackend.Controllers
 {

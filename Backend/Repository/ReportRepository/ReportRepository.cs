@@ -1,5 +1,4 @@
-﻿using CenterReport.Repository.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace CenterReport.Repository
 {
@@ -41,7 +40,7 @@ namespace CenterReport.Repository
 
             var query = _entities.Where(e =>
                     EF.Property<DateTime>(e, "createdtime") >= startTime// 匹配当天所有时间（忽略createdtime的时分秒）
-                    && EF.Property<DateTime>(e, "createdtime") <endTime);
+                    && EF.Property<DateTime>(e, "createdtime") < endTime);
 
             // 可选按Type筛选
             if (type.HasValue)
@@ -104,7 +103,7 @@ namespace CenterReport.Repository
                 _context.Remove(entity);
             }
         }
-    
-        
+
+
     }
 }

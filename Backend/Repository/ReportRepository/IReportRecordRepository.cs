@@ -1,6 +1,5 @@
 ﻿using CenterReport.Repository.Models;
 using CenterReport.Repository.Utils;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace CenterReport.Repository

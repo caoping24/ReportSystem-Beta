@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Net.NetworkInformation;
 using System.Windows;
-using System.Windows.Forms;
 using System.Windows.Resources;
 using System.Windows.Threading;
 
@@ -20,7 +17,7 @@ namespace ReportServer
         private NotifyIcon? _notifyIcon;
         private ToolStripMenuItem? _startMenuItem;
         private ToolStripMenuItem? _stopMenuItem;
-        private ToolStripMenuItem? _openMainWindow; 
+        private ToolStripMenuItem? _openMainWindow;
         private const string HomePageUrl = "http://localhost:5260/user/login"; // 主页地址（常量，便于修改）
         private readonly object _apiLock = new();
         private Icon? _iconRunning; // 服务运行时图标（图标A）
@@ -59,7 +56,7 @@ namespace ReportServer
             _openMainWindow = new ToolStripMenuItem("系统信息");
             _openMainWindow.Click += (_, __) => Dispatcher.Invoke(ShowAndActivateWindow);
             menu.Items.Add(_openMainWindow);
- 
+
 
             var exitMenu = new ToolStripMenuItem("退出");
             exitMenu.Click += async (_, __) => await ExitApplicationAsync();
@@ -79,7 +76,7 @@ namespace ReportServer
                 ContextMenuStrip = menu,
                 Visible = true
             };
-            
+
             _notifyIcon.DoubleClick += (_, __) => Dispatcher.Invoke(OpenBrowserToHomePage);// 双击托盘显示窗口
 
             UpdateMenuState();
@@ -91,9 +88,9 @@ namespace ReportServer
                 Uri uri = new Uri(packUri, UriKind.Absolute);
                 StreamResourceInfo resourceInfo = System.Windows.Application.GetResourceStream(uri);
                 if (resourceInfo?.Stream != null)
-                    {
-                        return new Icon(resourceInfo.Stream, 32, 32); // 固定32x32适配托盘
-                    }
+                {
+                    return new Icon(resourceInfo.Stream, 32, 32); // 固定32x32适配托盘
+                }
             }
             catch (Exception ex)
             {
@@ -126,7 +123,7 @@ namespace ReportServer
             {
                 Process.Start(new ProcessStartInfo(HomePageUrl)// 调用系统默认浏览器打开URL
                 {
-                    UseShellExecute = true 
+                    UseShellExecute = true
                 });
             }
             catch (Exception ex)
@@ -149,7 +146,7 @@ namespace ReportServer
             ShowInTaskbar = false;
             Topmost = false; // 隐藏时重置置顶状态
         }
-        
+
         private void Window_GotFocus(object sender, RoutedEventArgs e)// 获得焦点时置顶
         {
             Topmost = true;
@@ -163,7 +160,7 @@ namespace ReportServer
         }
         private void UpdateMenuState()
         {
-            
+
             if (!Dispatcher.CheckAccess())// 必须在 UI 线程执行（服务启动/停止是异步操作，可能触发非 UI 线程调用）
             {
                 Dispatcher.Invoke(UpdateMenuState);

@@ -1,10 +1,7 @@
 ﻿using CenterBackend.IFileService;
 using CenterBackend.Logging;
 using CenterBackend.Models;
-using CenterReport.Repository;
-using CenterReport.Repository.Models;
 using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Extensions.Logging;
 using System.Web;
 namespace CenterBackend.Services
 {

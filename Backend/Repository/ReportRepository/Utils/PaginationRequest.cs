@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CenterReport.Repository.Utils
+﻿namespace CenterReport.Repository.Utils
 {
     // 分页请求参数
     public class PaginationRequest
@@ -19,7 +13,7 @@ namespace CenterReport.Repository.Utils
         /// </summary>
         public int PageSize { get; set; } = 10;
 
-        public int Type { get; set; }=1;
+        public int Type { get; set; } = 1;
     }
 
     // 分页响应结果

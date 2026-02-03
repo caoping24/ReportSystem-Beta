@@ -4,11 +4,9 @@ using CenterReport.Repository;
 using CenterReport.Repository.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NPOI.OpenXmlFormats.Spreadsheet;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace CenterBackend.Services
@@ -19,7 +17,7 @@ namespace CenterBackend.Services
         private readonly IReportRecordRepository<ReportRecord> _reportRecord;
         private readonly IReportRepository<CalculatedData> _calculatedDatas;
         private readonly IReportUnitOfWork _reportUnitOfWork;
-      
+
         private readonly IReportRepository<CalculatedData> _reportRepository;
         private readonly CenterReportDbContext _dbContext;
         // 构造函数注入：按顺序注入5个SourceData仓储 + 原有依赖，一一对应赋值
@@ -28,7 +26,7 @@ namespace CenterBackend.Services
                              IReportRepository<CalculatedData> CalculatedDatas,
                              IReportUnitOfWork reportUnitOfWork,
                              IHttpContextAccessor httpContextAccessor,
-                             IReportRepository<CalculatedData> _reportRepository,   
+                             IReportRepository<CalculatedData> _reportRepository,
                             CenterReportDbContext _dbContext)
         {
             this._sourceData = SourceData;
@@ -133,7 +131,7 @@ namespace CenterBackend.Services
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
             target.cell2 = dataList.Select(x => x.cell2 ?? 0).Average();
             target.cell3 = dataList.Select(x => x.cell3 ?? 0).Average();
-            target.cell4 = dataList.Last().cell4- dataList.First().cell4;//差值
+            target.cell4 = dataList.Last().cell4 - dataList.First().cell4;//差值
             target.cell5 = dataList.Last().cell5 - dataList.First().cell5;//差值
             target.cell6 = dataList.Select(x => x.cell6 ?? 0).Average();
             target.cell7 = dataList.Select(x => x.cell7 ?? 0).Average();
@@ -355,8 +353,8 @@ namespace CenterBackend.Services
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
                         CalculatedData?[] targetArray2 = MatchSourceDataWeek(dataList2, StartTime);
-                        WriteXlsxWeekly(workbook,  targetArray2, ReportTime);
-                        TempRepoetName= $"{StartTime:yyyy-MM-dd}_to_{StopTime:yyyy-MM-dd}";
+                        WriteXlsxWeekly(workbook, targetArray2, ReportTime);
+                        TempRepoetName = $"{StartTime:yyyy-MM-dd}_to_{StopTime:yyyy-MM-dd}";
                         break;
                     case 3: // 上月
                         StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
@@ -368,7 +366,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataMonth(dataList2, StartTime);
                         WriteXlsxMonthly(workbook, targetArray2, ReportTime);
-                        TempRepoetName= $"{StartTime:yyyy-MM}_to_{StopTime:yyyy-MM}";
+                        TempRepoetName = $"{StartTime:yyyy-MM}_to_{StopTime:yyyy-MM}";
                         break;
                     case 4: // 去年   
                         StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
@@ -380,7 +378,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataYear(dataList2, StartTime);
                         WriteXlsxYearly(workbook, targetArray2, ReportTime);
-                        TempRepoetName= $"{StartTime:yyyy}_to_{StopTime:yyyy}";
+                        TempRepoetName = $"{StartTime:yyyy}_to_{StopTime:yyyy}";
                         break;
                     default:
                         return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 类型无效" });
@@ -605,7 +603,7 @@ namespace CenterBackend.Services
                 else { SetXlsxCellValue(srcSheet, Range1, 17, 0); }
                 if (data.cell17 != null) { SetXlsxCellValue(srcSheet, Range1, 18, (float)Math.Round(Convert.ToSingle(data.cell17), 2)); }
                 if (data.cell18 != null) { SetXlsxCellValue(srcSheet, Range1, 19, (float)Math.Round(Convert.ToSingle(data.cell18), 2)); }
-                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell19)*1000, 2)); }
+                if (data.cell19 != null) { SetXlsxCellValue(srcSheet, Range1, 20, (float)Math.Round(Convert.ToSingle(data.cell19) * 1000, 2)); }
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
@@ -653,7 +651,7 @@ namespace CenterBackend.Services
                 if (data.cell38 != null) { SetXlsxCellValue(srcSheet, Range1, 39, (float)Math.Round(Convert.ToSingle(data.cell38), 2)); }
                 if (data.cell39 != null) { SetXlsxCellValue(srcSheet, Range1, 40, (float)Math.Round(Convert.ToSingle(data.cell39), 2)); }
                 if (data.cell40 != null) { SetXlsxCellValue(srcSheet, Range1, 41, (float)Math.Round(Convert.ToSingle(data.cell40), 2)); }
-                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell41)*1000, 2)); }
+                if (data.cell41 != null) { SetXlsxCellValue(srcSheet, Range1, 42, (float)Math.Round(Convert.ToSingle(data.cell41) * 1000, 2)); }
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
@@ -679,7 +677,7 @@ namespace CenterBackend.Services
                 if (data.cell51 != null) { SetXlsxCellValue(srcSheet, Range2, 2, (float)Math.Round(Convert.ToSingle(data.cell51), 2)); }
                 if (data.cell52 != null) { SetXlsxCellValue(srcSheet, Range2, 3, (float)Math.Round(Convert.ToSingle(data.cell52), 2)); }
                 if (data.cell53 != null) { SetXlsxCellValue(srcSheet, Range2, 4, (float)Math.Round(Convert.ToSingle(data.cell53), 2)); }
-                if (data.cell54 != null) { SetXlsxCellValue(srcSheet, Range2, 5, (float)Math.Round(Convert.ToSingle(data.cell54)*1000, 2)); }
+                if (data.cell54 != null) { SetXlsxCellValue(srcSheet, Range2, 5, (float)Math.Round(Convert.ToSingle(data.cell54) * 1000, 2)); }
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
@@ -714,7 +712,7 @@ namespace CenterBackend.Services
                 if (data.cell75 != null) { SetXlsxCellValue(srcSheet, Range2, 26, (float)Math.Round(Convert.ToSingle(data.cell75), 2)); }
                 if (data.cell76 != null) { SetXlsxCellValue(srcSheet, Range2, 27, (float)Math.Round(Convert.ToSingle(data.cell76), 2)); }
                 if (data.cell77 != null) { SetXlsxCellValue(srcSheet, Range2, 28, (float)Math.Round(Convert.ToSingle(data.cell77), 2)); }
-                if (data.cell78 != null) { SetXlsxCellValue(srcSheet, Range2, 29, (float)Math.Round(Convert.ToSingle(data.cell78)*1000, 2)); }
+                if (data.cell78 != null) { SetXlsxCellValue(srcSheet, Range2, 29, (float)Math.Round(Convert.ToSingle(data.cell78) * 1000, 2)); }
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
@@ -750,7 +748,7 @@ namespace CenterBackend.Services
                 //if (data.cell100 != null) { SetXlsxCellValue(srcSheet, Range2, 51, (float)Math.Round(Convert.ToSingle(data.cell100), 2)); }
 
                 //Rang3
-                if (data.cell101 != null) { SetXlsxCellValue(srcSheet, Range3, 2, (float)Math.Round(Convert.ToSingle(data.cell101)*1000, 2)); }
+                if (data.cell101 != null) { SetXlsxCellValue(srcSheet, Range3, 2, (float)Math.Round(Convert.ToSingle(data.cell101) * 1000, 2)); }
                 if (i != 0)// 每小时的差值
                 {
                     var prevData = dataList.ElementAt(i - 1);
@@ -907,9 +905,9 @@ namespace CenterBackend.Services
                 var data = dataList.ElementAt(i);
                 if (data == null) continue; // 如果 data 为空则跳过
 
-                int Range1 = 5 + i-12;
-                int Range2 = 21 + i-12;
-                int Range3 = 38 + i-12;
+                int Range1 = 5 + i - 12;
+                int Range2 = 21 + i - 12;
+                int Range3 = 38 + i - 12;
 
                 // 从Excel第2列开始写入
                 //Rang1 
@@ -1442,7 +1440,7 @@ namespace CenterBackend.Services
 
         async Task<List<CalculatedData>> IReportService.getCalculatedData(DateTime time)
         {
-            var result = await _calculatedDatas.GetByDayAsyncType(time,1);
+            var result = await _calculatedDatas.GetByDayAsyncType(time, 1);
             return result;
         }
 

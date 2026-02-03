@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CenterReport.Repository.Models
 {
@@ -163,4 +162,4 @@ namespace CenterReport.Repository.Models
         public float? cell150 { get; set; }
     }
 }
-    
+

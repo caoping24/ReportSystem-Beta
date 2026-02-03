@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Numerics;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CenterReport.Repository.Models
 {

@@ -15,5 +15,5 @@ namespace CenterBackend.IServices
         //三个卡片图
         Task<CoreChartDto> getCoreChart(DateTime time);
 
-    } 
+    }
 }

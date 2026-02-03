@@ -1,9 +1,7 @@
 ﻿using CenterBackend.Dto;
-using CenterBackend.IReportServices;
 using CenterBackend.IServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
-using CenterReport.Repository.Utils;
 
 namespace CenterBackend.Services
 {
@@ -171,15 +169,15 @@ namespace CenterBackend.Services
             return pieChartItems;
         }
 
-        public async Task<CoreChartDto>  getCoreChart(DateTime time)
+        public async Task<CoreChartDto> getCoreChart(DateTime time)
         {
             await Task.Delay(1);
             var coreChartDto = new CoreChartDto
             {
-                Yesterday=55.23,
-                Week=66.22,
-                Month=21.21,
-                Year=12.33
+                Yesterday = 55.23,
+                Week = 66.22,
+                Month = 21.21,
+                Year = 12.33
             };
             return coreChartDto;
         }

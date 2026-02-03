@@ -13,6 +13,6 @@ namespace CenterBackend.IReportServices
         /// <param name="request">分页参数</param>
         /// <returns>分页结果</returns>
         Task<PaginationResult<ReportRecord>> GetReportsByPageAsync(PaginationRequest request);
- 
+
     }
 }
