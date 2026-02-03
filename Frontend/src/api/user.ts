@@ -112,3 +112,14 @@ export const batchDownloadReportZip = async (params: {
     timeout: 120000, // 保持超时设置
   });
 };
+// 新增：重新生成报表接口封装
+export const regenerateReports = async (params: {
+  type: number;    // 报表类型
+  time: string; // 时间字符串，后端期望格式请与后端约定（这里建议 'YYYY-MM-DD' 或 'YYYY-MM-01'）
+}) => {
+  return myAxios.request({
+    url: "/api/Report/BuildReport",
+    method: "POST",
+    data: params,
+  });
+};

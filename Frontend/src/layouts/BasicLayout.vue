@@ -51,14 +51,14 @@ const items = ref<MenuProps["items"]>([
    },
   { 
     key: "/app/home", 
-    label: "报表", 
-    title: "报表",
+    label: "报表下载", 
+    title: "报表下载",
     // 报表图标：FileTextOutlined
     icon: () => h(FileTextOutlined)  
   },
  { key: "/app/components/TableEditable", 
-   label: "手动填写", 
-   title: "手动填写" ,
+   label: "数据录入", 
+   title: "数据录入" ,
   // 2. 核心修改：将 DashboardOutlined 替换为 EditOutlined（手动填写的新图标）
   icon: () => h(EditOutlined)  
    },

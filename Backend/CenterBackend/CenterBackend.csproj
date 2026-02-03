@@ -37,6 +37,7 @@
 	  <Folder Include="wwwroot\Model\" />
 	  <Folder Include="wwwroot\Report\" />
 	  <Folder Include="wwwroot\Log\" />
+	  <Folder Include="wwwroot\Temp\" />
 	</ItemGroup>
 	<ItemGroup>
 		<Content Update="wwwroot\**\*">

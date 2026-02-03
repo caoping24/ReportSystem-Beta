@@ -57,6 +57,7 @@ namespace CenterBackend.Controllers
             await _logger.LogInfoAsync($"Test3:timeStr");
             var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
             return temp;
+
         }
 
         /// <summary>
