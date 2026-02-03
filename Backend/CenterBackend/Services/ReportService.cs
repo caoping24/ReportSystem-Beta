@@ -313,7 +313,9 @@ namespace CenterBackend.Services
             DateTime StopTime;
             List<SourceData>? dataList;
             List<CalculatedData>? dataList2;
-            
+            string TempRepoetName = "1999-12-31";
+
+
             try
             {
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
@@ -335,6 +337,7 @@ namespace CenterBackend.Services
                         SourceData?[] targetArray = MatchSourceDataDay(dataList, ReportTime);
                         WriteXlsxDaily1(workbook, targetArray, ReportTime);
                         WriteXlsxDaily2(workbook, targetArray, ReportTime);
+                        TempRepoetName = $"{ReportTime.AddDays(-1):yyyy-MM-dd}";
                         break;
                     case 2: // 上周
                         DateTime currentDayOfWeek = ReportTime.Date;// 计算上周的开始时间（星期一）
@@ -349,6 +352,7 @@ namespace CenterBackend.Services
                         }
                         CalculatedData?[] targetArray2 = MatchSourceDataWeek(dataList2, StartTime);
                         WriteXlsxWeekly(workbook,  targetArray2, ReportTime);
+                        TempRepoetName= $"{StartTime:yyyy-MM-dd}_to_{StopTime:yyyy-MM-dd}";
                         break;
                     case 3: // 上月
                         StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
@@ -360,6 +364,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataMonth(dataList2, StartTime);
                         WriteXlsxMonthly(workbook, targetArray2, ReportTime);
+                        TempRepoetName= $"{StartTime:yyyy-MM}_to_{StopTime:yyyy-MM}";
                         break;
                     case 4: // 去年   
                         StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
@@ -371,6 +376,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataYear(dataList2, StartTime);
                         WriteXlsxYearly(workbook, targetArray2, ReportTime);
+                        TempRepoetName= $"{StartTime:yyyy}_to_{StopTime:yyyy}";
                         break;
                     default:
                         return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 类型无效" });
@@ -381,6 +387,7 @@ namespace CenterBackend.Services
 
                 var temp = new ReportRecord();
                 temp.Type = 1;
+                temp.Repoetedtime = TempRepoetName;
                 await _reportRecord.AddAsync(temp);
                 await _reportUnitOfWork.SaveChangesAsync();
                 return new OkObjectResult(new { success = true, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} Excel生成成功" });
