@@ -10,9 +10,13 @@
       <template v-if="column.key === 'index'">
         {{ (paginationParams.pageIndex - 1) * paginationParams.pageSize + index + 1 }}
       </template>
-      <template v-else-if="column.dataIndex === 'createTime'">
+          <template v-else-if="column.dataIndex === 'repoetedtime'">
+        {{ record.repoetedtime  }}
+      </template>
+        <template v-else-if="column.dataIndex === 'createTime'">
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
       </template>
+  
       <template v-else-if="column.key === 'action'">
           <!-- 新增：重新生成按钮（放在下载按钮前） -->
           <a-button @click="emitRegenerate(record.createdtime)">重建</a-button>

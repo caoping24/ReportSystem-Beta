@@ -148,6 +148,7 @@ const reportTabs: ReportTabItem[] = [
 
 const columns = [
   { title: "序号", key: "index", width: 80, align: "center" },
+   { title: "报表对应时间", dataIndex: "repoetedtime", key: "repoetedtime" },
   { title: "创建时间", dataIndex: "createTime", key: "createTime" },
   { title: "操作", key: "action", width: 120, align: "center" },
 ];
