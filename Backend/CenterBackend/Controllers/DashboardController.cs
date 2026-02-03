@@ -48,8 +48,10 @@ namespace CenterBackend.Controllers
             try
             {
 
-                var result = await _dashboardService.getLineCharTwo(DateTime.Now);
-                return ResultUtils<LineChartDataDto>.Success(result);
+                //var result = await _dashboardService.getLineCharTwo(DateTime.Now);
+                //return ResultUtils<LineChartDataDto>.Success(result);
+                return ResultUtils<LineChartDataDto>.error();
+
             }
             catch (Exception ex)
             {

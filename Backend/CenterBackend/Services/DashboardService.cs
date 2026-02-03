@@ -18,8 +18,6 @@ namespace CenterBackend.Services
         public async Task<LineChartDataDto> getLineChartOne(DateTime time)
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
             string[] xAxis = Enumerable.Range(0, 24)
                            .Select(n => time.AddHours(-23 + n))
                            .Select(t => t.Hour.ToString("D2"))
@@ -36,7 +34,7 @@ namespace CenterBackend.Services
                         {
                             Name = "无数据",
                             // 替换NaN为null
-                            Data = fixedHours.Select(_ => (double?)null).ToArray()
+                            Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
                         }
                     }
                 };
@@ -66,8 +64,6 @@ namespace CenterBackend.Services
         public async Task<LineChartDataDto> getLineCharTwo(DateTime time)
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
             string[] xAxis = Enumerable.Range(0, 24)
                            .Select(n => time.AddHours(-23 + n))
                            .Select(t => t.Hour.ToString("D2"))
@@ -79,14 +75,14 @@ namespace CenterBackend.Services
                 {
                     XAxis = xAxis,
                     Series = new List<LineChartSeriesDto>
-            {
-                new LineChartSeriesDto
-                {
-                    Name = "无数据",
-                    // 替换NaN为null
-                    Data = fixedHours.Select(_ => (double?)null).ToArray()
-                }
-            }
+                    {
+                        new LineChartSeriesDto
+                        {
+                            Name = "无数据",
+                            // 替换NaN为null
+                            Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
+                        }
+                    }
                 };
             }
             double?[] data = new double?[sourceDatas.Count()];
@@ -113,8 +109,6 @@ namespace CenterBackend.Services
         public async Task<LineChartDataDto> getLineCharThree(DateTime time)
         {
             List<SourceData> sourceDatas = await _reportRepository.GetByDataTimeAsync(time.AddHours(-24), time);
-            var fixedHours = Enumerable.Range(8, 16).Concat(Enumerable.Range(0, 9)).ToList();
-            //string[] xAxis = fixedHours.Select(h => $"{h:D2}").ToArray();
             string[] xAxis = Enumerable.Range(0, 24)
                            .Select(n => time.AddHours(-23 + n))
                            .Select(t => t.Hour.ToString("D2"))
@@ -130,8 +124,7 @@ namespace CenterBackend.Services
                 new LineChartSeriesDto
                 {
                     Name = "无数据",
-                    // 替换NaN为null
-                    Data = fixedHours.Select(_ => (double?)null).ToArray()
+                    Data = Enumerable.Range(0,24).Select(_ => (double?)null).ToArray() // 改为24个null，匹配X轴
                 }
             }
                 };
@@ -152,12 +145,12 @@ namespace CenterBackend.Services
                 {
                     new LineChartSeriesDto
                     {
-                        Name = "羟基原料浓度",
+                        Name = "羟基原料浓度1",
                         Data = data1
                     },
                      new LineChartSeriesDto
                     {
-                        Name = "羟基配后浓度",
+                        Name = "羟基配后浓度2",
                         Data = data2
                     }
                 }

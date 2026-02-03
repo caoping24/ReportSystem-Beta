@@ -1,6 +1,7 @@
 using AngleSharp.Io;
 using CenterBackend.Dto;
 using CenterBackend.IReportServices;
+using CenterBackend.Services;
 using CenterReport.Repository.Models;
 using CenterReport.Repository.Utils;
 using CenterUser.Repository.Models;
@@ -14,10 +15,11 @@ namespace CenterBackend.Controllers
     public class ReportRecordController : ControllerBase
     {
         private readonly IReportRecordService _reportRecordService;
-
-        public ReportRecordController(IReportRecordService reportRecordService)
+        private readonly IReportService reportService;
+        public ReportRecordController(IReportRecordService reportRecordService, IReportService reportService)
         {
             this._reportRecordService = reportRecordService;
+            this.reportService = reportService;
         }
 
         /// <summary>
@@ -99,61 +101,121 @@ namespace CenterBackend.Controllers
         [HttpGet("HourData")]
         public async Task<ActionResult<List<HourDataDto>>> GetHourData([FromQuery] string date)
         {
-            // 校验日期格式
-            if (!DateTime.TryParse(date, out var queryDate))
+            // 1. 校验日期格式
+            if (!DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var queryDate))
             {
-                return StatusCode(500, new { message = "日期格式错误，请传入YYYY-MM-DD格式" });
+                return BadRequest(new { message = "日期格式错误，请传入YYYY-MM-DD格式" });
             }
+
             try
             {
-                // 小时列表
-                var hourList = new List<int> { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-                var random = new Random();
-                var mockData = hourList.Select((hour, index) =>
+                // 业务时间范围定义：查询日期8点 → 次日8点（核心划分规则，保留）
+                DateTime startTime = queryDate.Date.AddHours(8);   // 查询日8:00:00
+                DateTime endTime = startTime.AddDays(1);          // 次日8:00:00
+                // 当前系统时间（取到分钟，避免毫秒差异导致误判未来时间）
+                DateTime currentTime = DateTime.Now;
+
+                // 2. 获取该时间段内的所有CalculatedData数据（保留原有逻辑）
+                var calculatedDatas = await reportService.getCalculatedData(queryDate);
+
+                // 3.构建【带日期维度的分组键】，区分今日8点和次日8点（保留原有逻辑）
+                var dataWithKey = calculatedDatas.Select(cd => new
                 {
+                    Data = cd,
+                    GroupKey = cd.createdtime >= startTime && cd.createdtime < queryDate.Date.AddDays(1)
+                        ? cd.createdtime.Hour
+                        : cd.createdtime.Hour + 100
+                }).ToList();
+
+                // 4. 按唯一分组键分组（保留原有逻辑）
+                var hourGroupDict = dataWithKey
+                    .GroupBy(item => item.GroupKey)
+                    .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.Data);
+
+                // 业务小时列表：8点到次日8点（保留原有25个时段）
+                var hourList = new List<int> { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+
+                // 6. 构建返回数据（核心修改：计算真实时间+动态判定IsNextDay）
+                var hourDataList = hourList.Select((hour, index) =>
+                {
+                    // ===== 【核心修改1：计算当前小时段的真实业务时间戳】 =====
+                    DateTime realHourTime;
+                    if (index < 16)
+                    {
+                        // 前16个时段：8-23点 → 属于【查询日期】的8:00 - 23:59
+                        realHourTime = queryDate.Date.AddHours(hour);
+                    }
+                    else
+                    {
+                        // 后9个时段：0-7点+最后一个8点 → 属于【查询日期+1天】的0:00 - 8:00
+                        realHourTime = queryDate.Date.AddDays(1).AddHours(hour);
+                    }
+                    // 时间精度统一到分钟（避免毫秒差异导致未来时间误判）
+                    realHourTime = new DateTime(realHourTime.Year, realHourTime.Month, realHourTime.Day,
+                                                realHourTime.Hour, realHourTime.Minute, 0);
+
+                    // ===== 【核心修改2：匹配分组数据（保留原有逻辑）】 =====
+                    int targetKey = index >= 16 ? hour + 100 : hour;
+                    hourGroupDict.TryGetValue(targetKey, out var targetData);
+
+                    // ===== 【核心修改3：动态判定未来时间】 =====
+                    // 未来时间：该时段的真实时间 大于 当前系统时间
+                    bool isFutureTime = realHourTime > currentTime;
+
+                    // ===== 【核心修改4：修正IsNextDay判定条件（严格按需求）】 =====
+                    // IsNextDay=true（前端禁用）：未来时间 OR 无对应数据
+                    // IsNextDay=false（前端可编辑）：过去时间 AND 有对应数据
+                    bool isNextDay = isFutureTime || targetData == null;
+
+                    // 初始化返回DTO，赋值核心字段
                     var hourData = new HourDataDto
                     {
                         Hour = hour,
                         Date = date,
-                        IsNextDay = index >= 16 // 索引16及以后标记为次日
+                        IsNextDay = isNextDay, // 赋值修正后的禁用标识
+                        Cells = new Dictionary<string, string>() // 确保Cells初始化，避免空引用
                     };
 
-                    // 填充数据
-                    hourData.Cells[$"cell29"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell30"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell31"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell32"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell33"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell34"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell35"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell56"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell57"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell58"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell59"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell60"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell82"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell83"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell84"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell85"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell86"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell87"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell135"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell136"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell137"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell138"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell139"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell140"] = (random.NextDouble() * 100).ToString("0.0");
-                    hourData.Cells[$"cell141"] = (random.NextDouble() * 100).ToString("0.0");
+                    // 7. 填充cell字段（保留原有格式化逻辑，无数据为空字符串）
+                    hourData.Cells["cell29"] = targetData?.cell29?.ToString("0.00") ?? "";
+                    hourData.Cells["cell30"] = targetData?.cell30?.ToString("0.00") ?? "";
+                    hourData.Cells["cell31"] = targetData?.cell31?.ToString("0.00") ?? "";
+                    hourData.Cells["cell32"] = targetData?.cell32?.ToString("0.00") ?? "";
+                    hourData.Cells["cell33"] = targetData?.cell33?.ToString("0.00") ?? "";
+                    hourData.Cells["cell34"] = targetData?.cell34?.ToString("0.00") ?? "";
+                    hourData.Cells["cell35"] = targetData?.cell35?.ToString("0.00") ?? "";
+                    hourData.Cells["cell56"] = targetData?.cell56?.ToString("0.00") ?? "";
+                    hourData.Cells["cell57"] = targetData?.cell57?.ToString("0.00") ?? "";
+                    hourData.Cells["cell58"] = targetData?.cell58?.ToString("0.00") ?? "";
+                    hourData.Cells["cell59"] = targetData?.cell59?.ToString("0.00") ?? "";
+                    hourData.Cells["cell60"] = targetData?.cell60?.ToString("0.00") ?? "";
+                    hourData.Cells["cell82"] = targetData?.cell82?.ToString("0.00") ?? "";
+                    hourData.Cells["cell83"] = targetData?.cell83?.ToString("0.00") ?? "";
+                    hourData.Cells["cell84"] = targetData?.cell84?.ToString("0.00") ?? "";
+                    hourData.Cells["cell85"] = targetData?.cell85?.ToString("0.00") ?? "";
+                    hourData.Cells["cell86"] = targetData?.cell86?.ToString("0.00") ?? "";
+                    hourData.Cells["cell87"] = targetData?.cell87?.ToString("0.00") ?? "";
+                    hourData.Cells["cell135"] = targetData?.cell135?.ToString("0.00") ?? "";
+                    hourData.Cells["cell136"] = targetData?.cell136?.ToString("0.00") ?? "";
+                    hourData.Cells["cell137"] = targetData?.cell137?.ToString("0.00") ?? "";
+                    hourData.Cells["cell138"] = targetData?.cell138?.ToString("0.00") ?? "";
+                    hourData.Cells["cell139"] = targetData?.cell139?.ToString("0.00") ?? "";
+                    hourData.Cells["cell140"] = targetData?.cell140?.ToString("0.00") ?? "";
+                    hourData.Cells["cell141"] = targetData?.cell141?.ToString("0.00") ?? "";
 
                     return hourData;
                 }).ToList();
-                return Ok(mockData); // 返回200 
+
+                return Ok(hourDataList);
             }
             catch (Exception ex)
             {
+                // 生产环境建议添加日志记录
+                // _logger.LogError(ex, "查询小时数据失败，日期：{QueryDate}", date);
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
+    
 
         [HttpPost("SaveCell")]
         public async Task<ActionResult<List<TableHeaderDto>>> SaveCell([FromBody] SaveCellRequestDto request) {
@@ -166,6 +228,12 @@ namespace CenterBackend.Controllers
             }
             try
             {
+                await reportService.UpdateCalculatedDataFieldAsync(
+                        dateStr: request.Date,
+                        hour: request.Hour,
+                        prop: request.Prop,
+                        valueStr: request.Value);
+
                 return Ok(); // 返回200 
             }
             catch (Exception ex)
@@ -173,5 +241,7 @@ namespace CenterBackend.Controllers
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
+    
+    
     }
 }
