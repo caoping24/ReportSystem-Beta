@@ -70,8 +70,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-// 导入核心接口，【ReloadData为重载接口】后续对接后端后删除注释即可
-import { Headers, HourData, SaveCell,ReloadData } from "@/api/TableEdit";
+// 导入核心接口，ReloadData为重载接口（已取消注释，直接调用）
+import { Headers, HourData, SaveCell, ReloadData } from "@/api/TableEdit";
 
 // 表格表头类型：prop匹配后端cells的key（cell29/cell30等）
 interface TableHeader {
@@ -83,7 +83,7 @@ interface TableHeader {
 interface HourDataItem {
   hour: number;
   date: string;
-  isNextDay: boolean;
+  isNextDay: boolean; // 后端返回的禁用标识，true=禁用/false=可编辑
   cells?: Record<string, string>;
 }
 
@@ -103,7 +103,7 @@ const selectedDate = ref<string>(''); // 选中日期
 const tableHeaders = ref<TableHeader[]>([]); // 表格表头
 const tableData = ref<TableRow[]>([]); // 表格数据
 
-// 禁用未来日期选择
+// 禁用未来日期选择（日期选择器的禁用，与表格单元格禁用无关）
 const disabledFutureDate = (date: Date): boolean => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -112,24 +112,15 @@ const disabledFutureDate = (date: Date): boolean => {
   return selectDate.getTime() > today.getTime();
 };
 
-// 判断单元格是否禁用（未来时间禁用，适配次日时间isNextDay）
+// 判断单元格是否禁用：核心逻辑→根据后端返回的isNextDay字段，true禁用/false可编辑
 const isCellDisabled = (row: TableRow): boolean => {
+  // 基础非空校验：行数据的日期/小时缺失时，默认禁用单元格
   if (!row.date || row.hour === undefined || row.hour === null) return true;
-
-  const currentTime = new Date().getTime();
-  const rowDate = new Date(row.date);
-  const targetDate = new Date(rowDate);
-
-  if (row.isNextDay) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  }
-  targetDate.setHours(row.hour, 0, 0, 0);
-  const rowRealTime = targetDate.getTime();
-
-  return rowRealTime > currentTime;
+  // 核心规则：完全遵循后端返回的isNextDay标识
+  return row.isNextDay === true;
 };
 
-// 单元格样式：禁用/小时列添加灰色背景
+// 单元格样式：禁用/小时列添加灰色背景（基于isCellDisabled判断）
 const cellClassName = ({ row, column }: { row: TableRow; column: any }): string => {
   if (column.prop === 'hour') return 'disabled-cell';
   return isCellDisabled(row) ? 'disabled-cell' : '';
@@ -217,9 +208,9 @@ const reloadTableData = async (): Promise<void> => {
       type: 1,
       time: selectedDate.value
     };
-    // 【对接后端后删除注释】调用重载接口
-     await ReloadData(reloadParams);
-    // 重载成功后重新拉取数据，保证表格数据最新
+    // 调用后端重载接口
+    await ReloadData(reloadParams);
+    // 重载成功后重新拉取数据，保证表格数据最新（含最新的isNextDay标识）
     await fetchTableData();
     ElMessage.success(`【${selectedDate.value}】数据重载完成`);
   } catch (error) {

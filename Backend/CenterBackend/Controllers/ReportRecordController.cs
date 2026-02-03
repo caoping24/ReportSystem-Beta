@@ -96,51 +96,74 @@ namespace CenterBackend.Controllers
 
             try
             {
-                //定义时间范围（和仓储层一致），用于区分数据属于「今日」还是「次日」
-                DateTime startTime = queryDate.Date.AddHours(8);   // 今日8点（查询开始）
-                DateTime endTime = startTime.AddDays(1);          // 次日8点
+                // 业务时间范围定义：查询日期8点 → 次日8点（核心划分规则，保留）
+                DateTime startTime = queryDate.Date.AddHours(8);   // 查询日8:00:00
+                DateTime endTime = startTime.AddDays(1);          // 次日8:00:00
+                // 当前系统时间（取到分钟，避免毫秒差异导致误判未来时间）
+                DateTime currentTime = DateTime.Now;
 
-                // 2. 获取该时间段内的所有CalculatedData数据
+                // 2. 获取该时间段内的所有CalculatedData数据（保留原有逻辑）
                 var calculatedDatas = await reportService.getCalculatedData(queryDate);
 
-                // 3.构建【带日期维度的分组键】，区分今日8点和次日8点
+                // 3.构建【带日期维度的分组键】，区分今日8点和次日8点（保留原有逻辑）
                 var dataWithKey = calculatedDatas.Select(cd => new
                 {
                     Data = cd,
                     GroupKey = cd.createdtime >= startTime && cd.createdtime < queryDate.Date.AddDays(1)
-                        ? cd.createdtime.Hour          
-                        : cd.createdtime.Hour + 100    
+                        ? cd.createdtime.Hour
+                        : cd.createdtime.Hour + 100
                 }).ToList();
 
-                // 4. 按唯一分组键分组
+                // 4. 按唯一分组键分组（保留原有逻辑）
                 var hourGroupDict = dataWithKey
                     .GroupBy(item => item.GroupKey)
-                    .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.Data); // 按唯一键取第一条数据
+                    .ToDictionary(g => g.Key, g => g.FirstOrDefault()?.Data);
 
+                // 业务小时列表：8点到次日8点（保留原有25个时段）
                 var hourList = new List<int> { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
-                // 6. 构建返回数据
+                // 6. 构建返回数据（核心修改：计算真实时间+动态判定IsNextDay）
                 var hourDataList = hourList.Select((hour, index) =>
                 {
-                    // 【修改1】初始化HourDataDto时，先不赋值IsNextDay（需先判断是否有数据）
+                    // ===== 【核心修改1：计算当前小时段的真实业务时间戳】 =====
+                    DateTime realHourTime;
+                    if (index < 16)
+                    {
+                        // 前16个时段：8-23点 → 属于【查询日期】的8:00 - 23:59
+                        realHourTime = queryDate.Date.AddHours(hour);
+                    }
+                    else
+                    {
+                        // 后9个时段：0-7点+最后一个8点 → 属于【查询日期+1天】的0:00 - 8:00
+                        realHourTime = queryDate.Date.AddDays(1).AddHours(hour);
+                    }
+                    // 时间精度统一到分钟（避免毫秒差异导致未来时间误判）
+                    realHourTime = new DateTime(realHourTime.Year, realHourTime.Month, realHourTime.Day,
+                                                realHourTime.Hour, realHourTime.Minute, 0);
+
+                    // ===== 【核心修改2：匹配分组数据（保留原有逻辑）】 =====
+                    int targetKey = index >= 16 ? hour + 100 : hour;
+                    hourGroupDict.TryGetValue(targetKey, out var targetData);
+
+                    // ===== 【核心修改3：动态判定未来时间】 =====
+                    // 未来时间：该时段的真实时间 大于 当前系统时间
+                    bool isFutureTime = realHourTime > currentTime;
+
+                    // ===== 【核心修改4：修正IsNextDay判定条件（严格按需求）】 =====
+                    // IsNextDay=true（前端禁用）：未来时间 OR 无对应数据
+                    // IsNextDay=false（前端可编辑）：过去时间 AND 有对应数据
+                    bool isNextDay = isFutureTime || targetData == null;
+
+                    // 初始化返回DTO，赋值核心字段
                     var hourData = new HourDataDto
                     {
                         Hour = hour,
-                        Date = date
-                        // 移除原IsNextDay = index >=16，延后赋值
+                        Date = date,
+                        IsNextDay = isNextDay, // 赋值修正后的禁用标识
+                        Cells = new Dictionary<string, string>() // 确保Cells初始化，避免空引用
                     };
 
-                    // 根据是否是原次日时段，匹配分组键
-                    int targetKey = index >= 16 ? hour + 100 : hour;
-                    // 从分组中获取对应数据（无数据则targetData为null）
-                    hourGroupDict.TryGetValue(targetKey, out var targetData);
-
-                    // 【核心修改2】IsNextDay双条件判断：
-                    // 条件1：原逻辑（索引>=16为次日时段）；条件2：分组中无对应数据
-                    // 两个条件满足其一，即置为true
-                    hourData.IsNextDay = index >= 16 || targetData == null;
-
-                    // 7. 填充cell字段（逻辑不变，无数据为空字符串）
+                    // 7. 填充cell字段（保留原有格式化逻辑，无数据为空字符串）
                     hourData.Cells["cell29"] = targetData?.cell29?.ToString("0.00") ?? "";
                     hourData.Cells["cell30"] = targetData?.cell30?.ToString("0.00") ?? "";
                     hourData.Cells["cell31"] = targetData?.cell31?.ToString("0.00") ?? "";
@@ -174,11 +197,12 @@ namespace CenterBackend.Controllers
             }
             catch (Exception ex)
             {
-                // 建议补充日志记录（生产环境必备）
+                // 生产环境建议添加日志记录
                 // _logger.LogError(ex, "查询小时数据失败，日期：{QueryDate}", date);
                 return StatusCode(500, new { message = "查询失败", detail = ex.Message });
             }
         }
+    
 
         [HttpPost("SaveCell")]
         public async Task<ActionResult<List<TableHeaderDto>>> SaveCell([FromBody] SaveCellRequestDto request) {
