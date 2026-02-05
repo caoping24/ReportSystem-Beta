@@ -615,7 +615,11 @@ namespace CenterBackend.Services
                 }
                 else { SetXlsxCellValue(srcSheet, Range1, 21, 0); }
                 if (data.cell21 != null) { SetXlsxCellValue(srcSheet, Range1, 22, data.cell21.Value); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, Range1, 23, data.cell22.Value); }
+                if (data.cell22 != null) //摩尔比 大于0 小于2 
+                { 
+                    if (data.cell22.Value < 2 )
+                    SetXlsxCellValue(srcSheet, Range1, 23, data.cell22.Value); 
+                }
                 if (i == 12)
                 {
                     if (data.cell23 != null) { SetXlsxCellValue(srcSheet, Range1, 24, data.cell23.Value); }//只记录最后一个值
@@ -1004,7 +1008,11 @@ namespace CenterBackend.Services
                     }
                     else { SetXlsxCellValue(srcSheet, Range1, 21, 0); }
                 if (data.cell21 != null) { SetXlsxCellValue(srcSheet, Range1, 22, data.cell21.Value); }
-                if (data.cell22 != null) { SetXlsxCellValue(srcSheet, Range1, 23, data.cell22.Value); }
+                if (data.cell22 != null) //摩尔比 大于0 小于2 
+                {
+                    if (data.cell22.Value < 2)
+                        SetXlsxCellValue(srcSheet, Range1, 23, data.cell22.Value);
+                }
                 if (i == 24)
                 {
                     if (data.cell23 != null) { SetXlsxCellValue(srcSheet, Range1, 24, data.cell23.Value); }//只记录最后一个值
