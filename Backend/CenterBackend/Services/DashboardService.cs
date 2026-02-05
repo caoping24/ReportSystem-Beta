@@ -56,9 +56,9 @@ namespace CenterBackend.Services
                 {
                     continue;
                 }
-                if (sourceData.cell19 != null && Convert.ToSingle(sourceData.cell19) is float TempValue1)
+                if (sourceData.cell19 != null && sourceData.cell19 is float TempValue1)
                 {
-                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                    DataLine1[hourDiff] = TempValue1*1000;
                 }
             }
             return chartDataDto;
@@ -112,14 +112,15 @@ namespace CenterBackend.Services
                 {
                     continue;
                 }
-                if (sourceData.cell22 != null && Convert.ToSingle(sourceData.cell22) is float TempValue1)
+
+                if (sourceData.cell22 != null && sourceData.cell22 is float TempValue1)
                 {
-                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                    DataLine1[hourDiff] = TempValue1;
                 }
 
-                if (sourceData.cell23 != null && Convert.ToSingle(sourceData.cell23) is float TempValue2)
+                if (sourceData.cell23 != null && sourceData.cell23 is float TempValue2)
                 {
-                    DataLine2[hourDiff] = (float)Math.Round(TempValue2, 4);
+                    DataLine2[hourDiff] = TempValue2;
                 }
             }
             return chartDataDto;
@@ -173,14 +174,14 @@ namespace CenterBackend.Services
                 {
                     continue;
                 }
-                if (sourceData.cell3 != null && Convert.ToSingle(sourceData.cell3) is float TempValue1)
+                if (sourceData.cell3 != null && sourceData.cell3 is float TempValue1)
                 {
-                    DataLine1[hourDiff] = (float)Math.Round(TempValue1, 4);
+                    DataLine1[hourDiff] = TempValue1;
                 }
 
-                if (sourceData.cell6 != null && Convert.ToSingle(sourceData.cell6) is float TempValue2)
+                if (sourceData.cell6 != null && sourceData.cell6 is float TempValue2)
                 {
-                    DataLine2[hourDiff] = (float)Math.Round(TempValue2, 4);
+                    DataLine2[hourDiff] = TempValue2;
                 }
             }
             return chartDataDto;
