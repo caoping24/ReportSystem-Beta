@@ -203,9 +203,10 @@ namespace CenterBackend.Services
 
         public async Task<CoreChartDto> getCoreChart(DateTime time)
         {
-            var StartTime = time.AddDays(-1).Date;
-                StartTime = StartTime.AddHours(8).AddMinutes(30);
-            var EndTime = time.AddDays(-1).Date;
+            //var StartTime = time.AddDays(-1).Date;
+            var StartTime = time.Date;
+            StartTime = StartTime.AddHours(8).AddMinutes(30);
+            var EndTime = time.Date;
                 EndTime = EndTime.AddHours(8).AddMinutes(40);
 
             List<CalculatedData> dataList = await _calculatedData.GetByDataTimeAsync(StartTime, EndTime, 1);
@@ -217,18 +218,14 @@ namespace CenterBackend.Services
                 Month = 0,
                 Year = 0
             };
-            if (dataList == null || !dataList.Any())
-            {
-                return coreChartDto;
+            if (dataList == null || !dataList.Any()) return coreChartDto;
 
-            }
-
-            coreChartDto.Yesterday = (double)dataList.ElementAt(0).cell3;
-            coreChartDto.Week = (double)dataList.ElementAt(0).cell6;
-            coreChartDto.Month = (double)dataList.ElementAt(0).cell22;
-            coreChartDto.Year = (double)dataList.ElementAt(0).cell23;
-
+            if (dataList[0].cell3 is float value1) coreChartDto.Yesterday = value1;
+            if (dataList[0].cell6 is float value2) coreChartDto.Week = value2;
+            if (dataList[0].cell22 is float value3 && value3 <2) coreChartDto.Month = value3; // 大于2 则表示值错误
+            if (dataList[0].cell23 is float value4) coreChartDto.Year = value4;
             return coreChartDto;
+
         }
     }
 

@@ -5,21 +5,21 @@
         /// <summary>
         /// 昨日数据
         /// </summary>
-        public double Yesterday { get; set; }
+        public float Yesterday { get; set; }
 
         /// <summary>
         /// 本周数据
         /// </summary>
-        public double Week { get; set; }
+        public float Week { get; set; }
 
         /// <summary>
         /// 本月数据
         /// </summary>
-        public double Month { get; set; }
+        public float Month { get; set; }
 
         /// <summary>
         /// 本年数据
         /// </summary>
-        public double Year { get; set; }
+        public float Year { get; set; }
     }
 }

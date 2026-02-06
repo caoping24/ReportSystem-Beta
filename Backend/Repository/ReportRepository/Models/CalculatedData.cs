@@ -7,6 +7,7 @@ namespace CenterReport.Repository.Models
     public class CalculatedData //: ISoftDelete
     {
         public long Id { get; set; }
+        public string reportedTime { get; set; } = "2026-01-01"; //报表对应的时间 yyyy-MM-dd  日周月年 根据情况格式化
         public DateTime createdtime { get; set; } = DateTime.Now;
         public int Type { get; set; }
         public int PH { get; set; }//暂未使用
