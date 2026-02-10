@@ -10,7 +10,7 @@
         Task<List<T>> GetByDayAsyncType(DateTime time, int? type = null);
         Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
-        void Update(T entity);
+        Task Update(T entity);
         Task DeleteByIdAsync(int id);
     }
 }

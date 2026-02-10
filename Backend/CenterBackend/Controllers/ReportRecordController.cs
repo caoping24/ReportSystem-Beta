@@ -36,12 +36,7 @@ namespace CenterBackend.Controllers
                 if (result?.Data != null && result.Data.Any())// reportedTime 均为 "yyyy-MM-dd" 格式，按该日期降序排序（最新在前）
                 {
                     result.Data = result.Data
-                        .OrderByDescending(r =>
-                        {
-                            if (DateTime.TryParseExact(r.reportedTime, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-                                return dt;
-                            return DateTime.MinValue;
-                        })
+                        .OrderByDescending(r => r.reportedTime)
                         .ToList();
                 }
 

@@ -5,4 +5,4 @@ SET reportedTime = CONVERT(nchar(10), DATEADD(DAY, -1, createdtime), 23);
 
 -- 修改字段为不可空
 ALTER TABLE [dbo].[CalculatedData]
-ALTER COLUMN reportedTime nchar(10) NOT NULL;
+ALTER COLUMN reportedTime datetime2(0) NOT NULL;

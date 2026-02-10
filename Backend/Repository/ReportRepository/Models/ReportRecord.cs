@@ -6,7 +6,7 @@ namespace CenterReport.Repository.Models
     public class ReportRecord
     {
         public long Id { get; set; }
-        public string reportedTime { get; set; } = "2026-01-01"; //报表对应的时间 yyyy-MM-dd  日周月年 根据情况格式化
+        public DateTime reportedTime { get; set; } = DateTime.Parse("2026-01-01 00:00:00");
         public DateTime createdtime { get; set; } = DateTime.Now;
         public int Type { get; set; }
     }

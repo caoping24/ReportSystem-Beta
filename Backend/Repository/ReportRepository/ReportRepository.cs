@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using System;
 
 namespace CenterReport.Repository
 {
@@ -51,35 +53,52 @@ namespace CenterReport.Repository
             return await query.OrderBy(e => EF.Property<DateTime>(e, "createdtime")).ToListAsync();
         }
 
+        /// <summary>
+        /// SourceData表使用，该表没有reportedTime字段
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end)
         {
-            var from = DateTime.Compare(start, end) > 0 ? end : start;
-            var to = DateTime.Compare(start, end) > 0 ? start : end;
+            var fromDateTime = DateTime.Compare(start, end) > 0 ? end : start;
+            var toDateTime = DateTime.Compare(start, end) > 0 ? start : end;
 
             return await _entities
-                .Where(e => EF.Property<DateTime>(e, "createdtime") >= from && EF.Property<DateTime>(e, "createdtime") <= to)
+                .Where(e => EF.Property<DateTime>(e, "createdtime") >= fromDateTime && EF.Property<DateTime>(e, "createdtime") <= toDateTime)
                 .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
                 .ToListAsync();
         }
-
-        public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end, int _Type)
+        /// <summary>
+        /// CalculatedData表使用，该表有reportedTime字段
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public async Task<List<T>> GetByDataTimeAsync(DateTime start, DateTime end, int type)
         {
-            var from = DateTime.Compare(start, end) > 0 ? end : start;
-            var to = DateTime.Compare(start, end) > 0 ? start : end;
+            DateTime fromDateTime = DateTime.Compare(start, end) > 0 ? end : start;
+            DateTime toDateTime = DateTime.Compare(start, end) > 0 ? start : end;
 
-            if (from == to)//获取满足条件的最新的一条记录
+            if (fromDateTime == toDateTime)
             {
                 return await _entities
-                    .Where(e => EF.Property<DateTime>(e, "createdtime") == from && EF.Property<int>(e, "Type") == _Type)
+                    .Where(e =>
+                        EF.Property<DateTime>(e, "reportedTime") == fromDateTime &&
+                        EF.Property<int>(e, "Type") == type)
+                    .OrderBy(e => EF.Property<DateTime>(e, "reportedTime"))// 统一排序规则
                     .ToListAsync();
             }
             return await _entities
-                .Where(e => EF.Property<DateTime>(e, "createdtime") >= from && EF.Property<DateTime>(e, "createdtime") <= to
-                    && EF.Property<int>(e, "Type") == _Type)
-                .OrderBy(e => EF.Property<DateTime>(e, "createdtime"))
+                .Where(e =>
+                    EF.Property<DateTime?>(e, "reportedTime") != null &&
+                    EF.Property<DateTime>(e, "reportedTime") >= fromDateTime &&
+                    EF.Property<DateTime>(e, "reportedTime") <= toDateTime &&
+                    EF.Property<int>(e, "Type") == type)
+                .OrderBy(e => EF.Property<DateTime>(e, "reportedTime"))
                 .ToListAsync();
         }
-
 
         public async Task<T?> GetByIdAsync(int id) => await _entities.FindAsync(id);
         public async Task AddAsync(T entity)
@@ -87,7 +106,7 @@ namespace CenterReport.Repository
             await _entities.AddAsync(entity);
         }
 
-        public void Update(T entity)
+        public async Task Update(T entity)
         {
             _context.Entry(entity).State = EntityState.Modified;
         }

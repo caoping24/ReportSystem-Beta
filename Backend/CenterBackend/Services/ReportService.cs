@@ -2,11 +2,13 @@
 using CenterBackend.IReportServices;
 using CenterReport.Repository;
 using CenterReport.Repository.Models;
+using Masuit.Tools.DateTimeExt;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
+using Org.BouncyCastle.Asn1.X509;
 using System.Reflection;
 
 namespace CenterBackend.Services
@@ -76,51 +78,102 @@ namespace CenterBackend.Services
                 default:
                     return false;
             }
-            CalculatedData targetModel = new CalculatedData();
-            return await CalculatedDataAndInsert(StartTime, StopTime, targetModel, _Dto.Type);
+            return await CalculatedDataAndInsert(StartTime, StopTime, _Dto.Type);
         }
+
         /// <summary>
         /// 根据Tpye类型，计算周/月/年统计数据
         /// </summary>
-        private async Task<bool> CalculatedDataAndInsert(DateTime StartTime, DateTime StopTime, CalculatedData target, int Type)
+        private async Task<bool> CalculatedDataAndInsert(DateTime startTime, DateTime stopTime, int type)
         {
-            if (Type == 1)
+            var reportedTime = startTime.Date;//记录是那一天的数据
+            var target = _calculatedDatas.db.FirstOrDefault(r => r.Type == type && r.reportedTime == reportedTime);
+            bool isNewRecord = (target == null);
+            if (isNewRecord)
             {
-                var dataList1 = await _sourceData.GetByDataTimeAsync(StartTime, StopTime);//查询日数据
-                if (dataList1.Count == 0) return false;
-                await DayDataCalculate(target, dataList1);
+                target = new CalculatedData
+                {
+                    Type = type,
+                    reportedTime = reportedTime,
+                    createdtime = DateTime.Now // 新增时初始化创建时间
+                };
             }
             else
             {
-                List<CalculatedData> dataList;
-                switch (Type)
-                {
-                    case 2://周
-                        dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 1);//查询日数据
-                        if (dataList.Count == 0) return false;
-                        await WeekDataCalculate(target, dataList);
-                        break;
-                    case 3://月
-                        dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 1);//查询日数据
-                        if (dataList.Count == 0) return false;
-                        await MonthDataCalculate(target, dataList);
-                        break;
-                    case 4://年
-                        dataList = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 3);//查询月数据
-                        if (dataList.Count == 0) return false;
-                        await YearDataCalculate(target, dataList);
-                        break;
-                    default:
-                        break;
-                }
+                target.createdtime = DateTime.Now; // 更新时刷新创建时间（或改updateTime更合理）
             }
-            await _calculatedDatas.AddAsync(target);
+
+            bool isCalculatedSuccess = await CalculateDimensionDataAsync(target, startTime, stopTime, type);
+            if (!isCalculatedSuccess)
+            {
+                return false;
+            }
+
+            if (isNewRecord)
+            {
+                await _calculatedDatas.AddAsync(target);
+            }
+            else
+            {
+                _calculatedDatas.Update(target);
+
+            }
+
             await _reportUnitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+
+        /// <summary>
+        /// 提取：按维度计算数据（解耦维度计算逻辑，便于维护）
+        /// </summary>
+        /// <param name="target">要赋值的统计对象</param>
+        /// <param name="startTime">开始时间</param>
+        /// <param name="stopTime">结束时间</param>
+        /// <param name="analysisType">统计维度</param>
+        /// <returns>是否计算成功</returns>
+        private async Task<bool> CalculateDimensionDataAsync(CalculatedData target, DateTime startTime, DateTime stopTime, int analysisType)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target), "统计目标对象不能为空");
+            }
+
+            switch (analysisType)
+            {
+                case 1:
+                    var dailyDataList = await _sourceData.GetByDataTimeAsync(startTime, stopTime);
+                    if (dailyDataList.Count == 0) return false;
+                    await DayDataCalculate(target, dailyDataList);
+                    break;
+
+                case 2:
+                    var weeklyDataList = await _calculatedDatas.GetByDataTimeAsync(startTime, stopTime, 1);
+                    if (weeklyDataList.Count == 0) return false;
+                    await WeekDataCalculate(target, weeklyDataList);
+                    break;
+
+                case 3:
+                    var monthlyDataList = await _calculatedDatas.GetByDataTimeAsync(startTime, stopTime, 1);
+                    if (monthlyDataList.Count == 0) return false;
+                    await MonthDataCalculate(target, monthlyDataList);
+                    break;
+
+                case 4:
+                    var yearlyDataList = await _calculatedDatas.GetByDataTimeAsync(startTime, stopTime, 3);
+                    if (yearlyDataList.Count == 0) return false;
+                    await YearDataCalculate(target, yearlyDataList);
+                    break;
+
+                default:
+                    return false;
+            }
+
             return true;
         }
         private async Task DayDataCalculate(CalculatedData target, List<SourceData> dataList)
         {
-            target.Type = 1;//标记该数据是日统计数据
+
             target.PH = 80;//暂时没有特殊意义
             //(dataList.Last().cell2 ?? 0) - (dataList.First().cell2 ?? 0);//差值
             // dataList.Select(x => x.cell3 ?? 0).Sum();//总和
@@ -280,21 +333,21 @@ namespace CenterBackend.Services
         }
         private async Task WeekDataCalculate(CalculatedData target, List<CalculatedData> dataList)
         {
-            target.Type = 2;//标记该数据是月统计数据
+
             target.PH = 80;//暂时没有特殊意义
 
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
         }
         private async Task MonthDataCalculate(CalculatedData target, List<CalculatedData> dataList)
         {
-            target.Type = 3;//标记该数据是月统计数据
+
             target.PH = 80;//暂时没有特殊意义
 
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
         }
         private async Task YearDataCalculate(CalculatedData target, List<CalculatedData> dataList)
         {
-            target.Type = 4;//标记该数据是月统计数据
+
             target.PH = 80;//暂时没有特殊意义
 
             target.cell1 = dataList.Select(x => x.cell1 ?? 0).Average();//平均值
@@ -313,7 +366,7 @@ namespace CenterBackend.Services
             DateTime StopTime;
             List<SourceData>? dataList;
             List<CalculatedData>? dataList2;
-            string TempRepoetName = "1999-12-31";
+            DateTime TempRepoetName = DateTime.Parse("2026-01-01");
             try
             {
                 using var templateStream = new FileStream(ModelFullPath, FileMode.Open, FileAccess.Read);
@@ -336,7 +389,7 @@ namespace CenterBackend.Services
 
                         WriteXlsxDaily1(workbook, targetArray, ReportTime);
                         WriteXlsxDaily2(workbook, targetArray, ReportTime);
-                        TempRepoetName = $"{ReportTime.AddDays(-1):yyyy-MM-dd}";//报表的日期是昨日
+                        TempRepoetName = ReportTime.Date.AddDays(-1);//报表的日期是昨日
                         break;
                     case 2: // 上周
                         DateTime currentDayOfWeek = ReportTime.Date;// 计算上周的开始时间（星期一）
@@ -350,8 +403,8 @@ namespace CenterBackend.Services
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
                         CalculatedData?[] targetArray2 = MatchSourceDataWeek(dataList2, StartTime);
-                        WriteXlsxWeekly(workbook, targetArray2, ReportTime);
-                        TempRepoetName = $"{StartTime:yyyy-MM-dd}_to_{StopTime:yyyy-MM-dd}";//待修改
+                        WriteXlsxWeekly(workbook, targetArray2, StartTime);
+                        TempRepoetName = StartTime.Date;
                         break;
                     case 3: // 上月
                         StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
@@ -363,7 +416,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataMonth(dataList2, StartTime);
                         WriteXlsxMonthly(workbook, targetArray2, ReportTime);
-                        TempRepoetName = $"{StartTime:yyyy-MM}_to_{StopTime:yyyy-MM}";//待修改
+                        TempRepoetName = StartTime.Date;
                         break;
                     case 4: // 去年   
                         StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
@@ -375,7 +428,7 @@ namespace CenterBackend.Services
                         }
                         targetArray2 = MatchSourceDataYear(dataList2, StartTime);
                         WriteXlsxYearly(workbook, targetArray2, ReportTime);
-                        TempRepoetName = $"{StartTime:yyyy}_to_{StopTime:yyyy}";
+                        TempRepoetName = StartTime.Date;
                         break;
                     default:
                         return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 类型无效" });
@@ -383,8 +436,6 @@ namespace CenterBackend.Services
 
                 using var outputStream = new FileStream(TargetPullPath, FileMode.Create, FileAccess.Write);// 保存文件到指定路径
                 workbook.Write(outputStream);
-
-
 
                 //插入build记录(只更新时间)
                 var existingRecord = _reportRecord.db.FirstOrDefault(r => r.Type == Type && r.reportedTime == TempRepoetName);

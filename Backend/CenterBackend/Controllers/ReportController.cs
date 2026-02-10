@@ -71,17 +71,17 @@ namespace CenterBackend.Controllers
                     case 2: //Weekly
                         XlsxFilesPath = filePathAndName.WeeklyFilesPath;
                         XlsxFilesFullPath = filePathAndName.WeeklyFilesFullPath;
-                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20251208-Week.xlsx");
                         break;
                     case 3: //Monthly
                         XlsxFilesPath = filePathAndName.MonthlyFilesPath;
                         XlsxFilesFullPath = filePathAndName.MonthlyFilesFullPath;
-                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");
                         break;
                     case 4: //Yearly
                         XlsxFilesPath = filePathAndName.YearlyFilesPath;
                         XlsxFilesFullPath = filePathAndName.YearlyFilesFullPath;
-                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");//日报表模板路径
+                        modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Model\\Model-20260116.xlsx");
                         break;
                     default:
                         return new BadRequestObjectResult(new { success = false, msg = "ReportType不存在" });
