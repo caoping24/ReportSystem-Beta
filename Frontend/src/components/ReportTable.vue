@@ -15,7 +15,7 @@
         }}
       </template>
       <template v-else-if="column.dataIndex === 'reportedTime'">
-        {{ record.reportedTime }}
+        {{ dayjs(record.reportedTime).format("YYYY-MM-DD") }}
       </template>
       <template v-else-if="column.dataIndex === 'createTime'">
         {{ dayjs(record.createdtime).format("YYYY-MM-DD HH:mm:ss") }}
@@ -53,27 +53,23 @@ const emit = defineEmits<{
   (e: "regenerate", tabKey: string, reportedTime: string): void;
 }>();
 
-// 导出给模板使用：格式化并触发 download 事件
-const handleDownload = (reportedTime: string | Date | undefined) => {
-  if (!reportedTime) {
-    emit("download", props.tabKey, "");
-    return;
-  }
-  // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
-  const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
-  emit("download", props.tabKey, formattedTime);
-};
-
-// 导出给模板使用：格式化并触发 regenerate 事件
+//格式化并触发 regenerate 事件
 const emitRegenerate = (reportedTime: string | Date | undefined) => {
   if (!reportedTime) {
     emit("regenerate", props.tabKey, "");
     return;
   }
-
-  // 将 reportedTime 转为后端期望的时间字符串（与之前行为一致）
   const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
   emit("regenerate", props.tabKey, formattedTime);
+};
+//格式化并触发 download 事件
+const handleDownload = (reportedTime: string | Date | undefined) => {
+  if (!reportedTime) {
+    emit("download", props.tabKey, "");
+    return;
+  }
+  const formattedTime = dayjs(reportedTime).format("YYYY-MM-DD") + " 09:00:01";
+  emit("download", props.tabKey, formattedTime);
 };
 </script>
 

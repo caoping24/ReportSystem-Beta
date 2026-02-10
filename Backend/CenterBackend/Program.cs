@@ -86,7 +86,8 @@ namespace CenterBackend
                     policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
                           .AllowAnyMethod()
-                          .AllowCredentials();
+                          .AllowCredentials()
+                          .WithExposedHeaders("Content-Disposition");// 标准：暴露非简单响应头，前端才能读取 Content-Disposition
                 });
             });
             builder.Services.AddAuthentication("CookieAuth")

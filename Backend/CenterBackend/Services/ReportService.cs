@@ -46,10 +46,11 @@ namespace CenterBackend.Services
         //    return true;
         //}
 
-
         /// <summary>
-        /// 每日统计数据
+        /// 根据传入的Type类型，计算对应维度的统计数据并插入到CalculatedData表中 注意传入的时间
         /// </summary>
+        /// <param name="_Dto"></param>
+        /// <returns></returns>
         public async Task<bool> DataAnalyses(CalculateAndInsertDto _Dto)
         {
             DateTime StartTime;
@@ -115,7 +116,7 @@ namespace CenterBackend.Services
             }
             else
             {
-                _calculatedDatas.Update(target);
+                await _calculatedDatas.Update(target);
 
             }
 
@@ -374,12 +375,12 @@ namespace CenterBackend.Services
 
                 switch (Type)
                 {
-                    case 1: //当日8点以后查询昨日
+                    case 1: //本日
 
-                        if (ReportTime.AddMinutes(-1).Hour < 8)
-                        {
-                            return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 应大于8:00" });
-                        }
+                        //if (ReportTime.AddMinutes(-1).Hour < 8)
+                        //{
+                        //    return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 应大于8:00" });
+                        //}
                         dataList = await _sourceData.GetByDayAsync(ReportTime);
                         if (dataList == null || !dataList.Any())
                         {
@@ -389,13 +390,13 @@ namespace CenterBackend.Services
 
                         WriteXlsxDaily1(workbook, targetArray, ReportTime);
                         WriteXlsxDaily2(workbook, targetArray, ReportTime);
-                        TempRepoetName = ReportTime.Date.AddDays(-1);//报表的日期是昨日
+                        TempRepoetName = ReportTime.Date;
                         break;
-                    case 2: // 上周
-                        DateTime currentDayOfWeek = ReportTime.Date;// 计算上周的开始时间（星期一）
-                        int daysToLastMonday = ((int)currentDayOfWeek.DayOfWeek + 6) % 7 + 7;
-                        StartTime = currentDayOfWeek.AddDays(-daysToLastMonday);
-                        StopTime = StartTime.AddDays(6).AddHours(23).AddMinutes(59);// 计算上周的结束时间（星期天）
+                    case 2: // 本周
+                        DateTime currentDayOfWeek = ReportTime.Date;// 计算本周一
+                        int daysToThisMonday = ((int)currentDayOfWeek.DayOfWeek + 6) % 7 ;
+                        StartTime = currentDayOfWeek.AddDays(-daysToThisMonday);
+                        StopTime = StartTime.AddDays(6).AddHours(23).AddMinutes(59);
 
                         dataList2 = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 2);
                         if (dataList2 == null || !dataList2.Any())
@@ -406,7 +407,7 @@ namespace CenterBackend.Services
                         WriteXlsxWeekly(workbook, targetArray2, StartTime);
                         TempRepoetName = StartTime.Date;
                         break;
-                    case 3: // 上月
+                    case 3: // 本月
                         StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
                         StopTime = StartTime.AddMonths(1).AddDays(-1).AddHours(23).AddMinutes(59);// 计算上月的结束时间（最后一天）
                         dataList2 = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 3);
@@ -418,7 +419,7 @@ namespace CenterBackend.Services
                         WriteXlsxMonthly(workbook, targetArray2, ReportTime);
                         TempRepoetName = StartTime.Date;
                         break;
-                    case 4: // 去年   
+                    case 4: // 今年   
                         StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
                         StopTime = new DateTime(ReportTime.Year, 1, 1).AddDays(-1).AddHours(23).AddMinutes(59);// 计算去年的结束时间（12月31号）
                         dataList2 = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 4);
@@ -470,7 +471,7 @@ namespace CenterBackend.Services
         {
             SourceData?[] targetArray = new SourceData?[25];
             if (sourceDataList == null || !sourceDataList.Any()) return targetArray;
-            startTime = startTime.AddDays(-1).Date.AddHours(8);
+            startTime = startTime.Date.AddHours(8);
             foreach (var data in sourceDataList)
             {
                 if (data == null) continue;
@@ -565,7 +566,7 @@ namespace CenterBackend.Services
         private static bool WriteXlsxDaily1(XSSFWorkbook srcWorkbook, SourceData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
-            string Temp = ReportDataTime.AddDays(-1).ToString("yyyy-MM-dd");
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
             SetXlsxCellString(srcSheet, 51, 1, Temp);//记录日期,昨日
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 13; i++)
@@ -958,8 +959,8 @@ namespace CenterBackend.Services
         {
 
             ISheet srcSheet = srcWorkbook.GetSheetAt(2); //实际要写的表
-            string Temp = ReportDataTime.AddDays(-1).ToString("yyyy-MM-dd");
-            SetXlsxCellString(srcSheet, 51, 1, Temp);//记录日期,昨日
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            SetXlsxCellString(srcSheet, 51, 1, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 12; i < 25; i++)
             {
@@ -1345,11 +1346,13 @@ namespace CenterBackend.Services
             return true;
         }
         /// <summary>
-        /// 写Xlsx数据  上周
+        /// 写Xlsx数据  周
         /// </summary>
         private static bool WriteXlsxWeekly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 8; i++)
             {
@@ -1368,6 +1371,8 @@ namespace CenterBackend.Services
         private static bool WriteXlsxMonthly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 32; i++)
             {
@@ -1386,6 +1391,8 @@ namespace CenterBackend.Services
         private static bool WriteXlsxYearly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 13; i++)
             {

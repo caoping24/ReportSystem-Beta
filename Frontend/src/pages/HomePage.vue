@@ -269,14 +269,26 @@ const downloadExcel = async (tabKey: string, reportedTime: string) => {
   if (!reportedTime) return message.warning("ID 不能为空");
   try {
     const res = await downloadReport(reportedTime, Number(tabKey));
-    const fileName = `报表_${reportedTime.substring(0, 10)}.xlsx`;
+    // 从响应头解析文件名
+    const contentDisposition = res.headers?.["content-disposition"];
+    let fileName = `报表_${reportedTime.substring(0, 10)}.xlsx`;
+    if (contentDisposition) {
+      const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match?.[1]) {
+        fileName = decodeURIComponent(utf8Match[1]);
+      } else {
+        const normalMatch = contentDisposition.match(/filename=([^;]+)/i);
+        if (normalMatch?.[1]) {
+          fileName = decodeURIComponent(normalMatch[1].replace(/['"]/g, ""));
+        }
+      }
+    }
     handleFileDownload(res, fileName, "xlsx");
   } catch (error) {
     console.error("报表下载失败：", error);
     message.error("下载失败：网络异常或接口错误");
   }
 };
-
 // 修改点5：更新批量下载参数组装逻辑
 const batchDownloadZip = async () => {
   if (!validateBatchParams()) return;

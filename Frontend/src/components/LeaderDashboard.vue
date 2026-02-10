@@ -2,68 +2,74 @@
   <div id="leaderDashboardPage">
     <!-- 原有模板内容不变 -->
     <!-- 上部：产量指标卡片区 -->
-    <div class="production-cards">
-      <!-- 昨日产量卡片 -->
-      <a-card class="production-card" :loading="isLoading" hoverable>
-        <a-statistic
-          title="昨日羟基原料浓度"
-          :value="productionData.yesterday"
-          :precision="2"
-          suffix="g/L"
-          class="stat-item"
-        >
-          <template #prefix>
-            <CalendarOutlined class="stat-icon" />
-          </template>
-        </a-statistic>
-      </a-card>
+    <div class="top">
+      <div class="production-cards">
+        <!-- 昨日产量卡片 -->
+        <a-card class="production-card" :loading="isLoading" hoverable>
+          <a-statistic
+            title="昨日羟基原料浓度"
+            :value="productionData.yesterday"
+            :precision="2"
+            suffix="g/L"
+            class="stat-item"
+          >
+            <template #prefix>
+              <CalendarOutlined class="stat-icon" />
+            </template>
+          </a-statistic>
+        </a-card>
 
-      <!-- 当周产量卡片 -->
-      <a-card class="production-card" :loading="isLoading" hoverable>
-        <a-statistic
-          title="昨日羟基配料浓度"
-          :value="productionData.week"
-          :precision="2"
-          suffix="g/L"
-          class="stat-item"
-        >
-          <template #prefix>
-            <CalendarOutlined class="stat-icon" />
-          </template>
-        </a-statistic>
-      </a-card>
+        <!-- 当周产量卡片 -->
+        <a-card class="production-card" :loading="isLoading" hoverable>
+          <a-statistic
+            title="昨日羟基配料浓度"
+            :value="productionData.week"
+            :precision="2"
+            suffix="g/L"
+            class="stat-item"
+          >
+            <template #prefix>
+              <CalendarOutlined class="stat-icon" />
+            </template>
+          </a-statistic>
+        </a-card>
 
-      <!-- 当月产量卡片 -->
-      <a-card class="production-card" :loading="isLoading" hoverable>
-        <a-statistic
-          title="昨日摩尔比"
-          :value="productionData.month"
-          :precision="2"
-          suffix=" "
-          class="stat-item"
-        >
-          <template #prefix>
-            <CalendarOutlined class="stat-icon" />
-          </template>
-        </a-statistic>
-      </a-card>
+        <!-- 当月产量卡片 -->
+        <a-card class="production-card" :loading="isLoading" hoverable>
+          <a-statistic
+            title="昨日摩尔比"
+            :value="productionData.month"
+            :precision="2"
+            suffix=" "
+            class="stat-item"
+          >
+            <template #prefix>
+              <CalendarOutlined class="stat-icon" />
+            </template>
+          </a-statistic>
+        </a-card>
 
-      <!-- 今年产量卡片 -->
-      <a-card class="production-card" :loading="isLoading" hoverable>
-        <a-statistic
-          title="昨日累计配比"
-          :value="productionData.year"
-          :precision="2"
-          suffix=" "
-          class="stat-item"
+        <!-- 今年产量卡片 -->
+        <a-card class="production-card" :loading="isLoading" hoverable>
+          <a-statistic
+            title="昨日累计配比"
+            :value="productionData.year"
+            :precision="2"
+            suffix=" "
+            class="stat-item"
+          >
+            <template #prefix>
+              <CalendarOutlined class="stat-icon" />
+            </template>
+          </a-statistic>
+        </a-card>
+      </div>
+      <div class="refresh-btn-group">
+        <a-button type="primary" @click="fetchAllData" :loading="isLoading"
+          >刷新</a-button
         >
-          <template #prefix>
-            <CalendarOutlined class="stat-icon" />
-          </template>
-        </a-statistic>
-      </a-card>
+      </div>
     </div>
-
     <!-- 中部：折线图区域（三个趋势图） -->
     <div class="chart-section line-charts-section">
       <a-card
@@ -111,18 +117,6 @@
           <div ref="barChartRef" class="chart-container"></div>
         </div>
       </a-card>
-
-      <!-- 数据刷新按钮 -->
-      <div class="refresh-btn-group">
-        <a-button
-          type="primary"
-          @click="fetchAllData"
-          :loading="isLoading"
-          icon=""
-        >
-          刷新数据
-        </a-button>
-      </div>
     </div>
   </div>
 </template>
@@ -969,11 +963,16 @@ onMounted(async () => {
   background-color: #f5f7fa;
   min-height: 100vh;
 }
-
+.top {
+  display: flex;
+  align-items: flex-start; /* 顶部对齐 */
+  gap: 16px; /* 卡片与按钮之间的间距 */
+  justify-content: space-between; /* 两端对齐 */
+}
 /* 产量卡片布局 */
 .production-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -1022,13 +1021,9 @@ onMounted(async () => {
   margin-bottom: 10px;
 }
 
-.pie-bar-chart-section .chart-card {
-  height: 300px;
-}
-
 /* 刷新按钮样式 */
 .refresh-btn-group {
-  grid-column: 1 / 3;
+  width: 120px;
   margin-top: 10px;
   text-align: right;
 }

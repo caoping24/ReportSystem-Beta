@@ -25,8 +25,8 @@ namespace CenterReport.Repository
         public async Task<List<T>> GetByDayAsync(DateTime time)
         {
 
-            DateTime startDate = time.Date.AddDays(-1).AddHours(8);//昨日08:00
-            DateTime endDate = startDate.AddHours(24).AddMinutes(59);//今日08:00
+            DateTime startDate = time.Date.AddHours(8);//今日08:00
+            DateTime endDate = startDate.AddHours(24).AddMinutes(59);//明日08:00
             // 3. 执行查询：筛选当天数据 + 正序排序
             return await _entities
                 .Where(e =>

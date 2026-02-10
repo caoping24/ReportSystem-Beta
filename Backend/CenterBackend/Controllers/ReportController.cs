@@ -49,12 +49,13 @@ namespace CenterBackend.Controllers
         [HttpPost("BuildReport")]
         public async Task<IActionResult> CreateAndBuildReport([FromBody] CreateReportDto _CreateReportDto)
         {
-            await _logger.LogInfoAsync($"CreateAndBuildReport:CreateReportDto: {_CreateReportDto.Time},{_CreateReportDto.Time}");
+            await _logger.LogInfoAsync($"CreateAndBuildReport:CreateReportDto: {_CreateReportDto.Type},{_CreateReportDto.Time}");
+
             var reportFileRoot = Path.Combine(_webHostEnv.WebRootPath, "Report");//所有报表汇总文件夹
             DateTime tempTime = _CreateReportDto.Time;
             int reportType = _CreateReportDto.Type;
 
-            var filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime.AddDays(-1));//文件表示昨天的数据
+            var filePathAndName = _fileService.GetDateFolderPathAndName(reportFileRoot, tempTime);
             if (string.IsNullOrWhiteSpace(filePathAndName.DailyFileName)) return BadRequest("获取文件路径失败，请检查传入日期格式！");
             string? XlsxFilesPath;
             string? XlsxFilesFullPath;

@@ -89,11 +89,10 @@ export const getReportByPage = async (params: {
 
 // 你的下载接口封装文件 【精准修复版】
 export const downloadReport = async (timeStr: string, tabKey: number) => {
-  // ✅ 增加 tabKey 参数
   return myAxios.request({
     url: "api/Report/DownloadExcel",
     method: "GET",
-    params: { timeStr: timeStr, Type: tabKey }, // ✅ 核心：传2个参数，后端才能正常接收
+    params: { timeStr: timeStr, Type: tabKey },
     responseType: "blob",
     timeout: 60000,
   });
