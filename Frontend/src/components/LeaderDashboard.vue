@@ -274,7 +274,7 @@ const fetchPieChartData = async (params?: ProductionQueryParams) => {
       { name: "生产线A", value: 350 },
       { name: "生产线B", value: 280 },
       { name: "生产线C", value: 420 },
-      { name: "生产线D", value: 180 }
+      { name: "生产线D", value: 180 },
     ];
     await nextTick();
     setTimeout(() => safeInitChart("pie"), 100);
@@ -306,7 +306,7 @@ const fetchDayLineChartData = async (params?: ProductionQueryParams) => {
     // 给日折线图加模拟数据（可选）
     dayLineChartData.value = {
       xAxis: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"],
-      series: [{ name: "羟基乙腈", data: [85, 88, 92, 89, 95, 91] }]
+      series: [{ name: "羟基乙腈", data: [85, 88, 92, 89, 95, 91] }],
     };
     await nextTick();
     setTimeout(() => safeInitChart("dayLine"), 100);
@@ -338,7 +338,9 @@ const fetchWeekLineChartData = async (params?: ProductionQueryParams) => {
     // 给周折线图加模拟数据（可选）
     weekLineChartData.value = {
       xAxis: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
-      series: [{ name: "摩尔比", data: [1.2, 1.3, 1.1, 1.4, 1.25, 1.35, 1.28] }]
+      series: [
+        { name: "摩尔比", data: [1.2, 1.3, 1.1, 1.4, 1.25, 1.35, 1.28] },
+      ],
     };
     await nextTick();
     setTimeout(() => safeInitChart("weekLine"), 100);
@@ -370,7 +372,7 @@ const fetchMonthLineChartData = async (params?: ProductionQueryParams) => {
     // 给月折线图加模拟数据（可选）
     monthLineChartData.value = {
       xAxis: ["1日", "5日", "10日", "15日", "20日", "25日", "30日"],
-      series: [{ name: "羟基乙腈配料", data: [82, 85, 88, 86, 90, 89, 91] }]
+      series: [{ name: "羟基乙腈配料", data: [82, 85, 88, 86, 90, 89, 91] }],
     };
     await nextTick();
     setTimeout(() => safeInitChart("monthLine"), 100);
@@ -389,17 +391,17 @@ const fetchBarChartData = async (params?: ProductionQueryParams) => {
       series: [
         {
           name: "羟基原料浓度", // 第一个系列
-          data: [85.2, 88.7, 90.1, 87.5, 92.3, 89.8] // 对应数值
+          data: [85.2, 88.7, 90.1, 87.5, 92.3, 89.8], // 对应数值
         },
         {
           name: "羟基配料浓度", // 第二个系列（多系列柱状图）
-          data: [78.5, 81.2, 83.7, 80.9, 85.1, 82.4]
-        }
-      ]
+          data: [78.5, 81.2, 83.7, 80.9, 85.1, 82.4],
+        },
+      ],
     };
     // 直接赋值模拟数据
     barChartData.value = mockBarData;
-    
+
     await nextTick();
     setTimeout(() => safeInitChart("bar"), 100);
   } catch (error) {
@@ -408,7 +410,7 @@ const fetchBarChartData = async (params?: ProductionQueryParams) => {
     // 兜底模拟数据
     barChartData.value = {
       xAxis: ["暂无数据"],
-      series: [{ name: "产量", data: [0] }]
+      series: [{ name: "产量", data: [0] }],
     };
     await nextTick();
     setTimeout(() => safeInitChart("bar"), 100);
@@ -419,7 +421,13 @@ const fetchBarChartData = async (params?: ProductionQueryParams) => {
 
 // ===================== 图表初始化/更新核心函数 =====================
 const safeInitChart = (
-  chartType: "pie" | "dayLine" | "weekLine" | "monthLine" | "bar" | "all" = "all"
+  chartType:
+    | "pie"
+    | "dayLine"
+    | "weekLine"
+    | "monthLine"
+    | "bar"
+    | "all" = "all"
 ) => {
   // 1. 初始化饼图
   if (chartType === "pie" || chartType === "all") {
@@ -439,7 +447,11 @@ const safeInitChart = (
         },
         color: ["#003399", "#00AEEF", "#0066CC", "#66B2FF"],
         tooltip: { trigger: "item", formatter: "{a} <br/>{b}: {c} 件 ({d}%)" },
-        legend: { orient: "horizontal", bottom: 0, textStyle: { color: "#333" } },
+        legend: {
+          orient: "horizontal",
+          bottom: 0,
+          textStyle: { color: "#333" },
+        },
         toolbox: {
           show: true,
           feature: {
@@ -725,33 +737,33 @@ const safeInitChart = (
       const seriesData = barChartData.value.series.length
         ? barChartData.value.series
         : [{ name: "产量", data: [0] }];
-      
+
       // 定义两个系列的渐变颜色（核心优化：颜色区分）
       const colorList = [
         {
           // 羟基原料浓度：深蓝色渐变
           normal: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#0066CC' },
-            { offset: 1, color: '#003399' }
+            { offset: 0, color: "#0066CC" },
+            { offset: 1, color: "#003399" },
           ]),
           hover: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#3399FF' },
-            { offset: 1, color: '#0066CC' }
+            { offset: 0, color: "#3399FF" },
+            { offset: 1, color: "#0066CC" },
           ]),
-          border: '#002288'
+          border: "#002288",
         },
         {
           // 羟基配料浓度：浅蓝色渐变
           normal: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#66B2FF' },
-            { offset: 1, color: '#00AEEF' }
+            { offset: 0, color: "#66B2FF" },
+            { offset: 1, color: "#00AEEF" },
           ]),
           hover: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#99CCFF' },
-            { offset: 1, color: '#66B2FF' }
+            { offset: 0, color: "#99CCFF" },
+            { offset: 1, color: "#66B2FF" },
           ]),
-          border: '#0099DD'
-        }
+          border: "#0099DD",
+        },
       ];
 
       barChartInstance.setOption({
@@ -763,8 +775,8 @@ const safeInitChart = (
         },
         // 图例颜色与柱子颜色同步
         color: [colorList[0].normal, colorList[1].normal],
-        tooltip: { 
-          trigger: "axis", 
+        tooltip: {
+          trigger: "axis",
           axisPointer: { type: "shadow" },
           // 优化tooltip样式
           textStyle: { fontSize: 12 },
@@ -772,7 +784,7 @@ const safeInitChart = (
           borderColor: "#e8f4fc",
           borderWidth: 1,
           padding: 10,
-          formatter: function(params: any) {
+          formatter: function (params: any) {
             let res = `<div style="font-weight:600;margin-bottom:5px">${params[0].axisValue}</div>`;
             params.forEach((item: any) => {
               res += `<div style="margin:3px 0">
@@ -781,7 +793,7 @@ const safeInitChart = (
               </div>`;
             });
             return res;
-          }
+          },
         },
         legend: {
           orient: "horizontal",
@@ -789,10 +801,10 @@ const safeInitChart = (
           left: "center",
           textStyle: { color: "#333", fontSize: 12 },
           // 图例图标样式优化
-          icon: 'rect',
+          icon: "rect",
           itemWidth: 12,
           itemHeight: 8,
-          itemGap: 20
+          itemGap: 20,
         },
         toolbox: {
           show: true,
@@ -819,31 +831,31 @@ const safeInitChart = (
           type: "category",
           data: xAxisData,
           axisLine: { lineStyle: { color: "#e8f4fc" } },
-          axisLabel: { 
+          axisLabel: {
             color: "#666",
             fontSize: 11,
             // X轴文字换行（防止过长）
             interval: 0,
-            rotate: 0
+            rotate: 0,
           },
           axisTick: {
-            alignWithLabel: true
-          }
+            alignWithLabel: true,
+          },
         },
         yAxis: {
           type: "value",
           name: "g/L",
           nameTextStyle: { color: "#0066CC", fontSize: 12 },
           axisLine: { lineStyle: { color: "#e8f4fc" } },
-          axisLabel: { 
+          axisLabel: {
             color: "#666",
-            fontSize: 11
+            fontSize: 11,
           },
-          splitLine: { 
-            lineStyle: { 
+          splitLine: {
+            lineStyle: {
               color: "#e8f4fc",
-              type: 'dashed' // 虚线分割线，更精致
-            } 
+              type: "dashed", // 虚线分割线，更精致
+            },
           },
           // 修复：给value参数指定EChartsAxisValue类型
           min: (value: EChartsAxisValue) => Math.floor(value.min),
@@ -853,8 +865,8 @@ const safeInitChart = (
           name: item.name,
           type: "bar",
           barWidth: "35%", // 调整宽度适配双系列，避免拥挤
-          barGap: '30%', // 同系列柱子间距
-          barCategoryGap: '40%', // 不同系列柱子间距
+          barGap: "30%", // 同系列柱子间距
+          barCategoryGap: "40%", // 不同系列柱子间距
           data: item.data,
           // 核心优化：柱子样式（渐变+圆角+边框）
           itemStyle: {
@@ -862,7 +874,7 @@ const safeInitChart = (
             borderRadius: [4, 4, 0, 0], // 上圆角，下直角
             borderWidth: 1,
             borderColor: colorList[index].border,
-            borderType: 'solid'
+            borderType: "solid",
           },
           // 核心优化：hover高亮效果
           emphasis: {
@@ -870,23 +882,23 @@ const safeInitChart = (
               color: colorList[index].hover,
               borderWidth: 1.5,
               shadowBlur: 6,
-              shadowColor: 'rgba(0, 102, 204, 0.2)',
-              shadowOffsetY: 2
+              shadowColor: "rgba(0, 102, 204, 0.2)",
+              shadowOffsetY: 2,
             },
             // hover时显示数值标签
             label: {
               show: true,
-              position: 'top',
+              position: "top",
               fontSize: 11,
               fontWeight: 600,
-              color: '#333',
-              formatter: '{c} g/L'
-            }
+              color: "#333",
+              formatter: "{c} g/L",
+            },
           },
           // 正常状态下不显示标签（避免拥挤）
           label: {
-            show: false
-          }
+            show: false,
+          },
         })),
       });
     } catch (error) {

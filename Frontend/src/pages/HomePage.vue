@@ -389,21 +389,21 @@ fetchData("1");
 /* ========== 仅保留非标签页的配色修改 ========== */
 /* 1. 按钮配色 */
 /* 主按钮（批量下载）- HEBANG主深蓝色 */
-::v-deep .ant-btn-primary {
+:deep(.ant-btn-primary) {
   background: #003399;
   border-color: #003399;
 }
-::v-deep .ant-btn-primary:hover,
-::v-deep .ant-btn-primary:focus {
+:deep(.ant-btn-primary:hover),
+:deep(.ant-btn-primary:focus) {
   background: #0066cc; /* 深蓝hover色 */
   border-color: #0066cc;
 }
 /* 普通按钮（重置）- 浅蓝辅助色 */
-::v-deep .ant-btn-default {
+:deep(.ant-btn-default) {
   color: #003399;
   border-color: #003399;
 }
-::v-deep .ant-btn-default:hover {
+:deep(.ant-btn-default:hover) {
   color: #00aeef;
   border-color: #00aeef;
   background: #f0f8ff;
@@ -411,18 +411,20 @@ fetchData("1");
 
 /* 2. 表单/选择器配色 */
 /* 选择器/日期选择器激活边框 */
-::v-deep
-  .ant-select-focused:not(.ant-select-disabled).ant-select:not(
-    .ant-select-customize-input
+:deep(
+    .ant-select-focused:not(.ant-select-disabled).ant-select:not(
+        .ant-select-customize-input
+      )
+      .ant-select-selector,
+
   )
-  .ant-select-selector,
-::v-deep .ant-picker-focused {
+  :deep(.ant-picker-focused) {
   border-color: #00aeef !important;
   box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.2);
 }
 /* 选择器hover */
-::v-deep .ant-select-selector:hover,
-::v-deep .ant-picker:hover {
+:deep(.ant-select-selector:hover),
+:deep(.ant-picker:hover) {
   border-color: #00aeef;
 }
 
@@ -483,17 +485,17 @@ fetchData("1");
 }
 
 /* 5. 分页组件配色 */
-::v-deep .ant-pagination-item-active {
+:deep(.ant-pagination-item-active) {
   border-color: #003399;
   background: #003399;
 }
-::v-deep .ant-pagination-item-active a {
+:deep(.ant-pagination-item-active a) {
   color: #fff;
 }
-::v-deep .ant-pagination-item:hover {
+:deep(.ant-pagination-item:hover) {
   border-color: #00aeef;
 }
-::v-deep .ant-pagination-item a:hover {
+:deep(.ant-pagination-item a:hover) {
   color: #00aeef;
 }
 
