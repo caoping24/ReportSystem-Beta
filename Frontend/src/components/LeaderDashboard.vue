@@ -961,7 +961,7 @@ onMounted(async () => {
 #leaderDashboardPage {
   padding: 16px;
   background-color: #f5f7fa;
-  min-height: 100vh;
+  min-height: 80vh;
 }
 .top {
   display: flex;
@@ -972,7 +972,7 @@ onMounted(async () => {
 /* 产量卡片布局 */
 .production-cards {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 16px;
 }

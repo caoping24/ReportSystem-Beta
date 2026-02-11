@@ -118,5 +118,6 @@ export default defineComponent({
 /* 表格行边框 */
 :deep(.ant-table-tbody > tr > td) {
   border-bottom: 1px solid #e8f4fc;
+  padding: 4px 16px!important;
 }
 </style>

@@ -127,8 +127,10 @@ const clearAllCookies = () => {
 /* 样式部分保持不变 */
 .layout-container {
   display: flex;
+
   height: 100vh;
   overflow: hidden;
+
 }
 .sidebar {
   width: 180px;
@@ -136,8 +138,11 @@ const clearAllCookies = () => {
   background-color: #f5f9ff;
   color: #1e40af;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
+
+
+
+  overflow-y: auto;       /* 导航项过多时纵向滚动 */
+  transition: width 0.3s; /* 折叠/展开动画 */
 }
 .sidebar-header {
   display: flex;
@@ -167,9 +172,11 @@ const clearAllCookies = () => {
 }
 .main-content {
   flex: 1;
-  padding: 2px;
+  height: 100%;
+  padding: 8px;
   background-color: #ffffff;
-  overflow-y: 100vh;
+  overflow-y: auto;
+
 }
 :deep(.ant-menu-vertical .ant-menu-item) {
   height: 44px;

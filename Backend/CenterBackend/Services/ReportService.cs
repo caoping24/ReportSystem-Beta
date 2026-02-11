@@ -408,8 +408,8 @@ namespace CenterBackend.Services
                         TempRepoetName = StartTime.Date;
                         break;
                     case 3: // 本月
-                        StartTime = new DateTime(ReportTime.Year, ReportTime.Month, 1).AddMonths(-1);// 计算上月的开始时间（1号）
-                        StopTime = StartTime.AddMonths(1).AddDays(-1).AddHours(23).AddMinutes(59);// 计算上月的结束时间（最后一天）
+                        StartTime = ReportTime.Date;// 计算上月的开始时间（1号）
+                        StopTime = StartTime.AddMonths(1).AddDays(-1);
                         dataList2 = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 3);
                         if (dataList2 == null || !dataList2.Any())
                         {
@@ -420,8 +420,8 @@ namespace CenterBackend.Services
                         TempRepoetName = StartTime.Date;
                         break;
                     case 4: // 今年   
-                        StartTime = new DateTime(ReportTime.Year, 1, 1).AddYears(-1);// 计算去年的开始时间（1月1号）
-                        StopTime = new DateTime(ReportTime.Year, 1, 1).AddDays(-1).AddHours(23).AddMinutes(59);// 计算去年的结束时间（12月31号）
+                        StartTime = ReportTime.Date;
+                        StopTime = StartTime.AddYears(1).AddMinutes(-1);
                         dataList2 = await _calculatedDatas.GetByDataTimeAsync(StartTime, StopTime, 4);
                         if (dataList2 == null || !dataList2.Any())
                         {
@@ -1371,7 +1371,7 @@ namespace CenterBackend.Services
         private static bool WriteXlsxMonthly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
-            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            string Temp = ReportDataTime.Date.ToString("yyyy-MM");
             SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 32; i++)
@@ -1391,7 +1391,7 @@ namespace CenterBackend.Services
         private static bool WriteXlsxYearly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
             ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
-            string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
+            string Temp = ReportDataTime.Date.ToString("yyyy");
             SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度
             for (int i = 0; i < 13; i++)
