@@ -1,5 +1,13 @@
 <template>
-  <a-tabs type="card" style="max-width: 1800px; margin: 20px auto">
+  <a-tabs 
+    type="card" 
+    :style="{ 
+      maxWidth: '100%', 
+      margin: '20px auto',
+      padding: '0 10px' 
+    }"
+    :tab-bar-gutter="getTabGutter()"
+  >
     <a-tab-pane key="data-edit" tab="检测数据">
       <div class="table-container">
         <div class="date-selector">
@@ -16,16 +24,29 @@
                 {
                   text: '今天',
                   onClick: () => {
-                    selectedDate = new Date().toISOString().split('T')[0];
+                    selectedDate.value = new Date().toISOString().split('T')[0];
                     fetchTableData();
                   },
                 },
               ],
             }"
+            :size="getComponentSize()"
+            :style="getDatePickerStyle()"
           />
-          <el-button type="primary" @click="fetchTableData">查询</el-button>
-          <!-- 新增重载按钮：样式与查询一致 -->
-          <el-button type="primary" @click="reloadTableData">重载</el-button>
+          <el-button 
+            type="primary" 
+            @click="fetchTableData"
+            :size="getComponentSize()"
+          >
+            查询
+          </el-button>
+          <el-button 
+            type="primary" 
+            @click="reloadTableData"
+            :size="getComponentSize()"
+          >
+            重载
+          </el-button>
         </div>
         <div class="table-scroll-wrapper">
           <el-table
@@ -33,16 +54,19 @@
             border
             style="width: 100%; table-layout: fixed"
             :cell-class-name="cellClassName"
-            size="small"
+            :size="getComponentSize()"
             empty-text="当前日期暂无小时数据"
+            :header-cell-style="getHeaderCellStyle()"
+            :cell-style="getCellStyle()"
           >
             <el-table-column
               v-for="(header, index) in tableHeaders"
               :key="index"
               :prop="header.prop"
               :label="header.label"
-              :width="header.prop === 'hour' ? 60 : 90"
+              :width="getColumnWidth(header.prop)"
               align="center"
+              :show-overflow-tooltip="true"
             >
               <template #default="scope">
                 <template v-if="header.prop === 'hour'">
@@ -55,11 +79,11 @@
                   <template v-else>
                     <el-input
                       v-model="scope.row[header.prop]"
-                      size="small"
+                      :size="getComponentSize()"
                       @blur="handleCellEdit(scope.row, header.prop)"
                       :disabled="isCellDisabled(scope.row)"
                       maxlength="8"
-                      style="width: 80px"
+                      :style="{ width: getInputWidth() }"
                     />
                   </template>
                 </template>
@@ -70,7 +94,7 @@
       </div>
     </a-tab-pane>
     <a-tab-pane key="data-view" tab="数据预览">
-      <div style="padding: 20px; text-align: center">
+      <div style="padding: 20px; text-align: center" :style="{ fontSize: getFontSize() }">
         数据预览模块（可自定义内容）
       </div>
     </a-tab-pane>
@@ -78,42 +102,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, nextTick } from "vue";
 import { ElMessage } from "element-plus";
-// 导入核心接口，ReloadData为重载接口（已取消注释，直接调用）
 import { Headers, HourData, SaveCell, ReloadData } from "@/api/TableEdit";
 
-// 表格表头类型：prop匹配后端cells的key（cell29/cell30等）
+// 类型定义保持不变
 interface TableHeader {
   prop: string;
   label: string;
 }
 
-// 后端返回的小时数据项结构（精准适配，全小写）
 interface HourDataItem {
   hour: number;
   date: string;
-  isNextDay: boolean; // 后端返回的禁用标识，true=禁用/false=可编辑
+  isNextDay: boolean;
   cells?: Record<string, string>;
 }
 
-// 前端表格行类型：继承后端结构+动态字段兼容
 interface TableRow extends HourDataItem {
   [key: string]: any;
 }
 
-// 【重载接口参数类型】严格匹配后端要求：type固定1，time为日期字符串
 interface ReloadDataParams {
   type: number;
   time: string;
 }
 
 // 响应式数据
-const selectedDate = ref<string>(""); // 选中日期
-const tableHeaders = ref<TableHeader[]>([]); // 表格表头
-const tableData = ref<TableRow[]>([]); // 表格数据
+const selectedDate = ref<string>("");
+const tableHeaders = ref<TableHeader[]>([]);
+const tableData = ref<TableRow[]>([]);
+const screenWidth = ref<number>(window.innerWidth);
+const screenHeight = ref<number>(window.innerHeight); // 新增：监听屏幕高度
 
-// 禁用未来日期选择（日期选择器的禁用，与表格单元格禁用无关）
+// 监听窗口大小变化（同时监听宽+高）
+const handleResize = () => {
+  screenWidth.value = window.innerWidth;
+  screenHeight.value = window.innerHeight;
+  // 窗口变化后重新计算布局，避免高度偏差
+  nextTick(() => {
+    document.documentElement.style.overflowY = "hidden"; // 确保网页级滚动条不出现
+  });
+};
+
+// 屏幕分级（1080p属于normal）
+const screenGrade = computed(() => {
+  if (screenWidth.value < 1366) return "small";
+  if (screenWidth.value < 1920) return "normal"; // 1080p(1920*1080)归为normal
+  return "large";
+});
+
+// 组件尺寸计算
+const getComponentSize = () => {
+  return screenGrade.value === "small" ? "small" : "default";
+};
+
+const getTabGutter = () => {
+  return screenGrade.value === "small" ? 8 : 16;
+};
+
+// 日期选择器宽度控制
+const getDatePickerStyle = () => {
+  const styles: Record<string, string> = {
+    flexShrink: "0",
+    padding: "0 4px"
+  };
+  switch (screenGrade.value) {
+    case "small":
+      styles.width = "180px";
+      break;
+    case "normal":
+      styles.width = "200px";
+      break;
+    case "large":
+      styles.width = "220px";
+      break;
+  }
+  return styles;
+};
+
+// 表格列宽/输入框宽度/字体样式计算（保持不变）
+const getColumnWidth = (prop: string) => {
+  if (prop === "hour") {
+    return screenGrade.value === "small" ? 50 : 60;
+  }
+  return screenGrade.value === "small" ? 80 : screenGrade.value === "large" ? 100 : 90;
+};
+
+const getInputWidth = () => {
+  return screenGrade.value === "small" ? "70px" : screenGrade.value === "large" ? "90px" : "80px";
+};
+
+const getHeaderCellStyle = () => {
+  const fontSize = screenGrade.value === "small" ? "11px" : screenGrade.value === "large" ? "13px" : "12px";
+  return {
+    fontSize,
+    padding: "2px 0",
+  };
+};
+
+const getCellStyle = () => {
+  const fontSize = screenGrade.value === "small" ? "10px" : screenGrade.value === "large" ? "14px" : "13px";
+  return {
+    fontSize,
+    padding: "2px 0",
+  };
+};
+
+const getFontSize = () => {
+  return screenGrade.value === "small" ? "12px" : screenGrade.value === "large" ? "14px" : "13px";
+};
+
+// 业务逻辑保持不变
 const disabledFutureDate = (date: Date): boolean => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -122,15 +222,11 @@ const disabledFutureDate = (date: Date): boolean => {
   return selectDate.getTime() > today.getTime();
 };
 
-// 判断单元格是否禁用：核心逻辑→根据后端返回的isNextDay字段，true禁用/false可编辑
 const isCellDisabled = (row: TableRow): boolean => {
-  // 基础非空校验：行数据的日期/小时缺失时，默认禁用单元格
   if (!row.date || row.hour === undefined || row.hour === null) return true;
-  // 核心规则：完全遵循后端返回的isNextDay标识
   return row.isNextDay === true;
 };
 
-// 单元格样式：禁用/小时列添加灰色背景（基于isCellDisabled判断）
 const cellClassName = ({
   row,
   column,
@@ -142,7 +238,6 @@ const cellClassName = ({
   return isCellDisabled(row) ? "disabled-cell" : "";
 };
 
-// 获取表格表头（从后端接口拉取，强制hour列排第一）
 const fetchTableHeaders = async (): Promise<void> => {
   try {
     const res = await Headers();
@@ -164,7 +259,6 @@ const fetchTableHeaders = async (): Promise<void> => {
   }
 };
 
-// 获取指定日期的小时数据，解析后端cells字段为表格可渲染的动态字段
 const fetchTableData = async (): Promise<void> => {
   if (!selectedDate.value) {
     ElMessage.warning("请先选择查询日期");
@@ -201,7 +295,6 @@ const fetchTableData = async (): Promise<void> => {
   }
 };
 
-// 单元格编辑失焦保存，仅保存非禁用、非小时列的修改
 const handleCellEdit = async (row: TableRow, prop: string): Promise<void> => {
   if (prop === "hour" || isCellDisabled(row)) return;
 
@@ -221,7 +314,6 @@ const handleCellEdit = async (row: TableRow, prop: string): Promise<void> => {
   }
 };
 
-// 重载表格数据：调用后端重载接口（参数type=1，time=选中日期），重载后刷新表格
 const reloadTableData = async (): Promise<void> => {
   if (!selectedDate.value) {
     ElMessage.warning("请先选择查询日期");
@@ -230,17 +322,13 @@ const reloadTableData = async (): Promise<void> => {
 
   try {
     ElMessage.info(`正在重载【${selectedDate.value}】数据，请稍候...`);
-    //选中日期加1天(重建excle报表时需要传明天的日期)
-    const nextDay = new Date(selectedDate.value); // 构造日期对象
-    nextDay.setDate(nextDay.getDate() + 1); // 日期加1天（自动处理月底/跨年）
-    // 构造重载参数：严格匹配后端要求，type固定传1
+    const nextDay = new Date(selectedDate.value);
+    nextDay.setDate(nextDay.getDate() + 1);
     const reloadParams: ReloadDataParams = {
       type: 1,
       time: nextDay.toISOString().split("T")[0],
     };
-    // 调用后端重载接口
     await ReloadData(reloadParams);
-    // 重载成功后重新拉取数据，保证表格数据最新（含最新的isNextDay标识）
     await fetchTableData();
     ElMessage.success(`【${selectedDate.value}】数据重载完成`);
   } catch (error) {
@@ -249,82 +337,162 @@ const reloadTableData = async (): Promise<void> => {
   }
 };
 
-// 页面挂载初始化：先加载表头，再加载今日数据
+// 初始化逻辑
 onMounted(async () => {
+  window.addEventListener("resize", handleResize);
   await fetchTableHeaders();
   selectedDate.value = new Date().toISOString().split("T")[0];
   await fetchTableData();
+  
+  // 初始化后强制隐藏网页级滚动条
+  nextTick(() => {
+    document.documentElement.style.overflowY = "hidden";
+    document.body.style.overflowY = "hidden";
+  });
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  // 组件卸载后恢复网页滚动条
+  document.documentElement.style.overflowY = "auto";
+  document.body.style.overflowY = "auto";
 });
 </script>
 
 <style scoped>
+/* 核心修复：全局容器溢出控制 */
+:deep(html), :deep(body) {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* 禁止横向滚动 */
+  overflow-y: hidden; /* 禁止网页级纵向滚动 */
+  height: 100%;
+}
+
 :deep(.ant-tabs-card) {
   --ant-tabs-card-head-background: #f8f9fa;
   border-radius: 4px;
+  width: 100%;
+  height: calc(100vh - 40px); /* 适配页面上下边距，避免高度溢出 */
+  overflow: hidden; /* 禁止tabs容器溢出 */
 }
-/* .table-container { padding: 15px; } */
-/* 日期选择器+按钮布局，新增重载按钮后间距保持一致 */
+
+/* 日期选择器布局 */
 .date-selector {
   margin-bottom: 10px;
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+  padding: 0 4px;
+  width: 100%;
 }
 
-/* 表格滚动容器 - 核心样式 */
+/* 核心修复：表格容器高度精准计算（1080p重点） */
 .table-scroll-wrapper {
-  /* 适配页面视口：高度=视口高度 - 顶部导航/标题/分页等占用高度（根据你的页面调整数值，例：120px） */
-  height: calc(100vh - 120px);
-  /* 宽度100%适配父容器，也可写固定宽度 */
-  width: calc(100vw - 2px);
-  /* 内容超出时显示横竖滚动条，auto=需要时才显示，scroll=强制显示 */
-  overflow: auto;
-  /* 可选：避免容器和表格边框重叠 */
+  /* 1080p下精准计算：视口高度 - tabs头部 - 日期选择器 - 边距 */
+  height: calc(100vh - 160px); 
+  width: 100%;
+  overflow: auto; /* 仅表格容器显示滚动条 */
   box-sizing: border-box;
   padding: 0 1px;
   margin: 4px 0;
+  /* 确保滚动条不挤压内容 */
+  scrollbar-gutter: stable;
 }
+
+/* 不同屏幕的高度适配（修正1080p的高度偏差） */
+@media screen and (max-width: 1366px) {
+  .table-scroll-wrapper {
+    height: calc(100vh - 150px);
+  }
+  .date-selector {
+    gap: 8px;
+  }
+  :deep(.el-date-picker) {
+    max-width: 180px !important;
+  }
+}
+
+/* 1080p（1920*1080）专属适配 */
+@media screen and (min-width: 1367px) and (max-width: 1919px) {
+  .table-scroll-wrapper {
+    height: calc(100vh - 160px); /* 精准匹配1080p视口高度 */
+  }
+  /* 确保tabs容器高度不溢出 */
+  :deep(.ant-tabs-card) {
+    height: calc(100vh - 40px);
+  }
+}
+
+@media screen and (min-width: 1920px) {
+  .table-scroll-wrapper {
+    height: calc(100vh - 170px);
+  }
+}
+
+/* 滚动条样式优化（仅表格容器显示滚动条） */
 .table-scroll-wrapper::-webkit-scrollbar {
-  height: 20px;
-  width: 100px !important;
+  height: 12px;
+  width: 8px;
 }
+
 .table-scroll-wrapper::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 3px;
 }
 
-/* 表格单元格紧凑样式 */
+/* 表格样式 */
 :deep(.el-table td),
 :deep(.el-table th) {
-  padding: 4px 0 !important;
+  padding: 2px 0 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:deep(.el-table th .cell) {
-  font-size: 12px;
-  font-weight: 500;
+
+/* 日期选择器宽度限制 */
+:deep(.el-date-picker) {
+  max-width: 220px !important;
+  width: 100% !important;
 }
-:deep(.el-table td .cell) {
-  font-size: 13px;
-}
-/* 禁用单元格样式 */
+
+/* 其他样式保持不变 */
 .disabled-cell {
   background-color: #f5f5f5;
   color: #999;
   cursor: not-allowed;
 }
-/* 迷你输入框样式适配 */
-:deep(.el-input--mini) {
-  width: 80px !important;
-}
+
 :deep(.el-input__wrapper) {
   padding: 0 5px !important;
-  font-size: 13px;
+  box-sizing: border-box;
 }
-/* 日期选择器禁用样式优化 */
+
 :deep(.el-picker-panel__content .el-date-table td.disabled) {
   color: #ccc !important;
   cursor: not-allowed !important;
+}
+
+@media screen and (max-width: 1366px) {
+  :deep(.el-table th .cell) {
+    font-weight: 500;
+  }
+  :deep(.el-input__wrapper) {
+    font-size: 12px;
+  }
+}
+
+@media screen and (min-width: 1920px) {
+  :deep(.el-table th .cell) {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  :deep(.el-table td .cell) {
+    font-size: 14px;
+  }
+  :deep(.el-input__wrapper) {
+    font-size: 14px;
+  }
 }
 </style>
