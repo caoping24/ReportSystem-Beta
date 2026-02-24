@@ -1,5 +1,13 @@
 <template>
-  <a-tabs type="card" style="max-width: 1800px; margin: 20px auto">
+  <a-tabs 
+    type="card" 
+    :style="{ 
+      maxWidth: '100%', 
+      margin: '20px auto',
+      padding: '0 10px' 
+    }"
+    :tab-bar-gutter="getTabGutter()"
+  >
     <a-tab-pane key="data-edit" tab="检测数据">
       <div class="table-container">
         <div class="date-selector">
@@ -16,16 +24,30 @@
                 {
                   text: '今天',
                   onClick: () => {
-                    selectedDate = new Date().toISOString().split('T')[0];
+                    selectedDate.value = new Date().toISOString().split('T')[0];
                     fetchTableData();
                   },
                 },
               ],
             }"
+            :size="getComponentSize()"
+            :style="getDatePickerStyle()" 
           />
-          <el-button type="primary" @click="fetchTableData">查询</el-button>
+          <el-button 
+            type="primary" 
+            @click="fetchTableData"
+            :size="getComponentSize()"
+          >
+            查询
+          </el-button>
           <!-- 新增重载按钮：样式与查询一致 -->
-          <el-button type="primary" @click="reloadTableData">重载</el-button>
+          <el-button 
+            type="primary" 
+            @click="reloadTableData"
+            :size="getComponentSize()"
+          >
+            重载
+          </el-button>
         </div>
         <div class="table-scroll-wrapper">
           <el-table
@@ -33,16 +55,19 @@
             border
             style="width: 100%; table-layout: fixed"
             :cell-class-name="cellClassName"
-            size="small"
+            :size="getComponentSize()"
             empty-text="当前日期暂无小时数据"
+            :header-cell-style="getHeaderCellStyle()"
+            :cell-style="getCellStyle()"
           >
             <el-table-column
               v-for="(header, index) in tableHeaders"
               :key="index"
               :prop="header.prop"
               :label="header.label"
-              :width="header.prop === 'hour' ? 60 : 90"
+              :width="getColumnWidth(header.prop)"
               align="center"
+              :show-overflow-tooltip="true"
             >
               <template #default="scope">
                 <template v-if="header.prop === 'hour'">
@@ -55,11 +80,11 @@
                   <template v-else>
                     <el-input
                       v-model="scope.row[header.prop]"
-                      size="small"
+                      :size="getComponentSize()"
                       @blur="handleCellEdit(scope.row, header.prop)"
                       :disabled="isCellDisabled(scope.row)"
                       maxlength="8"
-                      style="width: 80px"
+                      :style="{ width: getInputWidth() }"
                     />
                   </template>
                 </template>
@@ -70,7 +95,7 @@
       </div>
     </a-tab-pane>
     <a-tab-pane key="data-view" tab="数据预览">
-      <div style="padding: 20px; text-align: center">
+      <div style="padding: 20px; text-align: center" :style="{ fontSize: getFontSize() }">
         数据预览模块（可自定义内容）
       </div>
     </a-tab-pane>
@@ -78,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 // 导入核心接口，ReloadData为重载接口（已取消注释，直接调用）
 import { Headers, HourData, SaveCell, ReloadData } from "@/api/TableEdit";
@@ -112,6 +137,86 @@ interface ReloadDataParams {
 const selectedDate = ref<string>(""); // 选中日期
 const tableHeaders = ref<TableHeader[]>([]); // 表格表头
 const tableData = ref<TableRow[]>([]); // 表格数据
+const screenWidth = ref<number>(window.innerWidth); // 屏幕宽度
+
+// 监听窗口大小变化
+const handleResize = () => {
+  screenWidth.value = window.innerWidth;
+};
+
+// 计算屏幕类型（仅电脑端分级）
+const screenGrade = computed(() => {
+  if (screenWidth.value < 1366) return "small"; // 小屏笔记本（1366*768）
+  if (screenWidth.value < 1920) return "normal"; // 常规屏（1920*1080）
+  return "large"; // 大屏显示器（2K/4K）
+});
+
+// 获取组件尺寸（按钮/输入框/表格）
+const getComponentSize = () => {
+  return screenGrade.value === "small" ? "small" : "default";
+};
+
+// 获取标签栏间距
+const getTabGutter = () => {
+  return screenGrade.value === "small" ? 8 : 16;
+};
+
+// 核心调整：控制日期选择器宽度（解决过宽问题）
+const getDatePickerStyle = () => {
+  const styles: Record<string, string> = {
+    flexShrink: "0", // 取消flex:1，避免占满剩余宽度
+    padding: "0 4px"
+  };
+  // 不同屏幕尺寸设置固定宽度上限
+  switch (screenGrade.value) {
+    case "small":
+      styles.width = "180px"; // 小屏：窄一点
+      break;
+    case "normal":
+      styles.width = "200px"; // 常规屏：适中
+      break;
+    case "large":
+      styles.width = "220px"; // 大屏：略宽但不夸张
+      break;
+  }
+  return styles;
+};
+
+// 获取列宽度
+const getColumnWidth = (prop: string) => {
+  if (prop === "hour") {
+    return screenGrade.value === "small" ? 50 : 60;
+  }
+  return screenGrade.value === "small" ? 80 : screenGrade.value === "large" ? 100 : 90;
+};
+
+// 获取输入框宽度
+const getInputWidth = () => {
+  return screenGrade.value === "small" ? "70px" : screenGrade.value === "large" ? "90px" : "80px";
+};
+
+// 获取表头样式
+const getHeaderCellStyle = () => {
+  const fontSize = screenGrade.value === "small" ? "11px" : screenGrade.value === "large" ? "13px" : "12px";
+  return {
+    fontSize,
+    padding: "2px 0",
+  };
+};
+
+// 获取单元格样式
+const getCellStyle = () => {
+  const fontSize = screenGrade.value === "small" ? "10px" : screenGrade.value === "large" ? "14px" : "13px";
+  return {
+    fontSize,
+    padding: "2px 0",
+  };
+};
+
+// 获取字体大小（预览区域）
+const getFontSize = () => {
+  return screenGrade.value === "small" ? "12px" : screenGrade.value === "large" ? "14px" : "13px";
+};
 
 // 禁用未来日期选择（日期选择器的禁用，与表格单元格禁用无关）
 const disabledFutureDate = (date: Date): boolean => {
@@ -251,9 +356,16 @@ const reloadTableData = async (): Promise<void> => {
 
 // 页面挂载初始化：先加载表头，再加载今日数据
 onMounted(async () => {
+  // 监听窗口大小变化
+  window.addEventListener("resize", handleResize);
   await fetchTableHeaders();
   selectedDate.value = new Date().toISOString().split("T")[0];
   await fetchTableData();
+});
+
+// 组件卸载时移除监听
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 
@@ -261,33 +373,69 @@ onMounted(async () => {
 :deep(.ant-tabs-card) {
   --ant-tabs-card-head-background: #f8f9fa;
   border-radius: 4px;
+  width: 100%;
 }
-/* .table-container { padding: 15px; } */
+
 /* 日期选择器+按钮布局，新增重载按钮后间距保持一致 */
 .date-selector {
   margin-bottom: 10px;
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+  padding: 0 4px;
+  width: 100%;
 }
 
-/* 表格滚动容器 - 核心样式 */
+/* 核心调整：限制日期选择器容器的最大宽度，避免挤压按钮 */
+:deep(.el-date-picker) {
+  max-width: 220px !important;
+  width: 100% !important;
+}
+
+/* 表格滚动容器 - 核心自适应样式 */
 .table-scroll-wrapper {
-  /* 适配页面视口：高度=视口高度 - 顶部导航/标题/分页等占用高度（根据你的页面调整数值，例：120px） */
-  height: calc(100vh - 120px);
-  /* 宽度100%适配父容器，也可写固定宽度 */
-  width: calc(100vw - 2px);
-  /* 内容超出时显示横竖滚动条，auto=需要时才显示，scroll=强制显示 */
+  /* 根据屏幕尺寸动态调整高度偏移 */
+  height: calc(100vh - var(--table-offset));
+  width: 100%;
   overflow: auto;
-  /* 可选：避免容器和表格边框重叠 */
   box-sizing: border-box;
   padding: 0 1px;
   margin: 4px 0;
 }
-.table-scroll-wrapper::-webkit-scrollbar {
-  height: 20px;
-  width: 100px !important;
+
+/* 不同电脑屏幕尺寸的表格高度偏移 */
+@media screen and (max-width: 1366px) {
+  .table-scroll-wrapper {
+    --table-offset: 110px;
+  }
+  .date-selector {
+    gap: 8px;
+  }
+  /* 小屏额外缩小日期选择器 */
+  :deep(.el-date-picker) {
+    max-width: 180px !important;
+  }
 }
+
+@media screen and (min-width: 1367px) and (max-width: 1919px) {
+  .table-scroll-wrapper {
+    --table-offset: 120px;
+  }
+}
+
+@media screen and (min-width: 1920px) {
+  .table-scroll-wrapper {
+    --table-offset: 130px;
+  }
+}
+
+/* 滚动条样式自适应 */
+.table-scroll-wrapper::-webkit-scrollbar {
+  height: 12px;
+  width: 8px;
+}
+
 .table-scroll-wrapper::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 3px;
@@ -296,35 +444,52 @@ onMounted(async () => {
 /* 表格单元格紧凑样式 */
 :deep(.el-table td),
 :deep(.el-table th) {
-  padding: 4px 0 !important;
+  padding: 2px 0 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:deep(.el-table th .cell) {
-  font-size: 12px;
-  font-weight: 500;
-}
-:deep(.el-table td .cell) {
-  font-size: 13px;
-}
+
 /* 禁用单元格样式 */
 .disabled-cell {
   background-color: #f5f5f5;
   color: #999;
   cursor: not-allowed;
 }
-/* 迷你输入框样式适配 */
-:deep(.el-input--mini) {
-  width: 80px !important;
-}
+
+/* 输入框样式适配 */
 :deep(.el-input__wrapper) {
   padding: 0 5px !important;
-  font-size: 13px;
+  box-sizing: border-box;
 }
+
 /* 日期选择器禁用样式优化 */
 :deep(.el-picker-panel__content .el-date-table td.disabled) {
   color: #ccc !important;
   cursor: not-allowed !important;
+}
+
+/* 适配小屏电脑的表格内容 */
+@media screen and (max-width: 1366px) {
+  :deep(.el-table th .cell) {
+    font-weight: 500;
+  }
+  :deep(.el-input__wrapper) {
+    font-size: 12px;
+  }
+}
+
+/* 适配大屏电脑的表格内容 */
+@media screen and (min-width: 1920px) {
+  :deep(.el-table th .cell) {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  :deep(.el-table td .cell) {
+    font-size: 14px;
+  }
+  :deep(.el-input__wrapper) {
+    font-size: 14px;
+  }
 }
 </style>
