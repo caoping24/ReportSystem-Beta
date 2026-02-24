@@ -404,7 +404,7 @@ namespace CenterBackend.Services
                             return new OkObjectResult(new { success = false, msg = $"类型:{Type} 时间:{ReportTime:yyyy-MM-dd hh:mm:ss} 无数据" });
                         }
                         CalculatedData?[] targetArray2 = MatchSourceDataWeek(dataList2, StartTime);
-                        WriteXlsxWeekly(workbook, targetArray2, StartTime);
+                        WriteXlsxWeekly1(workbook, targetArray2, StartTime);
                         TempRepoetName = StartTime.Date;
                         break;
                     case 3: // 本月
@@ -1348,9 +1348,9 @@ namespace CenterBackend.Services
         /// <summary>
         /// 写Xlsx数据  周
         /// </summary>
-        private static bool WriteXlsxWeekly(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
+        private static bool WriteXlsxWeekly1(XSSFWorkbook srcWorkbook, CalculatedData?[] dataList, DateTime ReportDataTime)
         {
-            ISheet srcSheet = srcWorkbook.GetSheetAt(0); //实际要写的表
+            ISheet srcSheet = srcWorkbook.GetSheetAt(1); //实际要写的表
             string Temp = ReportDataTime.Date.ToString("yyyy-MM-dd");
             SetXlsxCellString(srcSheet, 0, 0, Temp);//记录日期
             srcSheet.ForceFormulaRecalculation = false;//批量写入关闭公式自动计算，大幅提升写入速度

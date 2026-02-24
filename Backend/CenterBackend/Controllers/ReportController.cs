@@ -51,7 +51,7 @@ namespace CenterBackend.Controllers
         {
             await _logger.LogInfoAsync($"CreateAndBuildReport:CreateReportDto: {_CreateReportDto.Type},{_CreateReportDto.Time}");
 
-            var reportFileRoot = Path.Combine(_webHostEnv.WebRootPath, "Report");//所有报表汇总文件夹
+            var reportFileRoot = Path.Combine(_webHostEnv.ContentRootPath, "Report");//所有报表汇总文件夹
             DateTime tempTime = _CreateReportDto.Time;
             int reportType = _CreateReportDto.Type;
 
@@ -105,7 +105,7 @@ namespace CenterBackend.Controllers
         {
             await _logger.LogInfoAsync($"DownloadFile:timeStr:{timeStr},Type:{Type}");
 
-            var modelFilePath = Path.Combine(_webHostEnv.WebRootPath, "Report");//日报表模板路径
+            var modelFilePath = Path.Combine(_webHostEnv.ContentRootPath, "Report");//日报表模板路径
 
             DateTime dateTime = DateTime.ParseExact(timeStr, "yyyy-MM-dd HH:mm:ss", null);
             var PathAndFileName = _fileService.GetDateFolderPathAndName(modelFilePath, dateTime);

@@ -31,9 +31,9 @@ namespace CenterBackend.Controllers
         {
             try
             {
-                //var pathAndName = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+                //var pathAndName = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.ContentRootPath, "Report"), DateTime.Now);
                 //string sourceFilePath = Path.Combine(_webHostEnv.WebRootPath, "Files/Model-20260116.xlsx");
-                _fileService.CreateDateFolder(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+                _fileService.CreateDateFolder(Path.Combine(_webHostEnv.ContentRootPath, "Report"), DateTime.Now);
                 return new OkObjectResult(new { success = true, msg = "²Ù×÷³É¹¦" });
             }
             catch (Exception ex)
@@ -50,7 +50,7 @@ namespace CenterBackend.Controllers
         public async Task<FilePathAndName> Test3()
         {
             await _logger.LogInfoAsync($"Test3:timeStr");
-            var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.WebRootPath, "Report"), DateTime.Now);
+            var temp = _fileService.GetDateFolderPathAndName(Path.Combine(_webHostEnv.ContentRootPath, "Report"), DateTime.Now);
             return temp;
 
         }
@@ -64,7 +64,7 @@ namespace CenterBackend.Controllers
         public async Task<IActionResult> DownloadZipFileBig(String timeStr, int type)
         {
             string zipFileName = "default.zip";
-            string sourceFolder = Path.Combine(_webHostEnv.WebRootPath, "Report");
+            string sourceFolder = Path.Combine(_webHostEnv.ContentRootPath, "Report");
             string tempZipPath = string.Empty;
             await _logger.LogInfoAsync($"DownloadZipFileBig:timeStr: {timeStr},type: {type}");
             try
