@@ -130,7 +130,6 @@ const clearAllCookies = () => {
 
   height: 100vh;
   overflow: hidden;
-
 }
 .sidebar {
   width: 180px;
@@ -139,9 +138,7 @@ const clearAllCookies = () => {
   color: #1e40af;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
 
-
-
-  overflow-y: auto;       /* 导航项过多时纵向滚动 */
+  overflow-y: auto; /* 导航项过多时纵向滚动 */
   transition: width 0.3s; /* 折叠/展开动画 */
 }
 .sidebar-header {
@@ -176,7 +173,6 @@ const clearAllCookies = () => {
   padding: 8px;
   background-color: #ffffff;
   overflow-y: auto;
-
 }
 :deep(.ant-menu-vertical .ant-menu-item) {
   height: 44px;
