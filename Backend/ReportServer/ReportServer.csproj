@@ -51,10 +51,17 @@
   </ItemGroup>
 	<Target Name="CopyWebRootToWpfPublish" AfterTargets="Publish">
 		<ItemGroup>
-			<SourceFiles Include="$(ProjectDir)..\CenterBackend\wwwroot\**\*" />
+			<WebRootSourceFiles  Include="$(ProjectDir)..\CenterBackend\wwwroot\**\*" />
 		</ItemGroup>
-		<Copy SourceFiles="@(SourceFiles)" DestinationFolder="$(PublishDir)wwwroot\%(SourceFiles.RecursiveDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true">
-			<Output TaskParameter="CopiedFiles" ItemName="CopiedFiles" />
+		<Copy SourceFiles="@(WebRootSourceFiles)" DestinationFolder="$(PublishDir)wwwroot\%(WebRootSourceFiles.RecursiveDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true">
+			<Output TaskParameter="CopiedFiles" ItemName="WebRootCopiedFiles" />
+		</Copy>
+
+		<ItemGroup>
+			<ReportSourceFiles  Include="$(ProjectDir)..\CenterBackend\Report\**\*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(ReportSourceFiles)" DestinationFolder="$(PublishDir)Report\%(ReportSourceFiles.RecursiveDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true">
+			<Output TaskParameter="CopiedFiles" ItemName="ReportSourceFiles" />
 		</Copy>
 	</Target>
 </Project>
