@@ -38,7 +38,6 @@
 	<ItemGroup>
 	  <Folder Include="wwwroot\Model\" />
 	  <Folder Include="wwwroot\Log\" />
-	  <Folder Include="wwwroot\Report\日报表\" />
 	  <Folder Include="wwwroot\Temp\" />
 	</ItemGroup>
 	<ItemGroup>

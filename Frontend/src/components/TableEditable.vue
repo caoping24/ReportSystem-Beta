@@ -512,7 +512,9 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+:deep(.el-table .cell) {
+  padding: 1px 1px !important;
+}
 /* 日期选择器宽度限制 */
 :deep(.el-date-picker) {
   max-width: 220px !important;
