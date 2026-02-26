@@ -512,7 +512,6 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 :deep(.el-table .cell) {
   padding: 1px 1px !important;
 }
