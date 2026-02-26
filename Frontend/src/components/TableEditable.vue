@@ -507,12 +507,11 @@ onUnmounted(() => {
 /* 表格样式 */
 :deep(.el-table td),
 :deep(.el-table th) {
-
+  padding: 2px 0 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 :deep(.el-table .cell) {
   padding: 1px 1px !important;
 }
