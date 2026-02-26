@@ -71,6 +71,7 @@
               :width="getColumnWidth(header.prop)"
               align="center"
               :show-overflow-tooltip="true"
+              :fixed="header.prop === 'hour' ? 'left' : false"
             >
               <template #default="scope">
                 <template v-if="header.prop === 'hour'">
@@ -435,6 +436,7 @@ onUnmounted(() => {
 :deep(.el-table) {
   --el-table-header-text-color: #333;
   --el-table-row-hover-bg-color: #f8f9fa;
+   border: 1px solid #e6e6e6 !important;
 }
 
 /* 固定表头 */
@@ -537,7 +539,32 @@ onUnmounted(() => {
   color: #ccc !important;
   cursor: not-allowed !important;
 }
-
+:deep(.el-table__fixed) {
+  z-index: 11 !important;
+  background-color: #fff;
+  border-right: 1px solid #e6e6e6 !important;
+}
+:deep(.el-table__fixed-header-wrapper) {
+  z-index: 12 !important;
+  background-color: #fff;
+}
+:deep(.fixed-table-header th.el-table__cell) {
+  border-right: 1px solid #e6e6e6 !important;
+}
+:deep(.el-table__fixed th.el-table__cell) {
+  border-bottom: 1px solid #e6e6e6 !important;
+}
+:deep(.el-table) {
+  --el-table-header-text-color: #333;
+  --el-table-row-hover-bg-color: #f8f9fa;
+  border: 1px solid #e6e6e6 !important;
+  --el-table-header-border-color: #e6e6e6;
+  --el-table-border-color: #e6e6e6;
+}
+:deep(.el-table__fixed td),
+:deep(.el-table__fixed th) {
+  border-left: 1px solid #e6e6e6 !important;
+}
 @media screen and (max-width: 1366px) {
   :deep(.el-table th .cell) {
     font-weight: 500;
@@ -557,6 +584,21 @@ onUnmounted(() => {
   }
   :deep(.el-input__wrapper) {
     font-size: 14px;
+  }
+}
+@media screen and (max-width: 1366px) {
+  :deep(.el-table__fixed) {
+    width: 50px !important;
+  }
+}
+@media screen and (min-width: 1367px) and (max-width: 1919px) {
+  :deep(.el-table__fixed) {
+    width: 60px !important;
+  }
+}
+@media screen and (min-width: 1920px) {
+  :deep(.el-table__fixed) {
+    width: 60px !important;
   }
 }
 </style>
