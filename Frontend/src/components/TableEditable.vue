@@ -1,10 +1,10 @@
 <template>
-  <a-tabs 
-    type="card" 
-    :style="{ 
-      maxWidth: '100%', 
+  <a-tabs
+    type="card"
+    :style="{
+      maxWidth: '100%',
       margin: '20px auto',
-      padding: '0 10px' 
+      padding: '0 10px',
     }"
     :tab-bar-gutter="getTabGutter()"
   >
@@ -33,21 +33,23 @@
             :size="getComponentSize()"
             :style="getDatePickerStyle()"
           />
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="fetchTableData"
             :size="getComponentSize()"
           >
             查询
           </el-button>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="reloadTableData"
             :size="getComponentSize()"
           >
             重载
           </el-button>
         </div>
+
+        <!-- 关键修改1：重构表格容器，拆分表头和内容区域 -->
         <div class="table-scroll-wrapper">
           <el-table
             :data="tableData"
@@ -58,6 +60,8 @@
             empty-text="当前日期暂无小时数据"
             :header-cell-style="getHeaderCellStyle()"
             :cell-style="getCellStyle()"
+            height="100%"
+            :header-row-class-name="'fixed-table-header'"
           >
             <el-table-column
               v-for="(header, index) in tableHeaders"
@@ -83,7 +87,7 @@
                       @blur="handleCellEdit(scope.row, header.prop)"
                       :disabled="isCellDisabled(scope.row)"
                       maxlength="8"
-                      :style="{ width: getInputWidth() }"
+                      :style="{ width: '100%', height: '100%' }"
                     />
                   </template>
                 </template>
@@ -94,7 +98,10 @@
       </div>
     </a-tab-pane>
     <a-tab-pane key="data-view" tab="数据预览">
-      <div style="padding: 20px; text-align: center" :style="{ fontSize: getFontSize() }">
+      <div
+        style="padding: 20px; text-align: center"
+        :style="{ fontSize: getFontSize() }"
+      >
         数据预览模块（可自定义内容）
       </div>
     </a-tab-pane>
@@ -102,7 +109,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted, nextTick } from "vue";
+// 【脚本部分完全不变】
+import { ref, onMounted, computed, onUnmounted, nextTick, h } from "vue";
 import { ElMessage } from "element-plus";
 import { Headers, HourData, SaveCell, ReloadData } from "@/api/TableEdit";
 
@@ -165,7 +173,7 @@ const getTabGutter = () => {
 const getDatePickerStyle = () => {
   const styles: Record<string, string> = {
     flexShrink: "0",
-    padding: "0 4px"
+    padding: "0 4px",
   };
   switch (screenGrade.value) {
     case "small":
@@ -186,15 +194,28 @@ const getColumnWidth = (prop: string) => {
   if (prop === "hour") {
     return screenGrade.value === "small" ? 50 : 60;
   }
-  return screenGrade.value === "small" ? 80 : screenGrade.value === "large" ? 100 : 90;
+  return screenGrade.value === "small"
+    ? 80
+    : screenGrade.value === "large"
+    ? 100
+    : 90;
 };
 
 const getInputWidth = () => {
-  return screenGrade.value === "small" ? "70px" : screenGrade.value === "large" ? "90px" : "80px";
+  return screenGrade.value === "small"
+    ? "70px"
+    : screenGrade.value === "large"
+    ? "90px"
+    : "80px";
 };
 
 const getHeaderCellStyle = () => {
-  const fontSize = screenGrade.value === "small" ? "11px" : screenGrade.value === "large" ? "13px" : "12px";
+  const fontSize =
+    screenGrade.value === "small"
+      ? "11px"
+      : screenGrade.value === "large"
+      ? "13px"
+      : "12px";
   return {
     fontSize,
     padding: "2px 0",
@@ -202,7 +223,12 @@ const getHeaderCellStyle = () => {
 };
 
 const getCellStyle = () => {
-  const fontSize = screenGrade.value === "small" ? "10px" : screenGrade.value === "large" ? "14px" : "13px";
+  const fontSize =
+    screenGrade.value === "small"
+      ? "10px"
+      : screenGrade.value === "large"
+      ? "14px"
+      : "13px";
   return {
     fontSize,
     padding: "2px 0",
@@ -210,7 +236,11 @@ const getCellStyle = () => {
 };
 
 const getFontSize = () => {
-  return screenGrade.value === "small" ? "12px" : screenGrade.value === "large" ? "14px" : "13px";
+  return screenGrade.value === "small"
+    ? "12px"
+    : screenGrade.value === "large"
+    ? "14px"
+    : "13px";
 };
 
 // 业务逻辑保持不变
@@ -343,7 +373,7 @@ onMounted(async () => {
   await fetchTableHeaders();
   selectedDate.value = new Date().toISOString().split("T")[0];
   await fetchTableData();
-  
+
   // 初始化后强制隐藏网页级滚动条
   nextTick(() => {
     document.documentElement.style.overflowY = "hidden";
@@ -361,7 +391,8 @@ onUnmounted(() => {
 
 <style scoped>
 /* 核心修复：全局容器溢出控制 */
-:deep(html), :deep(body) {
+:deep(html),
+:deep(body) {
   margin: 0;
   padding: 0;
   overflow-x: hidden; /* 禁止横向滚动 */
@@ -388,17 +419,40 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* 核心修复：表格容器高度精准计算（1080p重点） */
+/* 关键修改2：调整表格容器样式，适配固定表头 */
 .table-scroll-wrapper {
-  /* 1080p下精准计算：视口高度 - tabs头部 - 日期选择器 - 边距 */
-  height: calc(100vh - 160px); 
   width: 100%;
-  overflow: auto; /* 仅表格容器显示滚动条 */
+  overflow: hidden; /* 隐藏容器溢出，仅表格内部滚动 */
   box-sizing: border-box;
   padding: 0 1px;
   margin: 4px 0;
-  /* 确保滚动条不挤压内容 */
+  /* 高度计算：视口高度 - tabs头部 - 日期选择器 - 边距 */
+  height: calc(100vh - 160px);
   scrollbar-gutter: stable;
+}
+
+/* 关键修改3：固定表头样式 + 表格内容滚动 */
+:deep(.el-table) {
+  --el-table-header-text-color: #333;
+  --el-table-row-hover-bg-color: #f8f9fa;
+}
+
+/* 固定表头 */
+:deep(.fixed-table-header) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 可选：增加表头阴影，提升视觉区分 */
+}
+
+/* 表格内容区域滚动 */
+:deep(.el-table__body-wrapper) {
+  overflow-y: auto !important; /* 仅内容纵向滚动 */
+  overflow-x: auto !important; /* 横向滚动（如需） */
+  height: calc(
+    100% - 40px
+  ) !important; /* 表头高度约40px，内容区域自适应剩余高度 */
 }
 
 /* 不同屏幕的高度适配（修正1080p的高度偏差） */
@@ -411,6 +465,10 @@ onUnmounted(() => {
   }
   :deep(.el-date-picker) {
     max-width: 180px !important;
+  }
+  /* 小屏适配表头高度 */
+  :deep(.el-table__body-wrapper) {
+    height: calc(100% - 36px) !important;
   }
 }
 
@@ -429,15 +487,19 @@ onUnmounted(() => {
   .table-scroll-wrapper {
     height: calc(100vh - 170px);
   }
+  /* 大屏适配表头高度 */
+  :deep(.el-table__body-wrapper) {
+    height: calc(100% - 44px) !important;
+  }
 }
 
-/* 滚动条样式优化（仅表格容器显示滚动条） */
-.table-scroll-wrapper::-webkit-scrollbar {
+/* 滚动条样式优化（仅表格内容区域显示滚动条） */
+:deep(.el-table__body-wrapper::-webkit-scrollbar) {
   height: 12px;
   width: 8px;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-thumb {
+:deep(.el-table__body-wrapper::-webkit-scrollbar-thumb) {
   background-color: #ccc;
   border-radius: 3px;
 }
@@ -445,12 +507,15 @@ onUnmounted(() => {
 /* 表格样式 */
 :deep(.el-table td),
 :deep(.el-table th) {
-  padding: 2px 0 !important;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+:deep(.el-table .cell) {
+  padding: 1px 1px !important;
+}
 /* 日期选择器宽度限制 */
 :deep(.el-date-picker) {
   max-width: 220px !important;
