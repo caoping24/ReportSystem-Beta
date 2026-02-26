@@ -78,16 +78,31 @@ namespace CenterBackend
                 options.Cookie.Name = "ReportSystem_SessionId";
             });
 
+            // 在构建 CORS 白名单前加入默认回退（当配置为空时允许本地开发使用）
             var allowedOrigins = configuration["CorsPolicy:AllowedOrigins"]?.Split(',') ?? Array.Empty<string>();
+            if (allowedOrigins.Length == 0)
+            {
+                // 允许嵌入式 WebView 从同一地址访问 API（开发时回退）
+                allowedOrigins = new[] { "http://localhost:5260", "https://appassets" };
+            }
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("Policy", policy =>
                 {
-                    policy.WithOrigins(allowedOrigins)
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials()
-                          .WithExposedHeaders("Content-Disposition");// 标准：暴露非简单响应头，前端才能读取 Content-Disposition
+                    // 1. 允许所有源（临时调试）/ 精准匹配（生产）
+                    policy.SetIsOriginAllowed(origin =>
+                    {
+                        // 调试阶段允许所有源，生产替换为精准匹配：
+                        // return origin == "http://localhost:5260" || origin == "https://appassets";
+                        return true;
+                    })
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .WithExposedHeaders("Content-Disposition");
+
+                    // 2. 显式允许预检请求（OPTIONS）的缓存时间，减少预检次数
+                    policy.SetPreflightMaxAge(TimeSpan.FromHours(1));
                 });
             });
             builder.Services.AddAuthentication("CookieAuth")
@@ -109,6 +124,7 @@ namespace CenterBackend
 
                     options.Cookie.SameSite = SameSiteMode.None;
                     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        
                 });
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSwaggerGen(c =>
@@ -127,7 +143,7 @@ namespace CenterBackend
             });
 
             var app = builder.Build();
-
+            app.UseCors("Policy");
             // 临时请求日志（便于确认请求是否到达服务器；可上线前移除）
             app.Use(async (ctx, next) =>
             {
@@ -145,10 +161,9 @@ namespace CenterBackend
                     c.RoutePrefix = "swagger";
                 });
             }
-
+        
             app.UseSpaStaticFiles();
             app.UseMiddleware<GlobalExceptionMiddleware>();
-            app.UseCors("Policy");
             app.UseSession();
             app.UseRouting();
             app.UseAuthentication();

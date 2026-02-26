@@ -25,7 +25,8 @@ const myAxios = axios.create({
   baseURL:
     process.env.NODE_ENV === "development"
       ? "http://localhost:5260"
-      : window.location.origin, // 生产环境使用当前页面的域名/IP
+      : "http://localhost:5260",
+      //: window.location.origin, // 生产环境使用当前页面的域名/IP
   timeout: 10000,
   withCredentials: true, // 允许携带cookie，适配session认证
 });

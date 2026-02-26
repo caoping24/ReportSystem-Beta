@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -16,6 +16,11 @@
     <None Remove="AppIco\SL_Icon_Gray.ico" />
     <None Remove="AppIco\SL_Icon_Green.ico" />
     <None Remove="MainPciture.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 添加 WebView2 NuGet 依赖（版本与错误中提到的版本一致，或可改为最新稳定版） -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,14 +56,14 @@
   </ItemGroup>
 	<Target Name="CopyWebRootToWpfPublish" AfterTargets="Publish">
 		<ItemGroup>
-			<WebRootSourceFiles  Include="$(ProjectDir)..\CenterBackend\wwwroot\**\*" />
+			<WebRootSourceFiles Include="$(ProjectDir)..\CenterBackend\wwwroot\**\*" />
 		</ItemGroup>
 		<Copy SourceFiles="@(WebRootSourceFiles)" DestinationFolder="$(PublishDir)wwwroot\%(WebRootSourceFiles.RecursiveDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true">
 			<Output TaskParameter="CopiedFiles" ItemName="WebRootCopiedFiles" />
 		</Copy>
 
 		<ItemGroup>
-			<ReportSourceFiles  Include="$(ProjectDir)..\CenterBackend\Report\**\*" />
+			<ReportSourceFiles Include="$(ProjectDir)..\CenterBackend\Report\**\*" />
 		</ItemGroup>
 		<Copy SourceFiles="@(ReportSourceFiles)" DestinationFolder="$(PublishDir)Report\%(ReportSourceFiles.RecursiveDir)" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true">
 			<Output TaskParameter="CopiedFiles" ItemName="ReportSourceFiles" />

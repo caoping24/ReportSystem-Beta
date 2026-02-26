@@ -24,6 +24,12 @@ namespace CenterBackend.Middlewares
         {
             try
             {
+                // 跳过 OPTIONS 预检请求
+                if (context.Request.Method == "OPTIONS")
+                {
+                    context.Response.StatusCode = 204; // No Content
+                    return;
+                }
                 // 该方法尝试执行下一个中间件(_next(context))，并在发生异常时捕获这些异常。
                 await _next(context);
             }
