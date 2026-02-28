@@ -18,7 +18,7 @@
             <Image HorizontalAlignment="Center"  Margin="1,1,1,1"  Source="/Picture/MainPciture.jpg"/>
         </StackPanel>
         <StackPanel Grid.Row="1" >
-            <Label Content="Ver:1.0.2.6" Height="25" Background="AliceBlue"/>
+            <Label Content="Ver:1.1.0.0 LastChange:2026-02-26" Height="25" Background="AliceBlue"/>
         </StackPanel>
         -->
         <wv2:WebView2 x:Name="webView" />
