@@ -29,7 +29,7 @@ namespace CenterBackend.Controllers
             return Ok(new
             {
                 success = true,
-                msg = "Version:1.0.2.6",
+                msg = "Ver:1.1.0.0 LastChange:2026-02-26",
                 compileTimeLocal = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             });
         }

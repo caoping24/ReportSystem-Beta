@@ -82,7 +82,7 @@ namespace ReportServer
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             //this.Hide();            // 隐藏窗口
-            this.ShowInTaskbar = false;
+            this.ShowInTaskbar = true;
             InitializeTray();// 初始化托盘图标与菜单
             await StartEmbeddedApiAsync();// 启动后端并在启动成功后导航到 API 提供的页面（统一 origin）
         }
@@ -92,15 +92,15 @@ namespace ReportServer
             if (_notifyIcon != null) return;// 如果已初始化，跳过
             var menu = new ContextMenuStrip();// 创建托盘菜单
 
-            _startMenuItem = new ToolStripMenuItem("启动后端");
-            _startMenuItem.Click += async (_, __) => await StartEmbeddedApiAsync();
-            menu.Items.Add(_startMenuItem);
+            // _startMenuItem = new ToolStripMenuItem("启动后端");
+            // _startMenuItem.Click += async (_, __) => await StartEmbeddedApiAsync();
+            // menu.Items.Add(_startMenuItem);
 
-            _stopMenuItem = new ToolStripMenuItem("停止后端");
-            _stopMenuItem.Click += async (_, __) => await StopEmbeddedApiAsync();
-            menu.Items.Add(_stopMenuItem);
+            // _stopMenuItem = new ToolStripMenuItem("停止后端");
+            // _stopMenuItem.Click += async (_, __) => await StopEmbeddedApiAsync();
+            // menu.Items.Add(_stopMenuItem);
 
-            menu.Items.Add(new ToolStripSeparator());
+            // menu.Items.Add(new ToolStripSeparator());
 
             _openMainWindow = new ToolStripMenuItem("系统信息");
             _openMainWindow.Click += (_, __) => Dispatcher.Invoke(ShowAndActivateWindow);
@@ -214,12 +214,13 @@ namespace ReportServer
                 return;
             }
 
-            bool isServiceRunning = _apiApp != null;
-            if (_startMenuItem != null) _startMenuItem.Enabled = !isServiceRunning;
-            if (_stopMenuItem != null) _stopMenuItem.Enabled = isServiceRunning;
+            // bool isServiceRunning = _apiApp != null;
+            // if (_startMenuItem != null) _startMenuItem.Enabled = !isServiceRunning;
+            // if (_stopMenuItem != null) _stopMenuItem.Enabled = isServiceRunning;
 
             if (_notifyIcon != null)// 根据服务状态切换托盘图标
             {
+                bool isServiceRunning = _apiApp != null;
                 _notifyIcon.Icon = isServiceRunning ? _iconRunning! : _iconStopped!;
                 _notifyIcon.Text = isServiceRunning ? "ReportServer（服务运行中）" : "ReportServer（服务已停止）";
             }

@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
-        Title="WPF嵌入Vue3" Height="800" Width="1200">
+        Title="ReportServer" Height="1080" Width="1920"
+        ShowInTaskbar="True"
+       >
     <Grid>
    
         <!-- 定义两行：第一行占满剩余空间，第二行自适应高度
@@ -18,7 +20,7 @@
             <Image HorizontalAlignment="Center"  Margin="1,1,1,1"  Source="/Picture/MainPciture.jpg"/>
         </StackPanel>
         <StackPanel Grid.Row="1" >
-            <Label Content="Ver:1.0.2.6" Height="25" Background="AliceBlue"/>
+            <Label Content="Ver:1.1.0.0 LastChange:2026-02-26" Height="25" Background="AliceBlue"/>
         </StackPanel>
         -->
         <wv2:WebView2 x:Name="webView" />
